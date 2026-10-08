@@ -23,8 +23,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#5](https://github.com/midhun221B/Wt-tracker/pull/5) | Runs and Body screens in "B orange" (28-day summary, weekly km bars, runs grouped by program week, "Fastest yet"; Body change tiles, trend charts, measurement cards); this HANDOVER.md |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: **screenshot import** (see open item 1). Waiting for CI and the owner's check
-  on the phone, then a PR to `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: **screenshot import** (see open item 1). CI green; the owner confirmed it works
+  on the phone (2026-10-08). PR to `main` open.
 
 ### Features in the app today
 - **Today:** weigh-in with ±0.1 steppers, hunger (None–Very), sleep, snacks, note, rest-day switch, add run.
@@ -33,7 +33,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy balance with the intake change needed.
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 3+ days.
-- **Screenshot import (pending merge):** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs.
+- **Screenshot import (PR open):** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
 - **Runs:** manual entry and Strava `activities.csv` import. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
@@ -41,7 +41,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Settings:** daily reminder (default 07:30 Tokyo), CSV export, JSON backup and restore.
 
 ## Open items / next steps
-1. **Screenshot import: built, needs checking on the phone.**
+1. **Screenshot import: built, confirmed working on the owner's phone with both screenshots.**
    - The owner sent two real screenshots on 2026-10-08: a Strava share image (3.45 km, 7:02 /km, 24m 19s, 377 Cal,
      no date) and a Japanese body-scale app screen (測定データ, 2026/10/08: BMI 30.6, 体脂肪率 29.2 %, 内臓脂肪 16.0,
      筋肉量 60.1 kg, 骨格筋率 37.0 %, 除脂肪体重 62.5 kg, 基礎代謝量 1818 kcal). The tests in `core/.../ScreenshotTest.kt`
@@ -56,7 +56,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
      - Saving a screenshot run replaces a run on the same day with about the same distance (±0.05 km), so the same image twice doesn't duplicate.
      - The body screen has no weight row. Weight = lean / (1 − fat %) (88.3 kg for the sample, about ±0.1 kg), with BMI × height² as the fallback.
        It's shown as an optional field with a note. When saved, it updates that day's weigh-in and keeps the sleep, hunger and notes.
-   - Not tested yet: real OCR quality on the phone, Strava in Japanese (labels 距離/ペース/時間 are handled, but the
+   - Not tested yet: Strava in Japanese (labels 距離/ペース/時間 are handled, but the
      units are guessed), and other scale apps. The dialogs aren't in the Robolectric screenshots (they use a separate window).
 2. **Not yet verified on a real device:**
    - status-bar icon colour and the dark launch window
