@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -51,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wt.app.R
 import wt.app.notify.Reminder
+import wt.core.io.BodyReading
+import wt.core.io.RunReading
 
 enum class Tab(val label: String, @DrawableRes val icon: Int) {
     LOG("Today", R.drawable.ic_tab_today),
@@ -87,6 +92,25 @@ fun AppScaffold(vm: AppViewModel) {
     val stravaLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.importStrava(uri)
     }
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) vm.readScreenshot(uri)
+    }
+    val pickScreenshot = { imageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+    val pickStravaCsv = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) }
+    val screenshot by vm.screenshot.collectAsStateWithLifecycle()
+    state?.let { s ->
+        when (val r = screenshot) {
+            is RunReading -> RunDialog(
+                initial = null, defaultDate = s.today, prefill = r,
+                onDismiss = { vm.screenshot.value = null }, onSave = vm::saveScreenshotRun,
+            )
+            is BodyReading -> BodyDialog(
+                initial = null, today = s.today, previous = null, prefill = r,
+                onDismiss = { vm.screenshot.value = null }, onSave = vm::saveScreenshotBody,
+            )
+            null -> {}
+        }
+    }
     val importReport by vm.importReport.collectAsStateWithLifecycle()
     importReport?.let { report ->
         AlertDialog(
@@ -121,13 +145,8 @@ fun AppScaffold(vm: AppViewModel) {
                     if (settingsOpen) IconButton(onClick = { settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
                 actions = {
-                    if (!settingsOpen && tab == Tab.RUNS) {
-                        Button(
-                            onClick = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Palette.Card, contentColor = Palette.Text),
-                            modifier = Modifier.padding(end = 8.dp),
-                        ) { Text("Import Strava") }
+                    if (!settingsOpen && tab in listOf(Tab.LOG, Tab.RUNS, Tab.BODY)) {
+                        ImportButton(withStravaCsv = tab == Tab.RUNS, onScreenshot = pickScreenshot, onStravaCsv = pickStravaCsv)
                     }
                     if (!settingsOpen) {
                         FilledIconButton(
@@ -199,13 +218,30 @@ fun AppScaffold(vm: AppViewModel) {
             Tab.DASHBOARD -> DashboardScreen(s.dashboard, modifier)
             Tab.RUNS -> RunsScreen(
                 s.runs, s.today, vm::saveRun, vm::deleteRun,
-                onImportStrava = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) },
+                onImportStrava = pickStravaCsv,
                 modifier = modifier,
                 weeks = s.dashboard.weekly,
                 programStart = s.dashboard.weights.firstOrNull()?.date ?: s.dashboard.plan.start.date,
             )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier)
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
+        }
+    }
+}
+
+/** "Import" in the top bar: a screenshot (Strava run or body scale), plus Strava's activities.csv on the Runs tab. */
+@Composable
+private fun ImportButton(withStravaCsv: Boolean, onScreenshot: () -> Unit, onStravaCsv: () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box(Modifier.padding(end = 8.dp)) {
+        Button(
+            onClick = { if (withStravaCsv) menuOpen = true else onScreenshot() },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.Card, contentColor = Palette.Text),
+        ) { Text(if (withStravaCsv) "Import" else "From screenshot") }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(text = { Text("Screenshot of a run") }, onClick = { menuOpen = false; onScreenshot() })
+            DropdownMenuItem(text = { Text("Strava activities.csv") }, onClick = { menuOpen = false; onStravaCsv() })
         }
     }
 }

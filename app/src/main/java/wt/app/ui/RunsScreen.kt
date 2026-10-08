@@ -37,6 +37,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import wt.core.io.RunReading
 import wt.core.model.formatMinSec
 import wt.core.summary.WeekSummary
 import java.time.temporal.ChronoUnit
@@ -213,7 +216,7 @@ private fun RunFigure(value: String, unit: String?, label: String, modifier: Mod
     }
 }
 
-/** Add or edit a run. Pace is computed from distance and time. */
+/** Add or edit a run, or confirm one read from a screenshot ([prefill]). Pace is computed from distance and time. */
 @Composable
 fun RunDialog(
     initial: RunEntity?,
@@ -221,11 +224,12 @@ fun RunDialog(
     onDismiss: () -> Unit,
     onSave: (RunEntity) -> Unit,
     onDelete: (() -> Unit)? = null,
+    prefill: RunReading? = null,
 ) {
     var date by remember { mutableStateOf(if (initial == null) defaultDate else initial.date) }
-    var km by remember { mutableStateOf(fieldText(initial?.km)) }
-    var time by remember { mutableStateOf(initial?.let { duration(it.durationSec) } ?: "") }
-    var kcalText by remember { mutableStateOf(fieldText(initial?.kcal)) }
+    var km by remember { mutableStateOf(fieldText(initial?.km ?: prefill?.km)) }
+    var time by remember { mutableStateOf((initial?.durationSec ?: prefill?.durationSec)?.let(::duration) ?: "") }
+    var kcalText by remember { mutableStateOf(fieldText(initial?.kcal ?: prefill?.kcal)) }
 
     val kmValue = parseDecimal(km)?.takeIf { it in 0.1..100.0 }
     val seconds = parseDuration(time)
@@ -235,9 +239,13 @@ fun RunDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Add run" else "Edit run") },
+        title = { Text(if (prefill != null) "Run from screenshot" else if (initial == null) "Add run" else "Edit run") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (prefill != null) {
+                    val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
+                    Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+                }
                 DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
                 NumberField("Distance", km, { km = it }, Modifier.fillMaxWidth(), suffix = "km", isError = km.isNotBlank() && kmValue == null)
                 NumberField("Time (mm:ss)", time, { time = it }, Modifier.fillMaxWidth(), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)
@@ -250,7 +258,7 @@ fun RunDialog(
                 enabled = valid,
                 onClick = {
                     onSave(
-                        (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0))
+                        (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0, source = if (prefill != null) "strava" else "manual"))
                             .copy(date = date, km = kmValue!!, durationSec = seconds!!, kcal = kcalValue),
                     )
                 },

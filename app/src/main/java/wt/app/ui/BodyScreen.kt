@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import wt.app.chart.MiniLineChart
 import wt.app.data.BodyCompEntity
+import wt.core.io.BodyReading
 import java.time.LocalDate
 
 /** Body-scale measurements (weekly or monthly): change tiles, fat and visceral trends, and the entries. */
@@ -99,11 +100,11 @@ fun BodyScreen(
         )
     }
 
-    if (adding) BodyDialog(null, today, sorted.lastOrNull(), { adding = false }, { onSave(it); adding = false })
+    if (adding) BodyDialog(null, today, sorted.lastOrNull(), { adding = false }, { it, _ -> onSave(it); adding = false })
     editing?.let { e ->
         BodyDialog(
             e, today, null, { editing = null },
-            onSave = {
+            onSave = { it, _ ->
                 if (it.date != e.date) onDelete(e.date) // date changed: move the entry
                 onSave(it)
                 editing = null
@@ -163,37 +164,57 @@ private fun Figure(value: String, label: String, modifier: Modifier = Modifier) 
     }
 }
 
+/**
+ * Add or edit a measurement, or confirm one read from a screenshot ([prefill]). Only the screenshot version has a
+ * weight field; [onSave] gets that weight, or null.
+ */
 @Composable
-private fun BodyDialog(
+fun BodyDialog(
     initial: BodyCompEntity?,
     today: LocalDate,
     previous: BodyCompEntity?,
     onDismiss: () -> Unit,
-    onSave: (BodyCompEntity) -> Unit,
+    onSave: (BodyCompEntity, Double?) -> Unit,
     onDelete: (() -> Unit)? = null,
+    prefill: BodyReading? = null,
 ) {
     // New entries start from the previous measurement so only changed values need typing.
-    val base = initial ?: previous
-    var date by remember { mutableStateOf(initial?.date ?: today) }
-    var fat by remember { mutableStateOf(fieldText(base?.fatPct)) }
-    var visceral by remember { mutableStateOf(fieldText(base?.visceral)) }
-    var muscle by remember { mutableStateOf(fieldText(base?.muscleKg)) }
-    var skeletal by remember { mutableStateOf(fieldText(base?.skeletalPct)) }
-    var lean by remember { mutableStateOf(fieldText(base?.leanKg)) }
-    var bmr by remember { mutableStateOf(fieldText(base?.bmrKcal)) }
+    val base = initial ?: previous.takeIf { prefill == null }
+    var date by remember { mutableStateOf(initial?.date ?: prefill?.date ?: today) }
+    var fat by remember { mutableStateOf(fieldText(base?.fatPct ?: prefill?.fatPct)) }
+    var visceral by remember { mutableStateOf(fieldText(base?.visceral ?: prefill?.visceral)) }
+    var muscle by remember { mutableStateOf(fieldText(base?.muscleKg ?: prefill?.muscleKg)) }
+    var skeletal by remember { mutableStateOf(fieldText(base?.skeletalPct ?: prefill?.skeletalPct)) }
+    var lean by remember { mutableStateOf(fieldText(base?.leanKg ?: prefill?.leanKg)) }
+    var bmr by remember { mutableStateOf(fieldText(base?.bmrKcal ?: prefill?.bmrKcal)) }
+    var weight by remember { mutableStateOf(fieldText(prefill?.weightKg)) }
+    val weightV = parseDecimal(weight)?.takeIf { it in 30.0..250.0 }
+    val weightValid = weight.isBlank() || weightV != null
 
     val fatV = parseDecimal(fat)?.takeIf { it in 2.0..70.0 }
     val visceralV = parseDecimal(visceral)?.takeIf { it in 0.0..60.0 }
     val muscleV = parseDecimal(muscle)?.takeIf { it in 10.0..150.0 }
     fun optional(s: String) = if (s.isBlank()) true else parseDecimal(s) != null
-    val valid = fatV != null && visceralV != null && muscleV != null && optional(skeletal) && optional(lean) && optional(bmr)
+    val valid = fatV != null && visceralV != null && muscleV != null && optional(skeletal) && optional(lean) && optional(bmr) && weightValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Add measurement" else "Edit measurement") },
+        title = { Text(if (prefill != null) "Measurement from screenshot" else if (initial == null) "Add measurement" else "Edit measurement") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (prefill != null) Text("Check the values before saving.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
                 DateField("Date", date, { date = it }, Modifier.fillMaxWidth())
+                if (prefill != null) {
+                    NumberField("Weight (optional)", weight, { weight = it }, Modifier.fillMaxWidth(), suffix = "kg", isError = !weightValid)
+                    if (prefill.weightEstimated) {
+                        Text(
+                            "Weight isn't on the screenshot, so it's worked out from lean mass and body fat. " +
+                                "Check it against the scale, or clear it to save only the measurement.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Palette.Muted,
+                        )
+                    }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumberField("Body fat", fat, { fat = it }, Modifier.weight(1f), suffix = "%", isError = fatV == null)
                     NumberField("Visceral", visceral, { visceral = it }, Modifier.weight(1f), isError = visceralV == null)
@@ -210,7 +231,7 @@ private fun BodyDialog(
         },
         confirmButton = {
             TextButton(enabled = valid, onClick = {
-                onSave(BodyCompEntity(date, fatV!!, visceralV!!, muscleV!!, parseDecimal(skeletal), parseDecimal(lean), parseDecimal(bmr)))
+                onSave(BodyCompEntity(date, fatV!!, visceralV!!, muscleV!!, parseDecimal(skeletal), parseDecimal(lean), parseDecimal(bmr)), weightV)
             }) { Text("Save") }
         },
         dismissButton = {

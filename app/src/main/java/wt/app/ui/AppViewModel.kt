@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.app.data.importStrava
 import wt.app.data.loadAll
+import wt.app.data.recognizeLines
 import wt.app.data.replaceAll
 import wt.app.notify.Reminder
 import wt.core.dashboard.Dashboard
@@ -32,6 +34,11 @@ import wt.core.dashboard.buildDashboard
 import wt.core.io.bodyCsv
 import wt.core.io.decodeBackup
 import wt.core.io.encodeBackup
+import wt.core.io.ScreenshotReading
+import wt.core.io.StoredRun
+import wt.core.io.ocrRows
+import wt.core.io.planStravaImport
+import wt.core.io.readScreenshot
 import wt.core.io.runsCsv
 import wt.core.io.weightsCsv
 import wt.core.model.Checkpoint
@@ -66,6 +73,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Report of the last Strava import, shown in a dialog until dismissed. */
     val importReport = MutableStateFlow<String?>(null)
+
+    /** What the last screenshot contained, shown in a confirm dialog until saved or dismissed. */
+    val screenshot = MutableStateFlow<ScreenshotReading?>(null)
 
     private val messageChannel = Channel<String>(Channel.BUFFERED)
     /** One-off messages for the snackbar. */
@@ -189,6 +199,37 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun importStrava(uri: Uri) = launchWithMessage(null) {
         val text = readText(uri)
         importReport.value = db.importStrava(text)
+    }
+
+    fun readScreenshot(uri: Uri) = launchWithMessage(null) {
+        val rows = ocrRows(recognizeLines(getApplication(), uri))
+        val reading = withContext(Dispatchers.Default) { readScreenshot(rows, db.profile().get()?.heightCm) }
+        if (reading == null) messageChannel.send("Couldn't find a run or body measurement in this image")
+        screenshot.value = reading
+    }
+
+    /** Saves a run read from a screenshot; a run already stored for that day with about the same distance is replaced. */
+    fun saveScreenshotRun(run: RunEntity) = launchWithMessage("Run saved") {
+        screenshot.value = null
+        db.withTransaction {
+            val existing = db.runs().all().map { StoredRun(it.id, it.toModel()) }
+            val match = planStravaImport(existing, listOf(run.toModel())).updates.firstOrNull()
+            db.runs().upsert(run.copy(id = match?.id ?: 0))
+        }
+    }
+
+    /** Saves a body measurement read from a screenshot and, when given, the weight for the same day. */
+    fun saveScreenshotBody(entry: BodyCompEntity, weightKg: Double?) = launchWithMessage(
+        if (weightKg != null) "Saved measurement and ${weightKg} kg for ${entry.date}" else "Measurement saved",
+    ) {
+        screenshot.value = null
+        db.withTransaction {
+            db.bodyComp().upsert(entry)
+            if (weightKg != null) {
+                // Keep sleep, hunger and notes already logged for that day.
+                db.weights().upsert(db.weights().get(entry.date)?.copy(kg = weightKg) ?: WeightEntity(entry.date, weightKg))
+            }
+        }
     }
 
     private suspend fun readText(uri: Uri): String = withContext(Dispatchers.IO) {

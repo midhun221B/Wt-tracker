@@ -64,6 +64,9 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
+    // On-device text recognition for Strava and body-scale screenshots (bundled model, works offline).
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
