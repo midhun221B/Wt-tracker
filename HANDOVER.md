@@ -20,14 +20,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#2](https://github.com/midhun221B/Wt-tracker/pull/2) | Step 2 UI (Compose), reminder, CSV/JSON export and backup; step 3 Strava `activities.csv` import; `debug-latest` APK release; fixed debug signing key |
 | [#3](https://github.com/midhun221B/Wt-tracker/pull/3) | CI no longer commits screenshots |
 | [#4](https://github.com/midhun221B/Wt-tracker/pull/4) | "B orange" redesign (dark theme, Strava orange, Barlow fonts) of Dashboard, Today and navigation; CLAUDE.md |
+| [#5](https://github.com/midhun221B/Wt-tracker/pull/5) | Runs and Body screens in "B orange" (28-day summary, weekly km bars, runs grouped by program week, "Fastest yet"; Body change tiles, trend charts, measurement cards); this HANDOVER.md |
 
-### Done, on branch `claude/fervent-ptolemy-ho7r2a`, NOT merged yet
-- Runs and Body screens redesigned to "B orange":
-  - **Runs:** 28-day summary, weekly km bars, runs grouped by program week, "Fastest yet" tag, "Import Strava" button in the top bar.
-  - **Body:** change tiles, trend charts, measurement cards.
-- README screenshots include Body.
-- This HANDOVER.md, plus a CLAUDE.md line requiring it to be kept up to date.
-- CI is green on this branch. No PR open yet; the owner hasn't decided whether to merge now or together with the screenshot import.
+### Not merged
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** weigh-in with ±0.1 steppers, hunger (None–Very), sleep, snacks, note, rest-day switch, add run.
@@ -45,14 +41,13 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 1. **Strava screenshot import.** The owner wants to upload a Strava run screenshot and have the run filled in automatically.
    - Plan: on-device text recognition (ML Kit, bundled model, no cloud), plus a parser in `core/` tested on the OCR text, plus a confirm dialog before saving.
    - **Blocked:** we need 1–2 real Strava screenshots from the owner. None has been received; the only upload so far is a design-reference video.
-2. **PR for the Runs/Body redesign:** open it and merge (see above).
-3. **Not yet verified on a real device:**
+2. **Not yet verified on a real device:**
    - status-bar icon colour and the dark launch window
    - Room v1→v2 migration on a real install
    - reminder notifications
    - the file pickers (export, restore, Strava CSV) and the date picker
    - only Strava's English date format has been tested
-4. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
+3. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
 
 ## Design decisions
 - **Chosen direction: "B orange".**
