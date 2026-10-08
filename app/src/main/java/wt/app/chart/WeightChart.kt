@@ -151,29 +151,58 @@ private fun DrawScope.polyline(points: List<Offset>, color: androidx.compose.ui.
     )
 }
 
-/** Small line chart for body-composition trends. */
+/** Small line chart for body-composition trends: thin grid, optional fill, first/last dates underneath. */
 @Composable
-fun MiniLineChart(points: List<Pair<LocalDate, Double>>, color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+fun MiniLineChart(
+    points: List<Pair<LocalDate, Double>>,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+    fill: Boolean = false,
+) {
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.merge(TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant))
     val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val background = MaterialTheme.colorScheme.surfaceContainer
     Canvas(modifier) {
         if (points.isEmpty()) return@Canvas
         val values = points.map { it.second }
-        val pad = maxOf((values.max() - values.min()) * 0.15, 0.5)
+        val pad = maxOf((values.max() - values.min()) * 0.2, 0.3)
         val yMin = values.min() - pad
         val yMax = values.max() + pad
         val start = points.first().first
         val end = maxOf(points.last().first, start.plusDays(1))
-        val axes = Axes(start, end, yMin, yMax, 30.dp.toPx(), 4.dp.toPx(), size.width - 38.dp.toPx(), size.height - 8.dp.toPx())
-        listOf(values.min(), values.max()).distinct().forEach { v ->
-            val y = axes.y(v)
-            drawLine(gridColor, Offset(axes.left, y), Offset(size.width, y), strokeWidth = 1f)
-            val t = measurer.measure("%.1f".format(v), labelStyle)
-            drawText(t, topLeft = Offset(0f, y - t.size.height / 2))
+        val labelHeight = 18.dp.toPx()
+        val inset = 6.dp.toPx()
+        val axes = Axes(start, end, yMin, yMax, inset, inset, size.width - 2 * inset, size.height - labelHeight - inset)
+        listOf(0f, 0.5f, 1f).forEach { f ->
+            val y = axes.top + axes.height * f
+            drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
         }
         val offsets = points.map { Offset(axes.x(it.first), axes.y(it.second)) }
-        polyline(offsets, color, 2.dp.toPx())
-        offsets.forEach { drawCircle(color, radius = 3.dp.toPx(), center = it) }
+        if (fill && offsets.size >= 2) {
+            val area = Path().apply {
+                moveTo(offsets.first().x, axes.top + axes.height)
+                offsets.forEach { lineTo(it.x, it.y) }
+                lineTo(offsets.last().x, axes.top + axes.height)
+                close()
+            }
+            drawPath(area, color.copy(alpha = 0.12f))
+        }
+        polyline(offsets, color, 3.dp.toPx())
+        offsets.forEachIndexed { i, p ->
+            if (i == offsets.lastIndex) {
+                drawCircle(color, radius = 5.dp.toPx(), center = p)
+            } else {
+                drawCircle(background, radius = 4.5.dp.toPx(), center = p)
+                drawCircle(color, radius = 4.5.dp.toPx(), center = p, style = Stroke(2.5.dp.toPx()))
+            }
+        }
+        val fmt = java.time.format.DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+        val firstLabel = measurer.measure(points.first().first.format(fmt), labelStyle)
+        drawText(firstLabel, topLeft = Offset(0f, size.height - firstLabel.size.height))
+        if (points.size >= 2) {
+            val lastLabel = measurer.measure(points.last().first.format(fmt), labelStyle)
+            drawText(lastLabel, topLeft = Offset(size.width - lastLabel.size.width, size.height - lastLabel.size.height))
+        }
     }
 }

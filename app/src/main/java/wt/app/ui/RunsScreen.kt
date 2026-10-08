@@ -1,6 +1,5 @@
 package wt.app.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +29,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import wt.app.data.RunEntity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import wt.core.model.formatMinSec
+import wt.core.summary.WeekSummary
+import java.time.temporal.ChronoUnit
 import java.time.LocalDate
 
 @Composable
@@ -41,37 +50,64 @@ fun RunsScreen(
     onDelete: (RunEntity) -> Unit,
     onImportStrava: () -> Unit,
     modifier: Modifier = Modifier,
+    weeks: List<WeekSummary> = emptyList(),
+    programStart: LocalDate? = null,
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
 
+    val dated = runs.filter { it.date != null }
+    val last28 = dated.filter { it.date!! > today.minusDays(28) }
+    // Fastest pace over runs of at least 1 km, so a short sprint doesn't win.
+    val fastest = dated.filter { it.km >= 1.0 }.minByOrNull { it.durationSec / it.km }
+    val start = programStart ?: dated.minOfOrNull { it.date!! } ?: today
+    val currentWeek = weekIndex(start, today)
+    val groups = dated.sortedByDescending { it.date }.groupBy { weekIndex(start, it.date!!) }
+
     Box(modifier.fillMaxSize()) {
-        LazyColumn(contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             item {
-                SectionCard("Strava") {
-                    Text(
-                        "Strava → Settings → My Account → Download or delete your account → Request your archive. " +
-                            "Unzip it and pick activities.csv. Only runs are imported; importing again skips runs you already have.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    OutlinedButton(onClick = onImportStrava, modifier = Modifier.fillMaxWidth()) { Text("Import activities.csv") }
+                SectionCard("Last 28 days", trailing = "plan: 4–5 runs a week") {
+                    Row(Modifier.fillMaxWidth()) {
+                        SummaryFigure("Runs", "${last28.size}", Modifier.weight(1f))
+                        SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
+                        SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), Palette.Accent)
+                    }
+                    if (weeks.isNotEmpty()) KmBars(weeks)
                 }
             }
-            val dated = runs.filter { it.date != null }
-            item {
-                val last28 = dated.filter { it.date!! > today.minusDays(28) }
-                Text(
-                    "Last 28 days: ${last28.size} runs · %.1f km".format(last28.sumOf { it.km }),
-                    style = MaterialTheme.typography.titleSmall,
-                )
+            val undated = runs.filter { it.date == null }
+            if (undated.isNotEmpty()) {
+                item { GroupHeader("Date not set · tap a run to set it") }
+                items(undated, key = { it.id }) { run -> RunCard(run, fastest = false) { editing = run } }
             }
-            items(runs, key = { it.id }) { run -> RunRow(run) { editing = run } }
-            if (runs.isEmpty()) item { Text("No runs yet.") }
+            groups.forEach { (week, list) ->
+                item(key = "week-$week") {
+                    val first = start.plusDays((week - 1) * 7L)
+                    GroupHeader(
+                        if (week == currentWeek) "This week"
+                        else "Week $week · ${dayMonth(first)} – ${dayMonth(first.plusDays(6))} · %.1f km".format(list.sumOf { it.km }),
+                    )
+                }
+                items(list, key = { it.id }) { run -> RunCard(run, fastest = run.id == fastest?.id) { editing = run } }
+            }
+            if (runs.isEmpty()) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("No runs yet.", color = Palette.Muted)
+                        TextButton(onClick = onImportStrava) { Text("Import from Strava") }
+                    }
+                }
+            }
         }
         ExtendedFloatingActionButton(
             onClick = { adding = true },
             icon = { Icon(Icons.Default.Add, null) },
-            text = { Text("Add run") },
+            text = { Text("Add run", style = MaterialTheme.typography.labelLarge) },
+            shape = RoundedCornerShape(18.dp),
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         )
     }
@@ -88,24 +124,92 @@ fun RunsScreen(
     }
 }
 
+/** 1-based program week of [date], counted from [start] (e.g. Thursday to Wednesday). */
+private fun weekIndex(start: LocalDate, date: LocalDate): Int =
+    (ChronoUnit.DAYS.between(start, date).coerceAtLeast(0) / 7 + 1).toInt()
+
 @Composable
-private fun RunRow(run: RunEntity, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    run.date?.let(::withWeekday) ?: "Date not set. Tap to set it.",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (run.date == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    "%.2f km · %s · %s".format(run.km, duration(run.durationSec), pace(run.durationSec / run.km)) +
-                        (run.kcal?.let { " · ${kcal(it)}" } ?: ""),
-                    style = MaterialTheme.typography.bodyMedium,
+private fun GroupHeader(text: String) {
+    Text(text, style = MaterialTheme.typography.labelLarge, color = Palette.Muted, modifier = Modifier.padding(start = 4.dp, top = 8.dp))
+}
+
+@Composable
+private fun SummaryFigure(label: String, value: String, modifier: Modifier = Modifier, color: Color = Palette.Text) {
+    Column(modifier) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+        Text(value, style = numberStyle(30.sp), color = color)
+    }
+}
+
+/** Last five program weeks as km bars; the current week in orange. */
+@Composable
+private fun KmBars(weeks: List<WeekSummary>) {
+    val shown = weeks.take(5).reversed() // weekly is newest first
+    val maxKm = shown.maxOf { it.km }.coerceAtLeast(1.0)
+    val newest = shown.last()
+    Row(Modifier.fillMaxWidth().height(100.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
+        shown.forEach { w ->
+            val current = w == newest
+            Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+                Text("%.1f".format(w.km), style = MaterialTheme.typography.labelSmall, color = if (current) Palette.Accent else Palette.Muted)
+                Box(
+                    Modifier.padding(top = 6.dp).fillMaxWidth()
+                        .height((70 * (w.km / maxKm)).dp.coerceAtLeast(4.dp))
+                        .background(if (current) Palette.Accent else Palette.CardHigh, RoundedCornerShape(6.dp)),
                 )
             }
-            if (run.source != "manual") Text(run.source, style = MaterialTheme.typography.labelSmall)
         }
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        shown.forEach { w ->
+            Text(
+                if (w == newest) "This week" else "Wk ${w.index}",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (w == newest) Palette.Text else Palette.Muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun RunCard(run: RunEntity, fastest: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    run.date?.let(::longDay) ?: "Date not set",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (run.date == null) Palette.Warn else Palette.Text,
+                    modifier = Modifier.weight(1f),
+                )
+                if (fastest) Pill("Fastest yet", filled = true)
+                else if (run.source != "manual") Pill(run.source.replaceFirstChar { it.uppercase() })
+            }
+            Row(Modifier.fillMaxWidth()) {
+                RunFigure("%.2f".format(run.km), "km", "distance", Modifier.weight(1f))
+                RunFigure(duration(run.durationSec), null, "time", Modifier.weight(1f))
+                RunFigure(formatMinSec(run.durationSec / run.km), null, "per km", Modifier.weight(1f), if (fastest) Palette.Accent else Palette.Text)
+            }
+            run.kcal?.let { Text("%,.0f kcal".format(it), style = MaterialTheme.typography.labelMedium, color = Palette.Muted) }
+        }
+    }
+}
+
+@Composable
+private fun RunFigure(value: String, unit: String?, label: String, modifier: Modifier = Modifier, color: Color = Palette.Text) {
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, style = numberStyle(26.sp), color = color)
+            if (unit != null) Text(" $unit", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
     }
 }
 
