@@ -92,7 +92,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { confirmRestore = false },
             title = { Text("Restore backup?") },
-            text = { Text("This replaces ALL current data with the backup's contents. Save a backup first if unsure.") },
+            text = { Text("This replaces all of your current data with the backup's contents. Save a backup first if unsure.") },
             confirmButton = { TextButton(onClick = { confirmRestore = false; onRestore() }) { Text("Choose file") } },
             dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text("Cancel") } },
         )

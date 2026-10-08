@@ -3,32 +3,36 @@ package wt.app.ui
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,17 +42,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import wt.app.R
 import wt.app.notify.Reminder
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    LOG("Today", Icons.Default.Edit),
-    DASHBOARD("Dashboard", Icons.Default.Home),
-    RUNS("Runs", Icons.Default.PlayArrow),
-    BODY("Body", Icons.Default.Person),
-    PLAN("Plan", Icons.Default.DateRange),
+enum class Tab(val label: String, @DrawableRes val icon: Int) {
+    LOG("Today", R.drawable.ic_tab_today),
+    DASHBOARD("Trend", R.drawable.ic_tab_trend),
+    RUNS("Runs", R.drawable.ic_tab_runs),
+    BODY("Body", R.drawable.ic_tab_body),
+    PLAN("Plan", R.drawable.ic_tab_plan),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,26 +99,57 @@ fun AppScaffold(vm: AppViewModel) {
     }
 
     Scaffold(
+        containerColor = Palette.Background,
         topBar = {
+            val s = state
+            val (subtitle, title) = when {
+                settingsOpen -> "Reminder, export and backup" to "Settings"
+                s == null -> "" to tab.label
+                tab == Tab.DASHBOARD -> programWeek(s.dashboard).let { (w, n) -> longDay(s.today) to "Week $w of $n" }
+                else -> longDay(s.today) to tab.label
+            }
             TopAppBar(
-                title = { Text(if (settingsOpen) "Settings" else tab.label) },
+                title = {
+                    Column {
+                        if (subtitle.isNotEmpty()) Text(subtitle, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                        Text(title, style = MaterialTheme.typography.titleLarge)
+                    }
+                },
                 navigationIcon = {
                     if (settingsOpen) IconButton(onClick = { settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
                 actions = {
-                    if (!settingsOpen) IconButton(onClick = { settingsOpen = true }) { Icon(Icons.Default.Settings, "Settings") }
+                    if (!settingsOpen) {
+                        FilledIconButton(
+                            onClick = { settingsOpen = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.Card, contentColor = Palette.Text),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) { Icon(Icons.Default.Settings, "Settings") }
+                    }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Palette.Background, titleContentColor = Palette.Text),
             )
         },
         bottomBar = {
-            NavigationBar {
-                Tab.entries.forEach { t ->
-                    NavigationBarItem(
-                        selected = !settingsOpen && tab == t,
-                        onClick = { tab = t; settingsOpen = false },
-                        icon = { Icon(t.icon, null) },
-                        label = { Text(t.label) },
-                    )
+            Column {
+                HorizontalDivider(color = Palette.CardHigh)
+                NavigationBar(containerColor = Palette.Background) {
+                    Tab.entries.forEach { t ->
+                        NavigationBarItem(
+                            selected = !settingsOpen && tab == t,
+                            onClick = { tab = t; settingsOpen = false },
+                            icon = { Icon(painterResource(t.icon), null) },
+                            label = { Text(t.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Palette.Accent,
+                                selectedTextColor = Palette.Accent,
+                                indicatorColor = Color.Transparent,
+                                unselectedIconColor = Palette.Muted,
+                                unselectedTextColor = Palette.Muted,
+                            ),
+                        )
+                    }
                 }
             }
         },

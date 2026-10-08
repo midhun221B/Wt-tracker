@@ -3,6 +3,7 @@ package wt.app.ui
 import wt.core.model.formatMinSec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 fun kg(v: Double) = "%.1f kg".format(v)
 
@@ -13,11 +14,19 @@ fun kcal(v: Double) = "%,.0f kcal".format(v)
 fun signedKcal(v: Double) = "%+,.0f kcal".format(v)
 
 private val shortDate = DateTimeFormatter.ofPattern("MM-dd")
+private val longDayFmt = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.ENGLISH)
+private val dayMonthFmt = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
 private val weekdayDate = DateTimeFormatter.ofPattern("EEE yyyy-MM-dd")
 
 fun short(d: LocalDate): String = d.format(shortDate)
 
 fun withWeekday(d: LocalDate): String = d.format(weekdayDate)
+
+/** "Thursday, 5 November" */
+fun longDay(d: LocalDate): String = d.format(longDayFmt)
+
+/** "7 Jan" */
+fun dayMonth(d: LocalDate): String = d.format(dayMonthFmt)
 
 fun pace(secPerKm: Double) = formatMinSec(secPerKm) + " /km"
 

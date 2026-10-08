@@ -40,7 +40,7 @@ jobs:
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk wt-tracker-debug.apk
           gh release delete debug-latest --yes --cleanup-tag || true
-          gh release create debug-latest wt-tracker-debug.apk --prerelease --target "$GITHUB_SHA" \
+          gh release create debug-latest wt-tracker-debug.apk app/build/screenshots/*.png --prerelease --target "$GITHUB_SHA" \
             --title "Debug build (latest)" \
             --notes "Debug APK from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}. Install on Android (allow installs from this source). Estimates, not medical advice."
 
