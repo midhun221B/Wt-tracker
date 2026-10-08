@@ -58,6 +58,8 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 - Planned vs realistic must stay distinguishable by lightness and dash, not hue alone. Touch targets ≥ 44 dp.
 
 ## Workflow
+- Read `HANDOVER.md` first: current status, open items and decisions. Update it at the end of every piece of work
+  (what changed, what's merged vs pending, new decisions, open questions), in the same commit or PR as the work.
 - Work in small steps and show results (test output, screenshots, APK) after each one.
 - Develop on a feature branch and open a PR to `main`; merge with a merge commit. After a PR merges, start the next change
   from the latest `main`.

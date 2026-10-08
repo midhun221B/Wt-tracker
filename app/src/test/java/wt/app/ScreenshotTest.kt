@@ -16,6 +16,7 @@ import wt.app.data.PlanEntity
 import wt.app.data.ProfileEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
+import wt.app.ui.BodyScreen
 import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
@@ -83,7 +84,12 @@ class ScreenshotTest {
 
     @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}) }
 
-    @Test fun runs() = shoot("3-runs") { RunsScreen(sampleState().runs, today, {}, {}, onImportStrava = {}) }
+    @Test fun runs() = shoot("3-runs") {
+        val s = sampleState()
+        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, programStart = Defaults.START)
+    }
+
+    @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
 }

@@ -3,9 +3,9 @@
 A personal Android app for weight loss. It compares the **planned** trajectory with a **realistic**, data-driven forecast
 that updates every time you log a weight. Everything stays on the phone: no accounts, no cloud.
 
-| Dashboard | Today | Runs | Plan |
-|---|---|---|---|
-| ![Dashboard](docs/screenshots/1-dashboard.jpg) | ![Today](docs/screenshots/2-today.jpg) | ![Runs](docs/screenshots/3-runs.jpg) | ![Plan](docs/screenshots/4-plan.jpg) |
+| Dashboard | Today | Runs | Body | Plan |
+|---|---|---|---|---|
+| ![Dashboard](docs/screenshots/1-dashboard.jpg) | ![Today](docs/screenshots/2-today.jpg) | ![Runs](docs/screenshots/3-runs.jpg) | ![Body](docs/screenshots/5-body.jpg) | ![Plan](docs/screenshots/4-plan.jpg) |
 
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 

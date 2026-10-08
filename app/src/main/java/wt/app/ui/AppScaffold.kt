@@ -15,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -119,6 +121,14 @@ fun AppScaffold(vm: AppViewModel) {
                     if (settingsOpen) IconButton(onClick = { settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
                 actions = {
+                    if (!settingsOpen && tab == Tab.RUNS) {
+                        Button(
+                            onClick = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Palette.Card, contentColor = Palette.Text),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) { Text("Import Strava") }
+                    }
                     if (!settingsOpen) {
                         FilledIconButton(
                             onClick = { settingsOpen = true },
@@ -191,6 +201,8 @@ fun AppScaffold(vm: AppViewModel) {
                 s.runs, s.today, vm::saveRun, vm::deleteRun,
                 onImportStrava = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) },
                 modifier = modifier,
+                weeks = s.dashboard.weekly,
+                programStart = s.dashboard.weights.firstOrNull()?.date ?: s.dashboard.plan.start.date,
             )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier)
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
