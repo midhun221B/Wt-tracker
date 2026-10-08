@@ -23,6 +23,7 @@ import wt.app.data.ProfileEntity
 import wt.app.data.RestDayEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
+import wt.app.data.importStrava
 import wt.app.data.loadAll
 import wt.app.data.replaceAll
 import wt.app.notify.Reminder
@@ -62,6 +63,9 @@ enum class ExportKind(val fileName: String, val mime: String) {
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val today = MutableStateFlow(todayInTokyo())
+
+    /** Report of the last Strava import, shown in a dialog until dismissed. */
+    val importReport = MutableStateFlow<String?>(null)
 
     private val messageChannel = Channel<String>(Channel.BUFFERED)
     /** One-off messages for the snackbar. */
@@ -179,11 +183,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun restore(uri: Uri) = launchWithMessage("Backup restored") {
-        val text = withContext(Dispatchers.IO) {
-            getApplication<Application>().contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
-        } ?: error("Couldn't open the file")
-        db.replaceAll(decodeBackup(text))
+        db.replaceAll(decodeBackup(readText(uri)))
     }
+
+    fun importStrava(uri: Uri) = launchWithMessage(null) {
+        val text = readText(uri)
+        importReport.value = db.importStrava(text)
+    }
+
+    private suspend fun readText(uri: Uri): String = withContext(Dispatchers.IO) {
+        getApplication<Application>().contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
+    } ?: error("Couldn't open the file")
 
     private suspend fun writeText(uri: Uri, text: String) = withContext(Dispatchers.IO) {
         val out = getApplication<Application>().contentResolver.openOutputStream(uri, "wt") ?: error("Couldn't open the file")

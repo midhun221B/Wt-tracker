@@ -87,7 +87,7 @@ class ScreenshotTest {
 
     @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}) }
 
-    @Test fun runs() = shoot("3-runs") { RunsScreen(sampleState().runs, today, {}, {}) }
+    @Test fun runs() = shoot("3-runs") { RunsScreen(sampleState().runs, today, {}, {}, onImportStrava = {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
 }
