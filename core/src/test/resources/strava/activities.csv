@@ -1,0 +1,10 @@
+﻿Activity ID,Activity Date,Activity Name,Activity Type,Activity Description,Elapsed Time,Distance,Max Heart Rate,Relative Effort,Commute,Activity Private Note,Activity Gear,Filename,Athlete Weight,Bike Weight,Elapsed Time,Moving Time,Distance,Max Speed,Average Speed,Calories
+15000000001,"Oct 8, 2026, 10:15:30 PM",Evening Run,Run,,1260,2.81,165,30,false,,,activities/15000000001.fit.gz,88.3,,1260.0,1216.0,2810.0,3.4,2.3,250
+15000000002,"Oct 10, 2026, 9:00:00 AM",Morning Run,Run,"Felt good,
+legs ""heavy""",950,2.37,165,30,false,,,activities/15000000002.fit.gz,88.3,,950.0,946.0,2370.0,3.4,2.3,
+15000000003,"Oct 11, 2026, 11:30:00 PM",Lunch Ride,Ride,,3600,20.1,165,30,false,,,activities/15000000003.fit.gz,88.3,,3600.0,3500.0,20100.0,3.4,2.3,500
+15000000004,"Oct 12, 2026, 1:00:00 AM",Walk,Walk,,1800,2.0,165,30,false,,,activities/15000000004.fit.gz,88.3,,1800.0,1750.0,2000.0,3.4,2.3,90
+15000000005,"Oct 13, 2026, 10:00:00 PM",Trail run,Trail Run,,1500,3.45,165,30,false,,,activities/15000000005.fit.gz,88.3,,1500.0,1459.0,3450.0,3.4,2.3,300
+15000000006,not a date,Bad row,Run,,1200,3.0,165,30,false,,,activities/15000000006.fit.gz,88.3,,1200.0,1200.0,3000.0,3.4,2.3,
+15000000007,"Oct 15, 2026, 10:00:00 PM",Treadmill,Virtual Run,,1283,3.14,165,30,false,,,activities/15000000007.fit.gz,88.3,,1283.0,,3140.0,3.4,2.3,230
+15000000008,"Oct 16, 2026, 10:00:00 PM",Evening Run,Run,,1048,2.54,165,30,false,,,activities/15000000008.fit.gz,88.3,,1048.0,1048.0,2540.0,3.4,2.3,215

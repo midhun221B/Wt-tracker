@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,6 +74,18 @@ fun AppScaffold(vm: AppViewModel) {
     }
     val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.restore(uri)
+    }
+    val stravaLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.importStrava(uri)
+    }
+    val importReport by vm.importReport.collectAsStateWithLifecycle()
+    importReport?.let { report ->
+        AlertDialog(
+            onDismissRequest = { vm.importReport.value = null },
+            title = { Text("Strava import") },
+            text = { Text(report) },
+            confirmButton = { TextButton(onClick = { vm.importReport.value = null }) { Text("OK") } },
+        )
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         notificationsAllowed = granted
@@ -135,7 +149,11 @@ fun AppScaffold(vm: AppViewModel) {
         when (tab) {
             Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier)
             Tab.DASHBOARD -> DashboardScreen(s.dashboard, modifier)
-            Tab.RUNS -> RunsScreen(s.runs, s.today, vm::saveRun, vm::deleteRun, modifier)
+            Tab.RUNS -> RunsScreen(
+                s.runs, s.today, vm::saveRun, vm::deleteRun,
+                onImportStrava = { stravaLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "text/plain", "*/*")) },
+                modifier = modifier,
+            )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier)
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
         }

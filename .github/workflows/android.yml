@@ -32,6 +32,18 @@ jobs:
           name: wt-tracker-debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
+      # Stable download link for the phone: the latest debug APK on a "debug-latest" pre-release.
+      - name: Publish debug APK
+        if: github.event_name == 'push' && success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk wt-tracker-debug.apk
+          gh release delete debug-latest --yes --cleanup-tag || true
+          gh release create debug-latest wt-tracker-debug.apk --prerelease --target "$GITHUB_SHA" \
+            --title "Debug build (latest)" \
+            --notes "Debug APK from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}. Install on Android (allow installs from this source). Estimates, not medical advice."
+
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -41,7 +53,8 @@ jobs:
 
       # Keep small previews in the repo so the screens can be viewed on GitHub directly.
       - name: Commit screenshot previews
-        if: github.event_name == 'push' && success()
+        # Feature branches only: never push straight to main.
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main' && success()
         run: |
           mkdir -p docs/screenshots
           cp app/build/screenshots/preview/*.jpg docs/screenshots/

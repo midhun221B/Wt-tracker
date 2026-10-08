@@ -18,6 +18,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,15 +39,24 @@ fun RunsScreen(
     today: LocalDate,
     onSave: (RunEntity) -> Unit,
     onDelete: (RunEntity) -> Unit,
+    onImportStrava: () -> Unit,
     modifier: Modifier = Modifier,
-    headerContent: @Composable () -> Unit = {},
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            item { headerContent() }
+            item {
+                SectionCard("Strava") {
+                    Text(
+                        "Strava → Settings → My Account → Download or delete your account → Request your archive. " +
+                            "Unzip it and pick activities.csv. Only runs are imported; importing again skips runs you already have.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    OutlinedButton(onClick = onImportStrava, modifier = Modifier.fillMaxWidth()) { Text("Import activities.csv") }
+                }
+            }
             val dated = runs.filter { it.date != null }
             item {
                 val last28 = dated.filter { it.date!! > today.minusDays(28) }
