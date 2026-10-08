@@ -24,7 +24,9 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#6](https://github.com/midhun221B/Wt-tracker/pull/6) | Screenshot import: Strava run and body-scale screenshots read on the phone (ML Kit, offline), confirm dialog before saving |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: the "Add run" dialog (Runs and Today) and the "Add measurement" dialog now have an
+  "Import from a … screenshot" button at the top. It closes the dialog, opens the photo picker and then shows the usual
+  pre-filled confirm dialog. The top-bar import button stays.
 
 ### Features in the app today
 - **Today:** weigh-in with ±0.1 steppers, hunger (None–Very), sleep, snacks, note, rest-day switch, add run.
@@ -33,7 +35,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy balance with the intake change needed.
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 3+ days.
-- **Screenshot import:** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs.
+- **Screenshot import:** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs, and an import
+  button inside the "Add run" and "Add measurement" dialogs.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
 - **Runs:** manual entry and Strava `activities.csv` import. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).

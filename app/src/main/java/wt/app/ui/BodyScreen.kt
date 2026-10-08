@@ -46,6 +46,7 @@ fun BodyScreen(
     onSave: (BodyCompEntity) -> Unit,
     onDelete: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    onScreenshot: (() -> Unit)? = null,
 ) {
     var editing by remember { mutableStateOf<BodyCompEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -100,7 +101,12 @@ fun BodyScreen(
         )
     }
 
-    if (adding) BodyDialog(null, today, sorted.lastOrNull(), { adding = false }, { it, _ -> onSave(it); adding = false })
+    if (adding) {
+        BodyDialog(
+            null, today, sorted.lastOrNull(), { adding = false }, { it, _ -> onSave(it); adding = false },
+            onFromScreenshot = onScreenshot?.let { pick -> { adding = false; pick() } },
+        )
+    }
     editing?.let { e ->
         BodyDialog(
             e, today, null, { editing = null },
@@ -166,7 +172,8 @@ private fun Figure(value: String, label: String, modifier: Modifier = Modifier) 
 
 /**
  * Add or edit a measurement, or confirm one read from a screenshot ([prefill]). Only the screenshot version has a
- * weight field; [onSave] gets that weight, or null.
+ * weight field; [onSave] gets that weight, or null. When adding, [onFromScreenshot] shows a button that picks a
+ * body-scale screenshot instead of typing.
  */
 @Composable
 fun BodyDialog(
@@ -177,6 +184,7 @@ fun BodyDialog(
     onSave: (BodyCompEntity, Double?) -> Unit,
     onDelete: (() -> Unit)? = null,
     prefill: BodyReading? = null,
+    onFromScreenshot: (() -> Unit)? = null,
 ) {
     // New entries start from the previous measurement so only changed values need typing.
     val base = initial ?: previous.takeIf { prefill == null }
@@ -203,6 +211,7 @@ fun BodyDialog(
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (prefill != null) Text("Check the values before saving.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+                if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a scale screenshot", onFromScreenshot)
                 DateField("Date", date, { date = it }, Modifier.fillMaxWidth())
                 if (prefill != null) {
                     NumberField("Weight (optional)", weight, { weight = it }, Modifier.fillMaxWidth(), suffix = "kg", isError = !weightValid)

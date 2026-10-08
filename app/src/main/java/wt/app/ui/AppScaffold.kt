@@ -214,7 +214,7 @@ fun AppScaffold(vm: AppViewModel) {
             return@Scaffold
         }
         when (tab) {
-            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier)
+            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier, onScreenshot = pickScreenshot)
             Tab.DASHBOARD -> DashboardScreen(s.dashboard, modifier)
             Tab.RUNS -> RunsScreen(
                 s.runs, s.today, vm::saveRun, vm::deleteRun,
@@ -222,8 +222,9 @@ fun AppScaffold(vm: AppViewModel) {
                 modifier = modifier,
                 weeks = s.dashboard.weekly,
                 programStart = s.dashboard.weights.firstOrNull()?.date ?: s.dashboard.plan.start.date,
+                onScreenshot = pickScreenshot,
             )
-            Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier)
+            Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot)
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
         }
     }

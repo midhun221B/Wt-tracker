@@ -1,6 +1,9 @@
 package wt.app.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -235,6 +238,18 @@ fun DateField(label: String, date: LocalDate?, onChange: (LocalDate) -> Unit, mo
             dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
         ) { DatePicker(state) }
     }
+}
+
+/** Full-width button at the top of the add dialogs that fills the entry from a screenshot instead. */
+@Composable
+fun ScreenshotButton(label: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Palette.Accent),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.Accent),
+    ) { Text(label) }
 }
 
 @Composable
