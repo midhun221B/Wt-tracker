@@ -29,6 +29,13 @@ jobs:
           name: wt-tracker-debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/build/screenshots/
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,6 @@
 package wt.app.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -92,6 +93,7 @@ data class ProfileEntity(
     val plannedFoodDeficitKcal: Double,
     val reminderHour: Int = 7,
     val reminderMinute: Int = 30,
+    @ColumnInfo(defaultValue = "1") val reminderEnabled: Boolean = true,
 ) {
     fun toModel() = Profile(sex, birthYear, heightCm, bmrKcal, activityFactor, goalKg, goalDate, plannedFoodDeficitKcal)
 

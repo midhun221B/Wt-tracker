@@ -18,10 +18,18 @@ interface WeightDao {
     @Query("SELECT * FROM weight ORDER BY date")
     suspend fun all(): List<WeightEntity>
 
+    @Query("SELECT * FROM weight WHERE date = :date")
+    suspend fun get(date: LocalDate): WeightEntity?
+
     @Upsert suspend fun upsert(entry: WeightEntity)
+
+    @Insert suspend fun insertAll(entries: List<WeightEntity>)
 
     @Query("DELETE FROM weight WHERE date = :date")
     suspend fun delete(date: LocalDate)
+
+    @Query("DELETE FROM weight")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -34,8 +42,13 @@ interface BodyCompDao {
 
     @Upsert suspend fun upsert(entry: BodyCompEntity)
 
+    @Insert suspend fun insertAll(entries: List<BodyCompEntity>)
+
     @Query("DELETE FROM body_comp WHERE date = :date")
     suspend fun delete(date: LocalDate)
+
+    @Query("DELETE FROM body_comp")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -53,6 +66,9 @@ interface RunDao {
     suspend fun insertIgnoringDuplicates(runs: List<RunEntity>): List<Long>
 
     @Delete suspend fun delete(run: RunEntity)
+
+    @Query("DELETE FROM run")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -68,6 +84,9 @@ interface RestDayDao {
 
     @Query("DELETE FROM rest_day WHERE date = :date")
     suspend fun delete(date: LocalDate)
+
+    @Query("DELETE FROM rest_day")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -96,6 +115,10 @@ abstract class PlanDao {
 
     @Query("SELECT id FROM plan WHERE active = 1 LIMIT 1")
     abstract suspend fun activePlanId(): Long?
+
+    /** Checkpoints cascade-delete with their plan. */
+    @Query("DELETE FROM plan")
+    abstract suspend fun deleteAll()
 
     /** Makes a new plan active; older plans are kept as history. */
     @Transaction

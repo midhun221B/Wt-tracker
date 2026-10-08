@@ -56,3 +56,21 @@ fun formatMinSec(totalSec: Double): String {
     val s = Math.round(totalSec)
     return "%d:%02d".format(s / 60, s % 60)
 }
+
+data class PlanRecord(
+    val id: Long,
+    val label: String,
+    val createdAt: LocalDate,
+    val active: Boolean,
+    val checkpoints: List<Checkpoint>,
+)
+
+/** Everything the app stores; used for backup/restore and export. */
+data class AppData(
+    val profile: Profile,
+    val weights: List<WeightEntry>,
+    val body: List<BodyComp>,
+    val runs: List<Run>,
+    val restDays: Set<LocalDate>,
+    val plans: List<PlanRecord>,
+)
