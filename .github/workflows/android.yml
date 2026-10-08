@@ -36,6 +36,17 @@ jobs:
           name: screenshots
           path: app/build/screenshots/
 
+      # TEMPORARY: print downscaled screenshots so they can be reviewed from the job log.
+      - name: Dump screenshots
+        if: always()
+        run: |
+          for f in app/build/screenshots/*.png; do
+            convert "$f" -resize 50% -quality 80 /tmp/shot.jpg
+            echo "=====BEGIN $(basename "$f")"
+            base64 -w 2000 /tmp/shot.jpg
+            echo "=====END"
+          done
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
