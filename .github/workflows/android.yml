@@ -40,10 +40,9 @@ jobs:
       - name: Dump screenshots
         if: always()
         run: |
-          for f in app/build/screenshots/*.png; do
-            convert "$f" -resize 50% -quality 80 /tmp/shot.jpg
+          for f in app/build/screenshots/preview/*.jpg; do
             echo "=====BEGIN $(basename "$f")"
-            base64 -w 2000 /tmp/shot.jpg
+            base64 -w 2000 "$f"
             echo "=====END"
           done
 
