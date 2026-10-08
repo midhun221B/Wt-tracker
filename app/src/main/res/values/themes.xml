@@ -1,0 +1,7 @@
+<resources>
+    <!-- Dark window so there is no white flash before Compose draws. -->
+    <style name="Theme.WtTracker" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorAccent">@color/accent</item>
+    </style>
+</resources>

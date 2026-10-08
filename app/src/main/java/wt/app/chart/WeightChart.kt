@@ -117,7 +117,11 @@ fun WeightChart(d: Dashboard, modifier: Modifier = Modifier) {
                     close()
                 }
                 drawPath(bandPath, colors.band)
-                // Trend: solid over the data, dashed as a projection.
+                // Trend: solid (with a soft glow) over the data, dashed as a projection.
+                drawLine(
+                    colors.realistic.copy(alpha = 0.25f), Offset(axes.x(from), axes.y(fit.valueAt(from))), Offset(todayX, axes.y(fit.valueAt(d.asOf))),
+                    strokeWidth = 10.dp.toPx(), cap = StrokeCap.Round,
+                )
                 drawLine(
                     colors.realistic, Offset(axes.x(from), axes.y(fit.valueAt(from))), Offset(todayX, axes.y(fit.valueAt(d.asOf))),
                     strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round,
