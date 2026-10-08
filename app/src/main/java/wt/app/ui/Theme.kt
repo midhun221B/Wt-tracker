@@ -1,6 +1,7 @@
 package wt.app.ui
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -121,6 +122,9 @@ private val typography = Typography().run {
 @Composable
 fun WtTheme(dynamicColor: Boolean = false, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalSeriesColors provides series) {
-        MaterialTheme(colorScheme = scheme, typography = typography, content = content)
+        MaterialTheme(colorScheme = scheme, typography = typography) {
+            // Every screen gets the dark background and light text, even outside the Scaffold.
+            Surface(color = Palette.Background, contentColor = Palette.Text, content = content)
+        }
     }
 }

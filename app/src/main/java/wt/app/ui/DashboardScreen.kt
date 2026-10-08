@@ -99,6 +99,7 @@ private fun ProgressCard(d: Dashboard) {
     val lost = (startKg - currentKg).coerceAtLeast(0.0)
 
     Card(
+        Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
     ) {
