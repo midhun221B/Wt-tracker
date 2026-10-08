@@ -77,10 +77,6 @@ class ScreenshotTest {
         val bitmap = compose.activity.window.decorView.drawToBitmap()
         val dir = File("build/screenshots").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        // Small JPEG preview for quick review from CI logs.
-        val small = Bitmap.createScaledBitmap(bitmap, bitmap.width / 2, bitmap.height / 2, true)
-        val previews = File(dir, "preview").apply { mkdirs() }
-        File(previews, "$name.jpg").outputStream().use { small.compress(Bitmap.CompressFormat.JPEG, 80, it) }
     }
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }

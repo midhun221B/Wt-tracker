@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # to commit screenshot previews
+  contents: write # to publish the debug-latest pre-release
 
 jobs:
   build:
@@ -50,20 +50,6 @@ jobs:
         with:
           name: screenshots
           path: app/build/screenshots/
-
-      # Keep small previews in the repo so the screens can be viewed on GitHub directly.
-      - name: Commit screenshot previews
-        # Feature branches only: never push straight to main.
-        if: github.event_name == 'push' && github.ref != 'refs/heads/main' && success()
-        run: |
-          mkdir -p docs/screenshots
-          cp app/build/screenshots/preview/*.jpg docs/screenshots/
-          git add docs/screenshots
-          if git diff --cached --quiet; then exit 0; fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Update screenshot previews [skip ci]"
-          git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Upload test reports
         if: always()

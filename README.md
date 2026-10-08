@@ -7,7 +7,7 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 |---|---|---|---|
 | ![Dashboard](docs/screenshots/1-dashboard.jpg) | ![Today](docs/screenshots/2-today.jpg) | ![Runs](docs/screenshots/3-runs.jpg) | ![Plan](docs/screenshots/4-plan.jpg) |
 
-Screenshots are rendered from sample data in CI (Robolectric) and refreshed automatically.
+Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
 - **Today:** quick weight entry with ±0.1 steppers; optional sleep, hunger, snacks and note; rest-day switch; add a run.
