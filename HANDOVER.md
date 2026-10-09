@@ -34,10 +34,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
 | [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
 | [#19](https://github.com/midhun221B/Wt-tracker/pull/19) | One trend-based "kg lost" and "over plan" (`goalProgress`, `gapKg`; the live weigh-in line is labelled "Scale"); fresh-install empty states (blank days before start, "Trend in N more weigh-ins", no empty km chart, Body hint card, re-baseline waits for a trend); ruler notch for marks; banner word order; screenshots `9a`–`9e` |
+| [#20](https://github.com/midhun221B/Wt-tracker/pull/20) | Version 0.2.0 (`versionCode` 2); CI creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` when a new version reaches `main` |
 
 ### Not merged
-- Version 0.2.0 (`versionCode` 2) and tagged releases: on `main`, CI's `publish` job creates a `v<versionName>`
-  release with `wt-tracker-v<versionName>.apk` when that version has no release yet. Merging this creates `v0.2.0`.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
