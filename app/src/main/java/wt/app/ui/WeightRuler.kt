@@ -100,6 +100,11 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
             }
         }
 
+        // Fade the ticks into the card at both edges; the marks below are drawn over it so they stay readable.
+        val fade = size.width * 0.2f
+        drawRect(Brush.horizontalGradient(listOf(Palette.Card, Color.Transparent), 0f, fade))
+        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Palette.Card), size.width - fade, size.width))
+
         // Last week (grey, top label row) and the plan (blue dashed, second row). Out of view, the label sits at
         // that edge with an arrow so the mark is never lost.
         fun xOf(kgMark: Double) = cx + ((kgMark * 10).roundToInt() - tenths) * step
@@ -111,7 +116,9 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
                     color, Offset(x, markTop), Offset(x, baseline), 2.dp.toPx(),
                     pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())) else null,
                 )
-                centeredText(measurer, "$name %.1f".format(kgMark), x, top, style)
+                // Centred on the mark, but kept inside the ruler.
+                val layout = measurer.measure("$name %.1f".format(kgMark), style)
+                drawText(layout, topLeft = Offset((x - layout.size.width / 2f).coerceIn(0f, size.width - layout.size.width), top))
             } else {
                 val layout = measurer.measure(if (x < cx) "‹ $name %.1f".format(kgMark) else "$name %.1f ›".format(kgMark), style)
                 val left = if (x < cx) 0f else size.width - layout.size.width
@@ -121,11 +128,8 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
         lastKg?.let { mark(it, "Last week", Palette.Muted, 2.dp.toPx(), dashed = false) }
         planKg?.let { mark(it, "Plan", Palette.Planned, 20.dp.toPx(), dashed = true) }
 
-        // Fixed centre mark, then fade both edges into the card.
+        // Fixed centre mark on top.
         drawLine(Palette.Accent, Offset(cx, baseline - 60.dp.toPx()), Offset(cx, baseline + 4.dp.toPx()), 4.dp.toPx(), StrokeCap.Round)
-        val fade = size.width * 0.2f
-        drawRect(Brush.horizontalGradient(listOf(Palette.Card, Color.Transparent), 0f, fade))
-        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Palette.Card), size.width - fade, size.width))
     }
 }
 
