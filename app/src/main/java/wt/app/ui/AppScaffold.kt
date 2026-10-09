@@ -131,7 +131,7 @@ fun AppScaffold(vm: AppViewModel) {
             val (subtitle, title) = when {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
-                tab == Tab.DASHBOARD -> programWeek(s.dashboard).let { (w, n) -> longDay(s.today) to "Week $w of $n" }
+                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> longDay(s.today) to "Week $w of $n" }
                 else -> longDay(s.today) to tab.label
             }
             TopAppBar(
@@ -221,7 +221,7 @@ fun AppScaffold(vm: AppViewModel) {
                 onImportStrava = pickStravaCsv,
                 modifier = modifier,
                 weeks = s.dashboard.weekly,
-                programStart = s.dashboard.weights.firstOrNull()?.date ?: s.dashboard.plan.start.date,
+                week1 = s.dashboard.week1,
                 onScreenshot = pickScreenshot,
             )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot)

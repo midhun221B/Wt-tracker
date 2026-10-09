@@ -36,9 +36,7 @@ import wt.core.alerts.Alert
 import wt.core.alerts.Severity
 import wt.core.dashboard.Dashboard
 import wt.core.summary.WeekSummary
-import java.time.temporal.ChronoUnit
 import kotlin.math.abs
-import kotlin.math.ceil
 
 @Composable
 fun DashboardScreen(d: Dashboard, modifier: Modifier = Modifier) {
@@ -54,14 +52,6 @@ fun DashboardScreen(d: Dashboard, modifier: Modifier = Modifier) {
         BodyTiles(d)
         Disclaimer()
     }
-}
-
-/** "Week 5 of 13", counted from the first weigh-in to the goal date. */
-fun programWeek(d: Dashboard): Pair<Int, Int> {
-    val start = d.weights.firstOrNull()?.date ?: d.plan.start.date
-    val current = ChronoUnit.DAYS.between(start, d.asOf).coerceAtLeast(0) / 7 + 1
-    val total = ceil(ChronoUnit.DAYS.between(start, d.plan.goal.date) / 7.0).toInt().coerceAtLeast(1)
-    return current.toInt() to total
 }
 
 @Composable
@@ -242,7 +232,7 @@ private fun WeeksCard(weeks: List<WeekSummary>) {
                         color = if (w == newest) Palette.Accent else Palette.Text,
                     )
                     Text(
-                        "Wk ${w.index}" + (w.changeKg?.let { " · %+.1f".format(it) } ?: ""),
+                        weekLabel(w) + (w.changeKg?.let { " · %+.1f".format(it) } ?: ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = Palette.Muted,
                         textAlign = TextAlign.Center,

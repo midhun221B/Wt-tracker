@@ -86,7 +86,7 @@ class ScreenshotTest {
 
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()
-        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, programStart = Defaults.START)
+        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
     }
 
     @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
