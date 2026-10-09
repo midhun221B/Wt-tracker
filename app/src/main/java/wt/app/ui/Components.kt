@@ -39,6 +39,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -83,6 +86,44 @@ fun SectionCard(title: String?, modifier: Modifier = Modifier, trailing: String?
                 }
             }
             content()
+        }
+    }
+}
+
+/**
+ * A card like [SectionCard] whose body folds away; the header shows [summary] while folded.
+ * Starts folded unless [initiallyExpanded]; the state survives rotation.
+ */
+@Composable
+fun CollapsibleSection(
+    title: String,
+    summary: String,
+    modifier: Modifier = Modifier,
+    initiallyExpanded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
+    Card(
+        modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 44.dp).clip(RoundedCornerShape(12.dp)).clickable { expanded = !expanded },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    if (!expanded) Text(summary, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                }
+                Icon(
+                    if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    if (expanded) "Collapse $title" else "Expand $title",
+                    tint = Palette.Muted,
+                )
+            }
+            if (expanded) content()
         }
     }
 }

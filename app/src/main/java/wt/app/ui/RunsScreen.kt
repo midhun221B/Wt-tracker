@@ -62,7 +62,7 @@ fun RunsScreen(
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
-    // Older weeks start collapsed to one line; tapping toggles them.
+    // Weeks before this one start collapsed to one line; tapping toggles them.
     val toggled = remember { mutableStateMapOf<LocalDate, Boolean>() }
 
     val dated = runs.filter { it.date != null }
@@ -101,7 +101,7 @@ fun RunsScreen(
                     else -> "Week $index · ${weekRange(monday)}"
                 }
                 val km = "%.1f km".format(list.sumOf { it.km })
-                val recent = monday >= thisWeek.minusWeeks(1)
+                val recent = monday == thisWeek // only this week starts open
                 val expanded = toggled[monday] ?: recent
                 item(key = "week-$monday") {
                     when {

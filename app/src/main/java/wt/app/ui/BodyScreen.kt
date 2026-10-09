@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +30,14 @@ import androidx.compose.ui.unit.sp
 import wt.app.chart.MiniLineChart
 import wt.app.data.BodyCompEntity
 import wt.core.io.BodyReading
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
-/** Body-scale measurements (weekly or monthly): change tiles, fat and visceral trends, and the entries. */
+/**
+ * Body-scale measurements: the next weekly measurement (same morning as the weigh-in) with a scale-screenshot
+ * import, change tiles, fat, visceral and muscle trends, and the entries.
+ */
 @Composable
 fun BodyScreen(
     body: List<BodyCompEntity>,
@@ -43,13 +46,15 @@ fun BodyScreen(
     onDelete: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     onScreenshot: (() -> Unit)? = null,
+    weighInDay: Int = 1,
 ) {
     var editing by remember { mutableStateOf<BodyCompEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
     val sorted = body.sortedBy { it.date }
 
     Box(modifier.fillMaxSize()) {
-        LazyColumn(contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { NextMeasurementCard(today, weighInDay, measuredToday = sorted.lastOrNull()?.date == today, onScreenshot, onAdd = { adding = true }) }
             if (sorted.isNotEmpty()) item {
                 val first = sorted.first()
                 val last = sorted.last()
@@ -81,20 +86,17 @@ fun BodyScreen(
                         MiniLineChart(sorted.map { it.date to it.visceral }, Palette.Planned, Modifier.fillMaxWidth().height(110.dp))
                     }
                 }
+                item {
+                    SectionCard("Muscle", trailing = "%.1f → %.1f kg".format(sorted.first().muscleKg, sorted.last().muscleKg)) {
+                        MiniLineChart(sorted.map { it.date to it.muscleKg }, Palette.Text, Modifier.fillMaxWidth().height(110.dp))
+                    }
+                }
             }
             if (sorted.isNotEmpty()) item {
                 Text("Measurements", style = MaterialTheme.typography.labelLarge, color = Palette.Muted, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
             }
             items(sorted.asReversed(), key = { it.date.toString() }) { entry -> MeasurementCard(entry) { editing = entry } }
-            if (sorted.isEmpty()) item { Text("No measurements yet. Add one from your body scale.", color = Palette.Muted) }
         }
-        ExtendedFloatingActionButton(
-            onClick = { adding = true },
-            icon = { Icon(Icons.Default.Add, null) },
-            text = { Text("Add measurement", style = MaterialTheme.typography.labelLarge) },
-            shape = RoundedCornerShape(18.dp),
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-        )
     }
 
     if (adding) {
@@ -113,6 +115,39 @@ fun BodyScreen(
             },
             onDelete = { onDelete(e.date); editing = null },
         )
+    }
+}
+
+/**
+ * When to measure next (the weigh-in day, as both come from the same scale), with the scale-screenshot import
+ * as the main action and manual entry as the fallback.
+ */
+@Composable
+private fun NextMeasurementCard(today: LocalDate, weighInDay: Int, measuredToday: Boolean, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
+    val next = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(weighInDay.coerceIn(1, 7))))
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Weekly measurement", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            Text(
+                when {
+                    measuredToday -> "Done for today"
+                    next == today -> "Today"
+                    else -> longDay(next)
+                },
+                style = numberStyle(30.sp),
+            )
+            Text(
+                "Same morning as your weigh-in. A scale screenshot fills the weight too.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Palette.Muted,
+            )
+            if (onScreenshot != null) PrimaryButton("Import scale screenshot", onScreenshot, Modifier.fillMaxWidth())
+            TextButton(onClick = onAdd, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Add by hand", color = Palette.Muted) }
+        }
     }
 }
 

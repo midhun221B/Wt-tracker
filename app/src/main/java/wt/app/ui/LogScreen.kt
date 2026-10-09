@@ -56,7 +56,7 @@ import kotlin.math.round
 
 /**
  * The day's page: run, rest day and this week's numbers. On the weekly weigh-in day (or when the day already has
- * a weight, or after "Weigh in now") it also shows the weigh-in card with ±0.1 steppers and the weekly check-in.
+ * a weight, or after "Weigh in now") it also shows the weigh-in card with ±0.1 steppers.
  */
 @Composable
 fun LogScreen(
@@ -79,14 +79,9 @@ fun LogScreen(
 
     // Field state resets when the date (or its stored entry) changes.
     var weight by remember(date, existing) { mutableStateOf(fieldText(existing?.kg ?: lastKg)) }
-    var sleep by remember(date, existing) { mutableStateOf(fieldText(existing?.sleepHours)) }
-    var snacks by remember(date, existing) { mutableStateOf(existing?.snacks ?: "") }
-    var note by remember(date, existing) { mutableStateOf(existing?.note ?: "") }
 
     val kgValue = parseDecimal(weight)
     val weightValid = kgValue != null && kgValue in 30.0..250.0
-    val sleepValue = parseDecimal(sleep)
-    val sleepValid = sleep.isBlank() || (sleepValue != null && sleepValue in 0.0..24.0)
     val planned = state.dashboard.plan.at(date)
     val ranToday = state.runs.filter { it.date == date }
 
@@ -145,31 +140,13 @@ fun LogScreen(
                 }
             }
 
-            DarkCard {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Weekly check-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DarkField(sleep, { sleep = it }, "Sleep (h)", Modifier.width(104.dp), KeyboardType.Decimal, isError = !sleepValid)
-                        DarkField(snacks, { snacks = it }, "Snacks", Modifier.weight(1f))
-                    }
-                    DarkField(note, { note = it }, "Note", Modifier.fillMaxWidth())
-                }
-            }
-
             Button(
                 onClick = {
-                    onSaveWeight(
-                        WeightEntity(
-                            date = date,
-                            kg = round(kgValue!! * 100) / 100,
-                            sleepHours = sleepValue,
-                            hunger = existing?.hunger, // no longer asked; keep what older entries stored
-                            snacks = snacks.trim().ifBlank { null },
-                            note = note.trim().ifBlank { null },
-                        ),
-                    )
+                    // Only the weight is asked now; sleep, hunger, snacks and notes from older entries are kept.
+                    val kg = round(kgValue!! * 100) / 100
+                    onSaveWeight(existing?.copy(kg = kg) ?: WeightEntity(date = date, kg = kg))
                 },
-                enabled = weightValid && sleepValid,
+                enabled = weightValid,
                 modifier = Modifier.fillMaxWidth().height(58.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.Accent, contentColor = Palette.OnAccent),
