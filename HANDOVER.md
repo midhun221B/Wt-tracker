@@ -27,20 +27,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
 | [#11](https://github.com/midhun221B/Wt-tracker/pull/11) | Today: "Change day" on the Next weigh-in card, one running card (run, rest day, week numbers), hunger no longer asked; Settings in the new style; `8-settings` screenshot |
 | [#12](https://github.com/midhun221B/Wt-tracker/pull/12) | Body: weekly measurement card (scale screenshot first) and muscle chart; weigh-in is weight only; Trend Weeks/Body sections collapsible; Runs opens only this week |
+| [#13](https://github.com/midhun221B/Wt-tracker/pull/13) | Weigh-in status by Mon–Sun week (`weighInStatus`: no prompt once the week has a weight, due until logged) for Today, Body and the reminder; one-line Body card unless due; collapsible Plan sections; screenshots at 411 dp (Nothing Phone (3a)) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - **Bug fix (owner, 9 Oct):** Today asked for a weigh-in on the weigh-in day even though that week already had one (8 Oct).
-    The new rule is `weighInStatus()` in core/summary/WeighIn.kt, tested. It works by Monday–Sunday week:
-    - It's done once the week has a weight.
-    - It's due from the weigh-in day until one is logged.
-    - Next is next week's day once this week is done.
-    Today, the Body card and the reminder all use it.
-  - **Today:** the scale screenshot is an "Import scale screenshot" button (outlined, since Save is the main action),
-    and the card says "This week done: … kg on …".
-  - **Body:** the measurement card is one line (next date, Add) unless due; it's the full card with the orange import when due.
-  - **Plan:** checkpoints and energy settings are collapsible, with summaries; re-baseline and history stay open.
-  - **Screenshot tests:** 411 dp wide, the owner's phone (Nothing Phone (3a)).
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
