@@ -1,7 +1,7 @@
 # Handover
 
 Where the project stands, what was decided and what is open. Update this file at the end of every piece of work
-(see CLAUDE.md). Last updated: 2026-10-08.
+(see CLAUDE.md). Last updated: 2026-10-09.
 
 ## Goal
 Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compares the planned trajectory
@@ -22,6 +22,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#4](https://github.com/midhun221B/Wt-tracker/pull/4) | "B orange" redesign (dark theme, Strava orange, Barlow fonts) of Dashboard, Today and navigation; CLAUDE.md |
 | [#5](https://github.com/midhun221B/Wt-tracker/pull/5) | Runs and Body screens in "B orange" (28-day summary, weekly km bars, runs grouped by program week, "Fastest yet"; Body change tiles, trend charts, measurement cards); this HANDOVER.md |
 | [#6](https://github.com/midhun221B/Wt-tracker/pull/6) | Screenshot import: Strava run and body-scale screenshots read on the phone (ML Kit, offline), confirm dialog before saving |
+| [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
 
 ### Not merged
 - Nothing pending. Start the next change from the latest `main`.
@@ -33,7 +34,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy balance with the intake change needed.
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 3+ days.
-- **Screenshot import:** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs.
+- **Screenshot import:** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs, and an import
+  button inside the "Add run" and "Add measurement" dialogs.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
 - **Runs:** manual entry and Strava `activities.csv` import. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).

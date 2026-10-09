@@ -55,6 +55,7 @@ fun RunsScreen(
     modifier: Modifier = Modifier,
     weeks: List<WeekSummary> = emptyList(),
     programStart: LocalDate? = null,
+    onScreenshot: (() -> Unit)? = null,
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -115,7 +116,12 @@ fun RunsScreen(
         )
     }
 
-    if (adding) RunDialog(null, today, onDismiss = { adding = false }, onSave = { onSave(it); adding = false })
+    if (adding) {
+        RunDialog(
+            null, today, onDismiss = { adding = false }, onSave = { onSave(it); adding = false },
+            onFromScreenshot = onScreenshot?.let { pick -> { adding = false; pick() } },
+        )
+    }
     editing?.let { run ->
         RunDialog(
             initial = run,
@@ -216,7 +222,10 @@ private fun RunFigure(value: String, unit: String?, label: String, modifier: Mod
     }
 }
 
-/** Add or edit a run, or confirm one read from a screenshot ([prefill]). Pace is computed from distance and time. */
+/**
+ * Add or edit a run, or confirm one read from a screenshot ([prefill]). Pace is computed from distance and time.
+ * When adding, [onFromScreenshot] shows a button that picks a Strava screenshot instead of typing.
+ */
 @Composable
 fun RunDialog(
     initial: RunEntity?,
@@ -225,6 +234,7 @@ fun RunDialog(
     onSave: (RunEntity) -> Unit,
     onDelete: (() -> Unit)? = null,
     prefill: RunReading? = null,
+    onFromScreenshot: (() -> Unit)? = null,
 ) {
     var date by remember { mutableStateOf(if (initial == null) defaultDate else initial.date) }
     var km by remember { mutableStateOf(fieldText(initial?.km ?: prefill?.km)) }
@@ -246,6 +256,7 @@ fun RunDialog(
                     val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
                     Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
                 }
+                if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a Strava screenshot", onFromScreenshot)
                 DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
                 NumberField("Distance", km, { km = it }, Modifier.fillMaxWidth(), suffix = "km", isError = km.isNotBlank() && kmValue == null)
                 NumberField("Time (mm:ss)", time, { time = it }, Modifier.fillMaxWidth(), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)

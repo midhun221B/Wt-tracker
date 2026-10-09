@@ -60,6 +60,7 @@ fun LogScreen(
     onSetRest: (LocalDate, Boolean) -> Unit,
     onSaveRun: (RunEntity) -> Unit,
     modifier: Modifier = Modifier,
+    onScreenshot: (() -> Unit)? = null,
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
@@ -219,6 +220,7 @@ fun LogScreen(
             defaultDate = date,
             onDismiss = { showRunDialog = false },
             onSave = { onSaveRun(it); showRunDialog = false },
+            onFromScreenshot = onScreenshot?.let { pick -> { showRunDialog = false; pick() } },
         )
     }
 }
