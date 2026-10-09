@@ -26,14 +26,18 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#9](https://github.com/midhun221B/Wt-tracker/pull/9) | Weekly weigh-in (weigh-in day setting, Room v3, forecast falls back to 42 days with 4+ weigh-ins over 3+ weeks, alert after 8 days); Mon–Sun weeks (runs before week 1 count as week 0, −1, …); collapsed older run weeks; `FormDialog` and dark fields for every pop-up; top-bar import removed (Strava CSV moved into Add run); Plan tab in "B orange" |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: the Trend energy tiles show daily intake instead of deficit.
+  "Eating now" is the estimated intake, and "To get back on plan" is the target intake, both rounded to 50 kcal.
+  The deficits move to the small line, and a note gives the plan's assumed intake (`EnergyReport.plannedIntake`).
+  - Decision (2026-10-09): no food logging. The owner doesn't track calories, and rough logs would add noise.
+    Intake stays inferred from the weight trend plus BMR × activity, labelled as an estimate.
 
 ### Features in the app today
 - **Today:** run, rest-day switch, week strip; on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with hunger, sleep, snacks and note.
 - **Dashboard ("Trend"):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
-  - Energy balance with the intake change needed.
+  - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.

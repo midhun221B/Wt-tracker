@@ -23,8 +23,10 @@ data class EnergyReport(
     val requiredCapped: Boolean,
     /** BMR × activity factor, excluding running. */
     val maintenanceKcal: Double,
-    /** Maintenance + running − actual deficit. */
+    /** Maintenance + running − actual deficit: what the weight trend says you eat. */
     val estimatedIntake: Double,
+    /** Maintenance + running − expected deficit: what the plan assumes you eat. */
+    val plannedIntake: Double,
     /** Change in daily intake to get back on plan; negative means eat less. */
     val intakeChange: Double,
     /** Suggested daily intake, never below the safety floor. */
@@ -82,6 +84,7 @@ fun energyBalance(
         requiredCapped = requiredRaw != null && required != requiredRaw,
         maintenanceKcal = maintenance,
         estimatedIntake = intake,
+        plannedIntake = maintenance + runPerDay - expectedDeficit,
         intakeChange = change,
         targetIntake = target,
         intakeFloored = floored,
