@@ -25,6 +25,7 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,8 +54,6 @@ import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.round
 
-private val hungerLabels = listOf("None", "Low", "Okay", "High", "Very")
-
 /**
  * The day's page: run, rest day and this week's numbers. On the weekly weigh-in day (or when the day already has
  * a weight, or after "Weigh in now") it also shows the weigh-in card with ±0.1 steppers and the weekly check-in.
@@ -68,6 +67,7 @@ fun LogScreen(
     onSaveRun: (RunEntity) -> Unit,
     modifier: Modifier = Modifier,
     onScreenshot: (() -> Unit)? = null,
+    onWeighInDay: (Int) -> Unit = {},
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
@@ -80,7 +80,6 @@ fun LogScreen(
     // Field state resets when the date (or its stored entry) changes.
     var weight by remember(date, existing) { mutableStateOf(fieldText(existing?.kg ?: lastKg)) }
     var sleep by remember(date, existing) { mutableStateOf(fieldText(existing?.sleepHours)) }
-    var hunger by remember(date, existing) { mutableStateOf(existing?.hunger) }
     var snacks by remember(date, existing) { mutableStateOf(existing?.snacks ?: "") }
     var note by remember(date, existing) { mutableStateOf(existing?.note ?: "") }
 
@@ -148,23 +147,7 @@ fun LogScreen(
 
             DarkCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Hunger", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        hungerLabels.forEachIndexed { i, label ->
-                            val level = i + 1
-                            val selected = hunger == level
-                            Button(
-                                onClick = { hunger = if (selected) null else level },
-                                modifier = Modifier.weight(1f).height(44.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(0.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (selected) Palette.Accent else Palette.CardHigh,
-                                    contentColor = if (selected) Palette.OnAccent else Palette.Text,
-                                ),
-                            ) { Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) }
-                        }
-                    }
+                    Text("Weekly check-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         DarkField(sleep, { sleep = it }, "Sleep (h)", Modifier.width(104.dp), KeyboardType.Decimal, isError = !sleepValid)
                         DarkField(snacks, { snacks = it }, "Snacks", Modifier.weight(1f))
@@ -180,7 +163,7 @@ fun LogScreen(
                             date = date,
                             kg = round(kgValue!! * 100) / 100,
                             sleepHours = sleepValue,
-                            hunger = hunger,
+                            hunger = existing?.hunger, // no longer asked; keep what older entries stored
                             snacks = snacks.trim().ifBlank { null },
                             note = note.trim().ifBlank { null },
                         ),
@@ -204,30 +187,21 @@ fun LogScreen(
             NextWeighInCard(
                 next = date.with(TemporalAdjusters.next(weighInDay)),
                 last = state.weights.lastOrNull { it.date <= date },
+                weighInDay = weighInDay.value,
                 onWeighInNow = { weighInOpen = true },
+                onWeighInDay = onWeighInDay,
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DarkCard(Modifier.weight(1f), onClick = { showRunDialog = true }) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(if (date == state.today) "Run today" else "Run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    Text(
-                        if (ranToday.isEmpty()) "No run" else "%.2f km".format(ranToday.sumOf { it.km }),
-                        style = numberStyle(28.sp),
-                    )
-                    Text("Tap to add a run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                }
-            }
-            DarkCard(Modifier.weight(1f)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Rest day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    Switch(checked = date in state.restDays, onCheckedChange = { onSetRest(date, it) })
-                }
-            }
-        }
-
-        WeekStrip(state.dashboard.weekly.firstOrNull { it.start == weekStart(date) }, if (date == state.today) state.dashboard.runStreak else null)
+        RunningCard(
+            today = date == state.today,
+            runs = ranToday,
+            rest = date in state.restDays,
+            week = state.dashboard.weekly.firstOrNull { it.start == weekStart(date) },
+            streak = if (date == state.today) state.dashboard.runStreak else null,
+            onAddRun = { showRunDialog = true },
+            onRest = { onSetRest(date, it) },
+        )
 
         Disclaimer()
     }
@@ -243,9 +217,10 @@ fun LogScreen(
     }
 }
 
-/** Off-day card: when the next weigh-in is and the last weight, with a way to weigh in anyway. */
+/** Off-day card: when the next weigh-in is and the last weight, with ways to weigh in anyway or change the day. */
 @Composable
-private fun NextWeighInCard(next: LocalDate, last: WeightEntity?, onWeighInNow: () -> Unit) {
+private fun NextWeighInCard(next: LocalDate, last: WeightEntity?, weighInDay: Int, onWeighInNow: () -> Unit, onWeighInDay: (Int) -> Unit) {
+    var picking by remember { mutableStateOf(false) }
     DarkCard(radius = 24) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Next weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
@@ -253,23 +228,61 @@ private fun NextWeighInCard(next: LocalDate, last: WeightEntity?, onWeighInNow: 
             if (last != null) {
                 Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             }
-            TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text("Weigh in now", color = Palette.Accent) }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text("Weigh in now", color = Palette.Accent) }
+                TextButton(onClick = { picking = !picking }, contentPadding = PaddingValues(0.dp)) {
+                    Text(if (picking) "Done" else "Change day", color = Palette.Muted)
+                }
+            }
+            if (picking) WeekdayPicker(weighInDay, { onWeighInDay(it); picking = false })
         }
     }
 }
 
-/** Runs, distance and rest days of the week holding the shown day; [streak] only for today. */
+/**
+ * Today's running and the week in one card: the day's run with an add button, the rest-day switch,
+ * then the week's runs, km, rest days and (for today) the streak.
+ */
 @Composable
-private fun WeekStrip(week: WeekSummary?, streak: Int?) {
-    if (week == null) return
+private fun RunningCard(
+    today: Boolean,
+    runs: List<RunEntity>,
+    rest: Boolean,
+    week: WeekSummary?,
+    streak: Int?,
+    onAddRun: () -> Unit,
+    onRest: (Boolean) -> Unit,
+) {
     DarkCard {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Week of ${weekRange(week.start)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            Row(Modifier.fillMaxWidth()) {
-                WeekFigure("${week.runs}", if (week.runs == 1) "run" else "runs", Modifier.weight(1f))
-                WeekFigure("%.1f".format(week.km), "km", Modifier.weight(1f))
-                WeekFigure("${week.restDays}", if (week.restDays == 1) "rest day" else "rest days", Modifier.weight(1f))
-                if (streak != null) WeekFigure("$streak", "day streak", Modifier.weight(1f))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(if (today) "Run today" else "Run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    if (runs.isEmpty()) {
+                        Text("No run yet", style = numberStyle(28.sp), color = Palette.Muted)
+                    } else {
+                        val km = runs.sumOf { it.km }
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text("%.2f km".format(km), style = numberStyle(28.sp))
+                            Text("  " + pace(runs.sumOf { it.durationSec } / km), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 4.dp))
+                        }
+                    }
+                }
+                SecondaryButton("Add run", onAddRun)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Rest day", Modifier.weight(1f))
+                Switch(checked = rest, onCheckedChange = onRest)
+            }
+            if (week != null) {
+                HorizontalDivider(color = Palette.CardHigh)
+                Text("Week of ${weekRange(week.start)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                Row(Modifier.fillMaxWidth()) {
+                    WeekFigure("${week.runs}", if (week.runs == 1) "run" else "runs", Modifier.weight(1f))
+                    WeekFigure("%.1f".format(week.km), "km", Modifier.weight(1f))
+                    WeekFigure("${week.restDays}", if (week.restDays == 1) "rest day" else "rest days", Modifier.weight(1f))
+                    if (streak != null) WeekFigure("$streak", "day streak", Modifier.weight(1f))
+                }
             }
         }
     }

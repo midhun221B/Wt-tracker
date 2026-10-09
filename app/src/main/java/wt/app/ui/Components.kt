@@ -2,6 +2,7 @@ package wt.app.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
@@ -340,6 +341,26 @@ fun FormDialog(
         sheet()
     } else {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) { sheet() }
+    }
+}
+
+/** Seven day chips (Mon…Sun) with [selected] as an ISO weekday in orange. */
+@Composable
+fun WeekdayPicker(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        java.time.DayOfWeek.entries.forEach { day ->
+            val on = selected == day.value
+            Button(
+                onClick = { onSelect(day.value) },
+                modifier = Modifier.weight(1f).height(44.dp),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (on) Palette.Accent else Palette.CardHigh,
+                    contentColor = if (on) Palette.OnAccent else Palette.Text,
+                ),
+            ) { Text(day.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH), style = MaterialTheme.typography.labelLarge) }
+        }
     }
 }
 
