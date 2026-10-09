@@ -85,6 +85,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
 - **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
+- **No weekly review card** (2026-10-09): built for v0.3 (trend, runs, plan gap and one suggestion on the weigh-in day), but the owner didn't like it; removed before merging.
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
