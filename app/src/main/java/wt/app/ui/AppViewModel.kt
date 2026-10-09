@@ -123,6 +123,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             db.seedIfEmpty()
+            db.removeSampleRuns()
             val p = db.profile().get() ?: return@launch
             Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
         }

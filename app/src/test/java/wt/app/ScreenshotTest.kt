@@ -90,13 +90,23 @@ class ScreenshotTest {
     // 5 Nov is a Thursday; the Monday 2 Nov weigh-in is done, so the card shows next week's.
     @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
 
-    // Weigh-in day Thursday and this week's Monday weigh-in left out, so the weigh-in is due.
+    // Weigh-in day Thursday and this week's weight and measurement left out, so the weigh-in is due.
     @Test fun weighIn() = shoot("2b-weigh-in") {
         val s = sampleState()
         LogScreen(
-            s.copy(profile = s.profile.copy(weighInDay = 4), weights = s.weights.filter { it.date < LocalDate.of(2026, 11, 2) }),
+            s.copy(
+                profile = s.profile.copy(weighInDay = 4),
+                weights = s.weights.filter { it.date < LocalDate.of(2026, 11, 2) },
+                body = s.body.filter { it.date < LocalDate.of(2026, 11, 2) },
+            ),
             {}, {}, { _, _ -> }, {}, onScreenshot = {},
         )
+    }
+
+    // The owner's case: a weight already logged today in a week that has one, so only the small card shows.
+    @Test fun loggedToday() = shoot("2c-logged-today") {
+        val s = sampleState()
+        LogScreen(s.copy(weights = s.weights + WeightEntity(today, 87.2)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
     }
 
     @Test fun runs() = shoot("3-runs") {
