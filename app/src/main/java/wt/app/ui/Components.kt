@@ -495,7 +495,7 @@ fun RunLoggedBanner(runs: Int, km: Double, modifier: Modifier = Modifier) {
         Column {
             Text("Run logged", color = Palette.OnAccent, fontWeight = FontWeight.SemiBold)
             Text(
-                "%.1f km this week · %d %s".format(km, runs, if (runs == 1) "run" else "runs"),
+                "%d %s · %.1f km this week".format(runs, if (runs == 1) "run" else "runs", km),
                 style = MaterialTheme.typography.labelMedium,
                 color = Palette.OnAccent,
             )

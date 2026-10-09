@@ -81,6 +81,24 @@ class ScreenshotTest {
         )
     }
 
+    /** A fresh install on the plan's first day: one weigh-in, no runs, no measurements. */
+    private fun freshState(): UiState {
+        val day = Defaults.START
+        val weights = listOf(WeightEntity(day, 88.3))
+        val profile = ProfileEntity.from(Defaults.profile)
+        return UiState(
+            today = day,
+            dashboard = buildDashboard(weights.map { it.toModel() }, emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, profile.toModel(), day),
+            weights = weights,
+            runs = emptyList(),
+            restDays = emptySet(),
+            body = emptyList(),
+            checkpoints = Defaults.planCheckpoints,
+            plans = listOf(PlanEntity(1, day, true, "Original plan")),
+            profile = profile,
+        )
+    }
+
     private fun shoot(name: String, content: @Composable () -> Unit) {
         compose.setContent { WtTheme(dynamicColor = false) { content() } }
         compose.waitForIdle()
@@ -143,6 +161,20 @@ class ScreenshotTest {
         val s = sampleState()
         RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
     }
+
+    // Fresh install: what each tab looks like with one weigh-in and nothing else.
+    @Test fun freshToday() = shoot("9a-fresh-today") { LogScreen(freshState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
+
+    @Test fun freshTrend() = shoot("9b-fresh-trend") { DashboardScreen(freshState().dashboard) }
+
+    @Test fun freshRuns() = shoot("9c-fresh-runs") {
+        val s = freshState()
+        RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
+    }
+
+    @Test fun freshBody() = shoot("9d-fresh-body") { BodyScreen(emptyList(), Defaults.START, {}, {}, onScreenshot = {}) }
+
+    @Test fun freshPlan() = shoot("9e-fresh-plan") { PlanScreen(freshState(), {}, {}, {}) }
 
     @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}, onScreenshot = {}) }
 
