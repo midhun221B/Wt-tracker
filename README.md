@@ -10,7 +10,7 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
-- **Today:** one running card (today's run, add run, rest-day switch, this week's numbers). On your weekly weigh-in day it shows the weight entry (±0.1 steppers, or from a scale screenshot) with sleep, snacks and note; other days show when the next weigh-in is, with a shortcut to change the day.
+- **Today:** one running card (today's run, add run, rest-day switch, this week's numbers). On your weekly weigh-in day it shows the weight entry (±0.1 steppers, or from a scale screenshot); other days show when the next weigh-in is, with a shortcut to change the day.
 - **Dashboard:**
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.
@@ -20,7 +20,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
   - Runs, trail runs and virtual runs are imported.
   - Re-importing the same file adds nothing new.
   - Runs you already logged are matched instead of duplicated (same day, about the same distance, or the undated sample runs).
-- **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean mass, BMR).
+- **Body:** the next weekly measurement (same morning as the weigh-in) with a scale-screenshot import, change tiles, fat, visceral and muscle charts, and the measurements (fat %, visceral, muscle, skeletal %, lean mass, BMR).
 - **Plan:**
   - Edit checkpoints.
   - **Re-baseline** from today's trend weight to the same goal date. The weekly loss it would need is flagged as unrealistic above 0.7 kg/week and blocked above 1 kg/week.

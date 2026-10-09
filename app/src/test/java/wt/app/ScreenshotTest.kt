@@ -100,7 +100,7 @@ class ScreenshotTest {
         RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
     }
 
-    @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
+    @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}, onScreenshot = {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
 

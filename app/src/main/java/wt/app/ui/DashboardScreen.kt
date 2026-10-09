@@ -221,7 +221,9 @@ private fun WeeksCard(weeks: List<WeekSummary>) {
     val shown = weeks.take(5).reversed() // weekly is newest first
     val maxKm = shown.maxOf { it.km }.coerceAtLeast(1.0)
     val newest = shown.last()
-    SectionCard("Weeks", trailing = "km run · avg weight") {
+    val summary = "This week %.1f km".format(newest.km) + (newest.avgKg?.let { " · %.1f kg".format(it) } ?: "")
+    CollapsibleSection("Weeks", summary) {
+        Text("km run and weight, last five weeks", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
         Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
             shown.forEach { w ->
                 val current = w == newest
@@ -260,8 +262,10 @@ private fun BodyTiles(d: Dashboard) {
     if (d.body.isEmpty()) return
     val first = d.body.first()
     val last = d.body.last()
-    TileRow { m ->
-        StatTile("Body fat", "%.1f%%".format(last.fatPct), m, sub = "%+.1f since start".format(last.fatPct - first.fatPct))
-        StatTile("Visceral fat", "%.1f".format(last.visceral), m, sub = "%+.1f since start".format(last.visceral - first.visceral))
+    CollapsibleSection("Body", "Fat %.1f%% · visceral %.1f".format(last.fatPct, last.visceral)) {
+        TileRow { m ->
+            StatTile("Body fat", "%.1f%%".format(last.fatPct), m, sub = "%+.1f since start".format(last.fatPct - first.fatPct))
+            StatTile("Visceral fat", "%.1f".format(last.visceral), m, sub = "%+.1f since start".format(last.visceral - first.visceral))
+        }
     }
 }
