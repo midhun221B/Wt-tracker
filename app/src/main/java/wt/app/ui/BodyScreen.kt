@@ -12,18 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -205,49 +201,41 @@ fun BodyDialog(
     fun optional(s: String) = if (s.isBlank()) true else parseDecimal(s) != null
     val valid = fatV != null && visceralV != null && muscleV != null && optional(skeletal) && optional(lean) && optional(bmr) && weightValid
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (prefill != null) "Measurement from screenshot" else if (initial == null) "Add measurement" else "Edit measurement") },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (prefill != null) Text("Check the values before saving.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
-                if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a scale screenshot", onFromScreenshot)
-                DateField("Date", date, { date = it }, Modifier.fillMaxWidth())
-                if (prefill != null) {
-                    NumberField("Weight (optional)", weight, { weight = it }, Modifier.fillMaxWidth(), suffix = "kg", isError = !weightValid)
-                    if (prefill.weightEstimated) {
-                        Text(
-                            "Weight isn't on the screenshot, so it's worked out from lean mass and body fat. " +
-                                "Check it against the scale, or clear it to save only the measurement.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Palette.Muted,
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Body fat", fat, { fat = it }, Modifier.weight(1f), suffix = "%", isError = fatV == null)
-                    NumberField("Visceral", visceral, { visceral = it }, Modifier.weight(1f), isError = visceralV == null)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Muscle", muscle, { muscle = it }, Modifier.weight(1f), suffix = "kg", isError = muscleV == null)
-                    NumberField("Skeletal", skeletal, { skeletal = it }, Modifier.weight(1f), suffix = "%", isError = !optional(skeletal))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Lean mass", lean, { lean = it }, Modifier.weight(1f), suffix = "kg", isError = !optional(lean))
-                    NumberField("BMR", bmr, { bmr = it }, Modifier.weight(1f), suffix = "kcal", isError = !optional(bmr))
-                }
+    FormDialog(
+        title = if (prefill != null) "Measurement from screenshot" else if (initial == null) "Add measurement" else "Edit measurement",
+        onDismiss = onDismiss,
+        confirmLabel = "Save measurement",
+        confirmEnabled = valid,
+        onConfirm = {
+            onSave(BodyCompEntity(date, fatV!!, visceralV!!, muscleV!!, parseDecimal(skeletal), parseDecimal(lean), parseDecimal(bmr)), weightV)
+        },
+        onDelete = onDelete,
+    ) {
+        if (prefill != null) Text("Check the values before saving.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+        if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a scale screenshot", onFromScreenshot)
+        DateField("Date", date, { date = it }, Modifier.fillMaxWidth())
+        if (prefill != null) {
+            NumberField("Weight (optional)", weight, { weight = it }, Modifier.fillMaxWidth(), suffix = "kg", isError = !weightValid)
+            if (prefill.weightEstimated) {
+                Text(
+                    "Weight isn't on the screenshot, so it's worked out from lean mass and body fat. " +
+                        "Check it against the scale, or clear it to save only the measurement.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Palette.Muted,
+                )
             }
-        },
-        confirmButton = {
-            TextButton(enabled = valid, onClick = {
-                onSave(BodyCompEntity(date, fatV!!, visceralV!!, muscleV!!, parseDecimal(skeletal), parseDecimal(lean), parseDecimal(bmr)), weightV)
-            }) { Text("Save") }
-        },
-        dismissButton = {
-            Row {
-                if (onDelete != null) TextButton(onClick = onDelete) { Text("Delete") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-            }
-        },
-    )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField("Body fat", fat, { fat = it }, Modifier.weight(1f), suffix = "%", isError = fatV == null)
+            NumberField("Visceral", visceral, { visceral = it }, Modifier.weight(1f), isError = visceralV == null)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField("Muscle", muscle, { muscle = it }, Modifier.weight(1f), suffix = "kg", isError = muscleV == null)
+            NumberField("Skeletal", skeletal, { skeletal = it }, Modifier.weight(1f), suffix = "%", isError = !optional(skeletal))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField("Lean mass", lean, { lean = it }, Modifier.weight(1f), suffix = "kg", isError = !optional(lean))
+            NumberField("BMR", bmr, { bmr = it }, Modifier.weight(1f), suffix = "kcal", isError = !optional(bmr))
+        }
+    }
 }

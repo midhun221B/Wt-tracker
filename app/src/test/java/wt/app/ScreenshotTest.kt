@@ -2,6 +2,7 @@ package wt.app
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.core.view.drawToBitmap
@@ -16,7 +17,10 @@ import wt.app.data.PlanEntity
 import wt.app.data.ProfileEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
+import wt.app.ui.BodyDialog
 import wt.app.ui.BodyScreen
+import wt.app.ui.LocalInlineDialogs
+import wt.app.ui.RunDialog
 import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
@@ -98,4 +102,17 @@ class ScreenshotTest {
     @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
+
+    // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.
+    @Test fun addRun() = shoot("6-add-run") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            RunDialog(null, today, onDismiss = {}, onSave = {}, onFromScreenshot = {}, onImportCsv = {})
+        }
+    }
+
+    @Test fun addMeasurement() = shoot("7-add-measurement") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            BodyDialog(null, today, sampleState().body.last(), {}, { _, _ -> }, onFromScreenshot = {})
+        }
+    }
 }

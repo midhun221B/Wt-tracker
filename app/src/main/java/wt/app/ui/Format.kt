@@ -25,6 +25,11 @@ fun withWeekday(d: LocalDate): String = d.format(weekdayDate)
 /** "Thursday, 5 November" */
 fun longDay(d: LocalDate): String = d.format(longDayFmt)
 
+private val dayMonthYearFmt = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+
+/** "8 Oct 2026" */
+fun dayMonthYear(d: LocalDate): String = d.format(dayMonthYearFmt)
+
 /** "7 Jan" */
 fun dayMonth(d: LocalDate): String = d.format(dayMonthFmt)
 

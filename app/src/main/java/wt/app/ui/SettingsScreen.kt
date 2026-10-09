@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -113,13 +111,12 @@ fun SettingsScreen(
     }
 
     if (confirmRestore) {
-        AlertDialog(
-            onDismissRequest = { confirmRestore = false },
-            title = { Text("Restore backup?") },
-            text = { Text("This replaces all of your current data with the backup's contents. Save a backup first if unsure.") },
-            confirmButton = { TextButton(onClick = { confirmRestore = false; onRestore() }) { Text("Choose file") } },
-            dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text("Cancel") } },
-        )
+        FormDialog(
+            title = "Restore backup?",
+            onDismiss = { confirmRestore = false },
+            confirmLabel = "Choose file",
+            onConfirm = { confirmRestore = false; onRestore() },
+        ) { Text("This replaces all of your current data with the backup's contents. Save a backup first if unsure.", color = Palette.Muted) }
     }
 }
 

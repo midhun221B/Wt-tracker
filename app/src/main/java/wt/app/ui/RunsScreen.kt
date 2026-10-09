@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -42,8 +41,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import wt.core.io.RunReading
 import wt.core.model.formatMinSec
 import wt.core.summary.WeekSummary
@@ -137,6 +134,7 @@ fun RunsScreen(
         RunDialog(
             null, today, onDismiss = { adding = false }, onSave = { onSave(it); adding = false },
             onFromScreenshot = onScreenshot?.let { pick -> { adding = false; pick() } },
+            onImportCsv = { adding = false; onImportStrava() },
         )
     }
     editing?.let { run ->
@@ -272,7 +270,8 @@ private fun RunFigure(value: String, unit: String?, label: String, modifier: Mod
 
 /**
  * Add or edit a run, or confirm one read from a screenshot ([prefill]). Pace is computed from distance and time.
- * When adding, [onFromScreenshot] shows a button that picks a Strava screenshot instead of typing.
+ * When adding, [onFromScreenshot] and [onImportCsv] show buttons that read a Strava screenshot or Strava's
+ * activities.csv instead of typing.
  */
 @Composable
 fun RunDialog(
@@ -283,6 +282,7 @@ fun RunDialog(
     onDelete: (() -> Unit)? = null,
     prefill: RunReading? = null,
     onFromScreenshot: (() -> Unit)? = null,
+    onImportCsv: (() -> Unit)? = null,
 ) {
     var date by remember { mutableStateOf(if (initial == null) defaultDate else initial.date) }
     var km by remember { mutableStateOf(fieldText(initial?.km ?: prefill?.km)) }
@@ -295,39 +295,38 @@ fun RunDialog(
     val kcalValid = kcalText.isBlank() || (kcalValue != null && kcalValue in 0.0..5000.0)
     val valid = date != null && kmValue != null && seconds != null && kcalValid
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (prefill != null) "Run from screenshot" else if (initial == null) "Add run" else "Edit run") },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (prefill != null) {
-                    val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
-                    Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
-                }
-                if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a Strava screenshot", onFromScreenshot)
-                DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
-                NumberField("Distance", km, { km = it }, Modifier.fillMaxWidth(), suffix = "km", isError = km.isNotBlank() && kmValue == null)
-                NumberField("Time (mm:ss)", time, { time = it }, Modifier.fillMaxWidth(), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)
-                NumberField("Calories (optional)", kcalText, { kcalText = it }, Modifier.fillMaxWidth(), suffix = "kcal", isError = !kcalValid)
-                if (kmValue != null && seconds != null) Text("Pace ${pace(seconds / kmValue)}")
+    FormDialog(
+        title = if (prefill != null) "Run from screenshot" else if (initial == null) "Add run" else "Edit run",
+        onDismiss = onDismiss,
+        confirmLabel = "Save run",
+        confirmEnabled = valid,
+        onConfirm = {
+            onSave(
+                (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0, source = if (prefill != null) "strava" else "manual"))
+                    .copy(date = date, km = kmValue!!, durationSec = seconds!!, kcal = kcalValue),
+            )
+        },
+        onDelete = onDelete,
+    ) {
+        if (prefill != null) {
+            val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
+            Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+        }
+        if (initial == null && prefill == null) {
+            onFromScreenshot?.let { ScreenshotButton("Import from a Strava screenshot", it) }
+            onImportCsv?.let { ScreenshotButton("Import Strava activities.csv", it) }
+        }
+        DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField("Distance", km, { km = it }, Modifier.weight(1f), suffix = "km", isError = km.isNotBlank() && kmValue == null)
+            NumberField("Time (mm:ss)", time, { time = it }, Modifier.weight(1f), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)
+        }
+        NumberField("Calories (optional)", kcalText, { kcalText = it }, Modifier.fillMaxWidth(), suffix = "kcal", isError = !kcalValid)
+        if (kmValue != null && seconds != null) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("Pace ", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                Text(pace(seconds / kmValue), style = numberStyle(22.sp), color = Palette.Accent)
             }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = valid,
-                onClick = {
-                    onSave(
-                        (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0, source = if (prefill != null) "strava" else "manual"))
-                            .copy(date = date, km = kmValue!!, durationSec = seconds!!, kcal = kcalValue),
-                    )
-                },
-            ) { Text("Save") }
-        },
-        dismissButton = {
-            Row {
-                if (onDelete != null) TextButton(onClick = onDelete) { Text("Delete") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-            }
-        },
-    )
+        }
+    }
 }
