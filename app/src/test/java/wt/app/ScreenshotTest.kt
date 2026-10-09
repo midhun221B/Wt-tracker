@@ -172,7 +172,9 @@ class ScreenshotTest {
         RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
     }
 
-    @Test fun freshBody() = shoot("9d-fresh-body") { BodyScreen(emptyList(), Defaults.START, {}, {}, onScreenshot = {}) }
+    @Test fun freshBody() = shoot("9d-fresh-body") {
+        BodyScreen(emptyList(), Defaults.START, {}, {}, onScreenshot = {}, weighInDay = 1, weightDates = listOf(Defaults.START))
+    }
 
     @Test fun freshPlan() = shoot("9e-fresh-plan") { PlanScreen(freshState(), {}, {}, {}) }
 

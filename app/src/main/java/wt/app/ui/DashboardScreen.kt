@@ -112,7 +112,12 @@ private fun ProgressCard(d: Dashboard) {
                         if (over) Palette.Warn else Palette.Accent,
                     )
                 } else {
-                    Text("Log 3 days to see your trend", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    // The trend needs 3 weigh-ins; weekly that's a couple of weeks.
+                    Text(
+                        "Trend after 3 weigh-ins · ${(3 - d.weights.size).coerceAtLeast(1)} to go",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Palette.Muted,
+                    )
                 }
             }
         }
@@ -135,8 +140,10 @@ private fun ChartCard(d: Dashboard) {
         WeightChart(d, Modifier.fillMaxWidth().height(220.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             LegendItem(c.planned, "Planned", dashed = true)
-            LegendItem(c.realistic, "Realistic")
-            LegendItem(c.band, "80% range", thick = true)
+            if (d.forecast != null) { // nothing realistic to show before there is a trend
+                LegendItem(c.realistic, "Realistic")
+                LegendItem(c.band, "80% range", thick = true)
+            }
         }
         if (d.forecast?.lowConfidence == true) {
             Text(
