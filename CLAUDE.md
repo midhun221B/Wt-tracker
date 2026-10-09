@@ -30,7 +30,7 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 ## CI and delivery
 - CI runs core tests, app unit tests and the debug APK build on every push and PR, and uploads the APK, screenshots and
   test reports as artifacts.
-- Every push also republishes the APK to the `debug-latest` pre-release. The phone download link is
+- Every push also republishes the APK to the `debug-latest` pre-release, from a separate `publish` job that runs one at a time. The phone download link is
   `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/wt-tracker-debug.apk`.
   From a cloud session, fetch that URL with curl: the artifact and log blob hosts are blocked, but release downloads work.
 - Debug builds are signed with the committed `app/debug.keystore` (standard debug credentials) so updates install over
