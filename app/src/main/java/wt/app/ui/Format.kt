@@ -46,6 +46,14 @@ fun shortDay(d: LocalDate): String = d.format(shortDayFmt)
 /** "7 Jan" */
 fun dayMonth(d: LocalDate): String = d.format(dayMonthFmt)
 
+private val dayMonthLongFmt = DateTimeFormatter.ofPattern("d MMMM", Locale.ENGLISH)
+
+/** "7 January" */
+fun dayMonthLong(d: LocalDate): String = d.format(dayMonthLongFmt)
+
+/** "82" for a whole number of kg, otherwise "81.5". */
+fun plainKg(v: Double): String = if (v == Math.rint(v)) "%.0f".format(v) else "%.1f".format(v)
+
 /** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
 fun weekRange(monday: LocalDate): String {
     val sunday = monday.plusDays(6)
