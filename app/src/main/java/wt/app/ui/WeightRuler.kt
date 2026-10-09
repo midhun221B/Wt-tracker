@@ -94,28 +94,32 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
                 else -> 14.dp.toPx() to Palette.Outline
             }
             drawLine(color, Offset(x, baseline - h), Offset(x, baseline), 2.dp.toPx(), StrokeCap.Round)
-            if (v % 10 == 0) centeredText(measurer, "${v / 10}", x, baseline + 6.dp.toPx(), label.copy(color = Palette.Muted))
+            // Skip labels that would be cut off at the edges.
+            if (v % 10 == 0 && abs(x - cx) < cx - 16.dp.toPx()) {
+                centeredText(measurer, "${v / 10}", x, baseline + 6.dp.toPx(), label.copy(color = Palette.Muted))
+            }
         }
 
-        // Last week (grey, top label row) and the plan (blue dashed, second row), when they are in view.
+        // Last week (grey, top label row) and the plan (blue dashed, second row). Out of view, the label sits at
+        // that edge with an arrow so the mark is never lost.
         fun xOf(kgMark: Double) = cx + ((kgMark * 10).roundToInt() - tenths) * step
-        lastKg?.let { l ->
-            val x = xOf(l)
-            if (abs(x - cx) < cx - 8.dp.toPx()) {
-                drawLine(Palette.Muted, Offset(x, markTop), Offset(x, baseline), 2.dp.toPx())
-                centeredText(measurer, "Last week %.1f".format(l), x, 2.dp.toPx(), label.copy(color = Palette.Muted))
-            }
-        }
-        planKg?.let { p ->
-            val x = xOf(p)
+        fun mark(kgMark: Double, name: String, color: Color, top: Float, dashed: Boolean) {
+            val x = xOf(kgMark)
+            val style = label.copy(color = color)
             if (abs(x - cx) < cx - 8.dp.toPx()) {
                 drawLine(
-                    Palette.Planned, Offset(x, markTop), Offset(x, baseline), 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())),
+                    color, Offset(x, markTop), Offset(x, baseline), 2.dp.toPx(),
+                    pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())) else null,
                 )
-                centeredText(measurer, "Plan %.1f".format(p), x, 20.dp.toPx(), label.copy(color = Palette.Planned))
+                centeredText(measurer, "$name %.1f".format(kgMark), x, top, style)
+            } else {
+                val layout = measurer.measure(if (x < cx) "‹ $name %.1f".format(kgMark) else "$name %.1f ›".format(kgMark), style)
+                val left = if (x < cx) 0f else size.width - layout.size.width
+                drawText(layout, topLeft = Offset(left, top))
             }
         }
+        lastKg?.let { mark(it, "Last week", Palette.Muted, 2.dp.toPx(), dashed = false) }
+        planKg?.let { mark(it, "Plan", Palette.Planned, 20.dp.toPx(), dashed = true) }
 
         // Fixed centre mark, then fade both edges into the card.
         drawLine(Palette.Accent, Offset(cx, baseline - 60.dp.toPx()), Offset(cx, baseline + 4.dp.toPx()), 4.dp.toPx(), StrokeCap.Round)

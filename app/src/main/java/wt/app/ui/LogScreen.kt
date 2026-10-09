@@ -160,7 +160,7 @@ fun LogScreen(
                             textStyle = numberStyle(88.sp, if (weightValid) Palette.Text else Palette.Error).copy(textAlign = TextAlign.Center),
                             cursorBrush = SolidColor(Palette.Accent),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.width(170.dp).semantics { contentDescription = "Weight in kg" },
+                            modifier = Modifier.width(140.dp).semantics { contentDescription = "Weight in kg" },
                         )
                         Text("kg", style = MaterialTheme.typography.titleMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 14.dp))
                     }
