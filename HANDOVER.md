@@ -38,10 +38,12 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`, version 0.3.0 (`versionCode` 4; merging creates the `v0.3.0` release):
+  - Weekly review card on Today on a weigh-in day (`weeklyReview` in `core/summary`, tests in `WeeklyReviewTest`): trend change since the previous weigh-in, runs and km since then (and the stretch before), plan gap and whether it's closing, and one suggestion: too early, on plan, on pace, run about N km more a week (when that's at most 6 km), eat about N kcal a day (never below 1800), or eat a little more when losing faster than 1 kg/week. With "Estimates, not medical advice".
+  - Screenshots `2h-weekly-review` and `9f-fresh-second-weigh-in`.
 
 ### Features in the app today
-- **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
+- **Today:** on a weigh-in day, a "Week N review" card (trend, runs, plan gap, one safe suggestion); one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
 - **Dashboard ("Trend", program week in the top bar's small line):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
@@ -85,6 +87,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
 - **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
+- **Weekly review suggestions** (v0.3): one suggestion per weigh-in, from the dashboard's forecast and energy report so the safety limits apply; running is suggested when the gap takes at most 6 km/week, food otherwise.
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
