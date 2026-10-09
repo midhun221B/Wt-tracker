@@ -14,7 +14,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
 - **Dashboard:**
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.
-  - Energy balance: actual vs expected deficit and the intake change needed.
+  - Energy: estimated daily intake now and the intake that gets you back on plan (rounded to 50 kcal, never below 1800), with the deficits in small print. Worked out from the weight trend, so no food logging is needed.
   - Weekly table, body-fat and visceral-fat trends, alerts.
 - **Runs:** manual entry, a Strava screenshot, or **Strava `activities.csv` import** (all from Add run). Runs are grouped by Monday–Sunday week; older weeks collapse to one line.
   - Runs, trail runs and virtual runs are imported.

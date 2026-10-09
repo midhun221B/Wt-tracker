@@ -175,22 +175,31 @@ private fun ForecastTiles(d: Dashboard) {
         if (e != null) {
             TileRow { m ->
                 StatTile(
-                    "Deficit per day", "%.0f kcal".format(e.actualDeficit), m,
-                    sub = "%.0f expected".format(e.expectedDeficit),
+                    "Eating now", "≈" + roughKcal(e.estimatedIntake), m,
+                    sub = "kcal/day · deficit ${roughDeficit(e.actualDeficit)}",
                 )
-                val change = e.intakeChange
+                // Difference of the rounded figures, so the three numbers on screen agree.
+                val change = round50(e.targetIntake) - round50(e.estimatedIntake)
                 StatTile(
-                    if (e.requiredKgPerWeek == null) "Goal date passed" else "Back on plan",
-                    when {
-                        e.requiredKgPerWeek == null -> "Re-baseline"
-                        abs(change) < 25 -> "On pace"
-                        else -> "%+.0f kcal".format(change)
-                    },
+                    if (e.requiredKgPerWeek == null) "Goal date passed" else "To get back on plan",
+                    if (e.requiredKgPerWeek == null) "Re-baseline" else "≈" + roughKcal(e.targetIntake),
                     m,
-                    sub = if (e.requiredKgPerWeek == null) "in Plan" else "a day · target ≈ %,.0f".format(e.targetIntake),
+                    sub = when {
+                        e.requiredKgPerWeek == null -> "in Plan"
+                        change == 0 -> "kcal/day · on pace"
+                        change < 0 -> "kcal/day · %,d less".format(-change)
+                        else -> "kcal/day · %,d more".format(change)
+                    },
                     highlight = true,
                 )
             }
+            Text(
+                "The plan assumes ≈${roughKcal(e.plannedIntake)} kcal/day (deficit ${roughDeficit(e.expectedDeficit)}). " +
+                    "Worked out from your weight trend, not food logs, so treat these as estimates.",
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.Muted,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
             if (e.intakeFloored) {
                 Text(
                     "Limited to ${Safety.MIN_INTAKE_KCAL.toInt()} kcal/day. Consider re-baselining instead of eating less.",
@@ -201,6 +210,9 @@ private fun ForecastTiles(d: Dashboard) {
         }
     }
 }
+
+/** A deficit rounded to 10 kcal ("360"). */
+private fun roughDeficit(v: Double) = "%,d".format((Math.round(v / 10.0) * 10).toInt())
 
 /** Last five weeks: km run as bars, average weight underneath. */
 @Composable

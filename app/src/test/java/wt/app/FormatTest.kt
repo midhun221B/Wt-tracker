@@ -5,6 +5,7 @@ import wt.app.ui.duration
 import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
+import wt.app.ui.roughKcal
 import wt.app.ui.weekRange
 import wt.core.model.TOKYO
 import java.time.Duration
@@ -14,6 +15,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class FormatTest {
+    @Test
+    fun roughKcalRoundsToFifty() {
+        assertEquals("2,350", roughKcal(2358.0))
+        assertEquals("2,100", roughKcal(2076.0))
+        assertEquals("1,800", roughKcal(1800.0))
+    }
+
     @Test
     fun weekRanges() {
         assertEquals("12 – 18 Oct", weekRange(java.time.LocalDate.of(2026, 10, 12)))

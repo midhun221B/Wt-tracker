@@ -24,6 +24,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#6](https://github.com/midhun221B/Wt-tracker/pull/6) | Screenshot import: Strava run and body-scale screenshots read on the phone (ML Kit, offline), confirm dialog before saving |
 | [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
 | [#9](https://github.com/midhun221B/Wt-tracker/pull/9) | Weekly weigh-in (weigh-in day setting, Room v3, forecast falls back to 42 days with 4+ weigh-ins over 3+ weeks, alert after 8 days); Mon–Sun weeks (runs before week 1 count as week 0, −1, …); collapsed older run weeks; `FormDialog` and dark fields for every pop-up; top-bar import removed (Strava CSV moved into Add run); Plan tab in "B orange" |
+| [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
 
 ### Not merged
 - Nothing pending. Start the next change from the latest `main`.
@@ -33,7 +34,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Dashboard ("Trend"):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
-  - Energy balance with the intake change needed.
+  - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
@@ -69,6 +70,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 3. Open questions: hunger, sleep, snacks and note are stored with a weigh-in, so they're now weekly. If daily notes matter,
    they need their own table.
 4. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
+
+## Product decisions
+- **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
+  from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
+- **Weekly weigh-ins** on a chosen day; hunger, sleep, snacks and notes are a weekly check-in stored with the weigh-in.
 
 ## Design decisions
 - **Chosen direction: "B orange".**

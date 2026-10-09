@@ -73,6 +73,16 @@ class EnergyTest {
     }
 
     @Test
+    fun plannedIntakeIsMaintenancePlusRunsMinusPlannedDeficit() {
+        val data = Synthetic.series(days = 21, kgPerWeek = 0.5, noiseSd = 0.0)
+        val fit = fitTrend(data, data.last().date)!!
+        val e = energyBalance(fit, emptyList(), profile)
+        assertEquals(e.maintenanceKcal - profile.plannedFoodDeficitKcal, e.plannedIntake, 1e-9)
+        // Losing faster than the plan's deficit means eating less than the plan assumes.
+        assertEquals(e.plannedIntake - (e.actualDeficit - e.expectedDeficit), e.estimatedIntake, 1e-9)
+    }
+
+    @Test
     fun goalDatePassedGivesNoRequirement() {
         val data = Synthetic.series(days = 21, kgPerWeek = 0.3, noiseSd = 0.0)
         val fit = fitTrend(data, data.last().date)!!
