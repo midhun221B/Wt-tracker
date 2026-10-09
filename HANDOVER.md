@@ -37,7 +37,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#20](https://github.com/midhun221B/Wt-tracker/pull/20) | Version 0.2.0 (`versionCode` 2); CI creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` when a new version reaches `main` |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Settings › About shows the app version (`BuildConfig.VERSION_NAME`; `buildConfig` enabled in `app/build.gradle.kts`).
+  Version 0.2.1 (`versionCode` 3); merging creates the `v0.2.1` release.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -51,7 +52,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
 - **Plan:** edit checkpoints, re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy settings.
-- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore.
+- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
 
 ## Open items / next steps
 1. **Screenshot import: merged via #6, confirmed working on the owner's phone with both screenshots.**
