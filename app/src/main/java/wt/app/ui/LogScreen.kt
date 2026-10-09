@@ -73,10 +73,12 @@ fun LogScreen(
     var showRunDialog by remember { mutableStateOf(false) }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
-    val status = weighInStatus(state.weights.map { it.date }, date, weighInDay.value)
+    // A scale measurement counts as the week's weigh-in too (it may have been saved without a weight).
+    val status = weighInStatus(state.weights.map { it.date } + state.body.map { it.date }, date, weighInDay.value)
     var weighInOpen by remember(date) { mutableStateOf(false) }
-    // Weekly: show the card when this week's weigh-in is due, the day already has a weight, or on request.
-    val showWeighIn = status.due || existing != null || weighInOpen
+    // Weekly: the big card shows only while this week's weigh-in is due, or when asked for ("Weigh in now" / "Edit").
+    // A day that already has a weight shows it in the small card instead.
+    val showWeighIn = (status.due && existing == null) || weighInOpen
     val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg ?: 80.0
 
     // Field state resets when the date (or its stored entry) changes.
@@ -155,6 +157,7 @@ fun LogScreen(
                     // Only the weight is asked now; sleep, hunger, snacks and notes from older entries are kept.
                     val kg = round(kgValue!! * 100) / 100
                     onSaveWeight(existing?.copy(kg = kg) ?: WeightEntity(date = date, kg = kg))
+                    weighInOpen = false
                 },
                 enabled = weightValid,
                 modifier = Modifier.fillMaxWidth().height(58.dp),
@@ -168,14 +171,19 @@ fun LogScreen(
                 )
             }
             if (existing != null) {
-                TextButton(onClick = { onDeleteWeight(date) }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
+                TextButton(onClick = { onDeleteWeight(date); weighInOpen = false }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
         } else {
             NextWeighInCard(
                 next = status.next,
-                doneThisWeek = status.doneOn?.let { d -> state.weights.firstOrNull { it.date == d } },
+                done = status.doneOn?.let { d ->
+                    val kg = state.weights.firstOrNull { it.date == d }?.kg
+                    val day = if (d == date) "today" else "on ${dayMonth(d)}"
+                    if (kg != null) "This week done: %.1f kg %s".format(kg, day) else "This week done: scale measurement $day"
+                },
                 last = state.weights.lastOrNull { it.date <= date },
                 weighInDay = weighInDay.value,
+                actionLabel = if (existing != null) "Edit ${if (date == state.today) "today's" else "this day's"} weight" else "Weigh in now",
                 onWeighInNow = { weighInOpen = true },
                 onWeighInDay = onWeighInDay,
             )
@@ -209,9 +217,10 @@ fun LogScreen(
 @Composable
 private fun NextWeighInCard(
     next: LocalDate,
-    doneThisWeek: WeightEntity?,
+    done: String?,
     last: WeightEntity?,
     weighInDay: Int,
+    actionLabel: String,
     onWeighInNow: () -> Unit,
     onWeighInDay: (Int) -> Unit,
 ) {
@@ -221,15 +230,11 @@ private fun NextWeighInCard(
             Text("Next weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             Text(longDay(next), style = numberStyle(30.sp))
             when {
-                doneThisWeek != null -> Text(
-                    "This week done: %.1f kg on %s".format(doneThisWeek.kg, dayMonth(doneThisWeek.date)),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Palette.Accent,
-                )
+                done != null -> Text(done, style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
                 last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text("Weigh in now", color = Palette.Accent) }
+                TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text(actionLabel, color = Palette.Accent) }
                 TextButton(onClick = { picking = !picking }, contentPadding = PaddingValues(0.dp)) {
                     Text(if (picking) "Done" else "Change day", color = Palette.Muted)
                 }

@@ -36,6 +36,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - **Sample runs removed:** fresh installs no longer seed `Defaults.sampleRuns`. On start, `removeSampleRuns()` deletes the
     leftover ones that are still undated, manual, and have the exact sample km and time; dated or edited runs stay.
   - **Settings:** the reminder time is a button that opens a Material3 `TimePicker` (24 h) instead of a typed field.
+  - **Fix (owner, 9 Oct, still seeing the big weigh-in card on the new build):**
+    - A day that already has a weight now shows the small card ("This week done: … kg today" plus "Edit today's weight")
+      instead of the big card.
+    - A scale measurement counts as the week's weigh-in (Today and the reminder), even if it was saved without a weight.
+    - New screenshot: `2c-logged-today`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".

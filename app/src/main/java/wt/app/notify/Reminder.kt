@@ -89,8 +89,9 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val db = AppDatabase.get(applicationContext)
         val today = todayInTokyo()
         val weighInDay = db.profile().get()?.weighInDay ?: 1
-        // Due = no weight yet this Monday–Sunday week and the weigh-in day has come (so a missed day keeps reminding).
-        if (weighInStatus(db.weights().all().map { it.date }, today, weighInDay).due) Reminder.show(applicationContext)
+        // Due = no weight or scale measurement yet this Monday–Sunday week and the weigh-in day has come (so a missed day keeps reminding).
+        val logged = db.weights().all().map { it.date } + db.bodyComp().all().map { it.date }
+        if (weighInStatus(logged, today, weighInDay).due) Reminder.show(applicationContext)
         return Result.success()
     }
 }
