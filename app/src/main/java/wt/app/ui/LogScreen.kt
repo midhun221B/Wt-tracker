@@ -68,11 +68,7 @@ import wt.app.data.BodyCompEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.core.summary.weekStart
-import wt.core.Safety
-import wt.core.summary.Suggestion
-import wt.core.summary.WeeklyReview
 import wt.core.summary.WeighInProgress
-import wt.core.summary.weeklyReview
 import wt.core.summary.weighInProgress
 import wt.core.summary.weighInStatus
 import java.time.DayOfWeek
@@ -246,11 +242,6 @@ fun LogScreen(
             )
         }
 
-        // The weekly check-in on a weigh-in day: trend, runs, plan gap and one suggestion.
-        if (!showWeighIn) {
-            weeklyReview(state.dashboard, state.runs.map { it.toModel() }, date)?.let { WeeklyReviewCard(it) }
-        }
-
         RunningCard(
             date = date,
             today = state.today,
@@ -350,73 +341,6 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
             TextButton(onClick = onEdit) { Text("Edit", color = Palette.Muted) }
         }
     }
-}
-
-/**
- * The weekly check-in shown on a weigh-in day: the trend's change since the previous weigh-in, the runs in between
- * (and the stretch before), the gap to the plan and one suggestion that stays within the safety limits.
- */
-@Composable
-private fun WeeklyReviewCard(r: WeeklyReview) {
-    DarkCard {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Column {
-                Text("Week ${r.week} review", style = MaterialTheme.typography.titleMedium)
-                Text("since ${shortDay(r.since)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            }
-            r.trendChangeKg?.let { c ->
-                ReviewRow("Trend", "%+.1f kg".format(c), if (c <= 0.05) Palette.Accent else Palette.Warn)
-            }
-            val before = if (r.previousRuns != null && r.previousKm != null) " (before: ${r.previousRuns} · %.1f km)".format(r.previousKm) else ""
-            ReviewRow("Runs", "${r.runs} · %.1f km".format(r.km) + before)
-            r.gapKg?.let { gap ->
-                val where = when {
-                    gap < -0.05 -> "%.1f kg ahead".format(-gap)
-                    gap <= 0.05 -> "On plan"
-                    else -> "%.1f kg behind".format(gap)
-                }
-                val change = r.gapChangeKg?.let { c ->
-                    when {
-                        c < -0.05 -> " · %.1f kg closer".format(-c)
-                        c > 0.05 -> " · %.1f kg further".format(c)
-                        else -> " · steady"
-                    }
-                }.orEmpty()
-                ReviewRow("Plan", where + change, if (gap <= 0.05) Palette.Accent else Palette.Warn)
-            }
-            Text(
-                suggestionText(r.suggestion),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth()
-                    .background(Palette.Accent.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-            )
-            Text(Safety.DISCLAIMER, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-        }
-    }
-}
-
-@Composable
-private fun ReviewRow(label: String, value: String, color: Color = Palette.Text) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.width(56.dp))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = color)
-    }
-}
-
-/** One plain sentence per suggestion; kcal rounded to 50 like the Trend tab. */
-private fun suggestionText(s: Suggestion): String = when (s) {
-    Suggestion.TooEarly -> "Your trend starts after 3 weigh-ins. Keep weighing in weekly."
-    Suggestion.OnPlan -> "Keep this week's routine."
-    Suggestion.OnPace -> "Behind the plan line, but your pace still reaches the goal on time. Keep going."
-    is Suggestion.RunMore -> "Add about %.1f km of easy running a week.".format(s.kmPerWeek)
-    is Suggestion.EatLess ->
-        if (s.floored) {
-            "Aim for about %,d kcal a day. That's the lowest the app suggests; a later goal date may be kinder: see Re-baseline.".format(round50(s.targetKcal))
-        } else {
-            "Aim for about %,d kcal a day (about %,d less).".format(round50(s.targetKcal), round50(s.lessKcal))
-        }
-    is Suggestion.SlowDown -> "Faster than 1 kg a week. Eat a little more: about %,d kcal a day.".format(round50(s.targetKcal))
 }
 
 /**

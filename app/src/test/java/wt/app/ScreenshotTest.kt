@@ -51,12 +51,11 @@ class ScreenshotTest {
 
     private val today = LocalDate.of(2026, 11, 5)
 
-    /** Sample data as of [today]; [extraWeights] are added before the dashboard is built. */
-    private fun sampleState(extraWeights: List<WeightEntity> = emptyList()): UiState {
+    private fun sampleState(): UiState {
         val rnd = Random(7)
         val weights = listOf(0, 4, 11, 18, 25).map { d -> // 8 Oct, then Mondays 12 Oct to 2 Nov
             WeightEntity(Defaults.START.plusDays(d.toLong()), Math.round((88.3 - 0.05 * d + rnd.nextGaussian() * 0.35) * 10) / 10.0)
-        } + extraWeights
+        }
         val runs = (0..28).filter { it % 7 !in setOf(2, 5) }.mapIndexed { i, d ->
             RunEntity(i + 1L, Defaults.START.plusDays(d.toLong()), 3.0 + (d / 25) * 0.5, 1260 + rnd.nextInt(120))
         } + RunEntity(100, null, 2.81, 1216) + RunEntity(101, LocalDate.of(2026, 10, 4), 3.0, 1290) // a run before the plan
@@ -82,8 +81,10 @@ class ScreenshotTest {
         )
     }
 
-    /** A fresh install: by default the plan's first day with one weigh-in, no runs, no measurements. */
-    private fun freshState(day: LocalDate = Defaults.START, weights: List<WeightEntity> = listOf(WeightEntity(Defaults.START, 88.3))): UiState {
+    /** A fresh install on the plan's first day: one weigh-in, no runs, no measurements. */
+    private fun freshState(): UiState {
+        val day = Defaults.START
+        val weights = listOf(WeightEntity(day, 88.3))
         val profile = ProfileEntity.from(Defaults.profile)
         return UiState(
             today = day,
@@ -137,11 +138,6 @@ class ScreenshotTest {
         LogScreen(s.copy(weights = s.weights + WeightEntity(today, 86.9)), {}, {}, { _, _ -> }, {}, onScreenshot = {}, savedWeighIn = today)
     }
 
-    // This week's weigh-in today (Thu 5 Nov, after Monday's): the weekly review since Mon 2 Nov under the small card.
-    @Test fun weeklyReview() = shoot("2h-weekly-review") {
-        LogScreen(sampleState(extraWeights = listOf(WeightEntity(today, 86.9))), {}, {}, { _, _ -> }, {}, onScreenshot = {})
-    }
-
     // Today before the run is logged, and a rest day instead of a run.
     @Test fun noRunYet() = shoot("2d-no-run-yet") {
         val s = sampleState()
@@ -168,12 +164,6 @@ class ScreenshotTest {
 
     // Fresh install: what each tab looks like with one weigh-in and nothing else.
     @Test fun freshToday() = shoot("9a-fresh-today") { LogScreen(freshState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
-
-    // The second weekly weigh-in on a fresh install: the review is there, but the trend needs a third weigh-in.
-    @Test fun freshSecondWeighIn() = shoot("9f-fresh-second-weigh-in") {
-        val day = Defaults.START.plusDays(7)
-        LogScreen(freshState(day, listOf(WeightEntity(Defaults.START, 88.3), WeightEntity(day, 87.8))), {}, {}, { _, _ -> }, {}, onScreenshot = {})
-    }
 
     @Test fun freshTrend() = shoot("9b-fresh-trend") { DashboardScreen(freshState().dashboard) }
 
