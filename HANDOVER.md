@@ -32,15 +32,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#15](https://github.com/midhun221B/Wt-tracker/pull/15) | Today: "Run done" / rest-day done state, Mon–Sun week dots with "N runs · X km this week", 3 s "Run logged" banner after saving a run |
 | [#16](https://github.com/midhun221B/Wt-tracker/pull/16) | Today polish: one-line Next weigh-in card (tap to change day), pace and "+ Add another" on one row, dash for missed days in the week dots, "Run logged" banner under the top bar for every new run (form or screenshot) |
 | [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
+| [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - Today: when the week was done by a scale measurement without a weight, "Edit" opens that measurement (edit or delete) instead of an empty weight entry.
-  - Today: in the "Run done" card, pace and time sit right under the distance, with "+ Add another" on the right.
-  - Today, weigh-in: a drag ruler (0.1 kg ticks, haptic per tick, plan as a blue dashed mark, last week as a grey mark) replaces the − / + buttons; the number can still be typed. After saving, a "Weigh-in saved" card: the goal ring fills from the previous weigh-in's progress to the new one (`weighInProgress` in `core/summary`), change since the last weigh-in, gap to plan, "Edit". It closes when the day or tab changes.
-  - Today, run: the check pops with one ring pulse (and today's week dot pops) when a new run is logged.
-  - Both animations are skipped when the phone's animations are off.
-  - CI: publishing to `debug-latest` moved to its own `publish` job with a concurrency group, so two pushes of the same commit no longer clash (that turned `main` red once after #17).
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
