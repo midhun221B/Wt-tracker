@@ -230,7 +230,7 @@ fun AppScaffold(vm: AppViewModel) {
             return@Scaffold
         }
         when (tab) {
-            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier, onScreenshot = pickScreenshot, onWeighInDay = vm::setWeighInDay)
+            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier, onScreenshot = pickScreenshot, onWeighInDay = vm::setWeighInDay, onSaveBody = vm::saveBody, onDeleteBody = vm::deleteBody)
             Tab.DASHBOARD -> DashboardScreen(s.dashboard, modifier)
             Tab.RUNS -> RunsScreen(
                 s.runs, s.today, vm::saveRun, vm::deleteRun,

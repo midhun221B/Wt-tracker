@@ -34,7 +34,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`:
+  - Today: when the week was done by a scale measurement without a weight, "Edit" opens that measurement (edit or delete) instead of an empty weight entry.
+  - Today: in the "Run done" card, pace and time sit right under the distance, with "+ Add another" on the right.
+  - CI: publishing to `debug-latest` moved to its own `publish` job with a concurrency group, so two pushes of the same commit no longer clash (that turned `main` red once after #17).
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (±0.1 steppers or scale screenshot), weight only; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -101,5 +104,6 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
     `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/<name>`.
   - Screenshot names: `1-dashboard.png`, `2-today.png`, `3-runs.png`, `4-plan.png`, `5-body.png`, `wt-tracker-debug.apk`.
   - GitHub artifact and log downloads are blocked from the cloud sandbox; release downloads work.
+  - Publishing runs in a separate `publish` job, one at a time; the release notes name the branch and commit it came from.
 - Workflow the owner uses: small steps, show results (screenshots, APK) after each one, then PR → merge with a merge commit.
   After a merge, start the next change from the latest `main`.

@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import wt.app.data.BodyCompEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.core.summary.weekStart
@@ -76,9 +77,12 @@ fun LogScreen(
     modifier: Modifier = Modifier,
     onScreenshot: (() -> Unit)? = null,
     onWeighInDay: (Int) -> Unit = {},
+    onSaveBody: (BodyCompEntity) -> Unit = {},
+    onDeleteBody: (LocalDate) -> Unit = {},
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
+    var editingBody by remember { mutableStateOf<BodyCompEntity?>(null) }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
     // A scale measurement counts as the week's weigh-in too (it may have been saved without a weight).
@@ -198,8 +202,15 @@ fun LogScreen(
                 actionLabel = if (status.doneOn != null || existing != null) "Edit" else "Weigh in",
                 onWeighInNow = {
                     val target = status.doneOn ?: date
-                    date = target
-                    weighInFor = target
+                    val scaleOnly = state.weights.none { it.date == target }
+                    val body = state.body.firstOrNull { it.date == target }
+                    if (status.doneOn != null && scaleOnly && body != null) {
+                        // The week was done by a scale measurement without a weight: edit that measurement.
+                        editingBody = body
+                    } else {
+                        date = target
+                        weighInFor = target
+                    }
                 },
                 onWeighInDay = onWeighInDay,
             )
@@ -226,6 +237,18 @@ fun LogScreen(
             onDismiss = { showRunDialog = false },
             onSave = { onSaveRun(it); showRunDialog = false },
             onFromScreenshot = onScreenshot?.let { pick -> { showRunDialog = false; pick() } },
+        )
+    }
+
+    editingBody?.let { e ->
+        BodyDialog(
+            e, state.today, null, { editingBody = null },
+            onSave = { it, _ ->
+                if (it.date != e.date) onDeleteBody(e.date) // date changed: move the entry
+                onSaveBody(it)
+                editingBody = null
+            },
+            onDelete = { onDeleteBody(e.date); editingBody = null },
         )
     }
 }
@@ -302,15 +325,14 @@ private fun RunningCard(
                 runs.isNotEmpty() -> {
                     val km = runs.sumOf { it.km }
                     val sec = runs.sumOf { it.durationSec }
+                    // Pace and time sit right under the distance; "+ Add another" on the right of the same block.
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         DoneMark(filled = true)
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(if (runs.size > 1) "${runs.size} runs done" else "Run done", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
                             Text("%.2f km".format(km), style = numberStyle(28.sp))
+                            Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                         }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.weight(1f))
                         TextButton(onClick = onAddRun) { Text("+ Add another", color = Palette.Muted) }
                     }
                 }
