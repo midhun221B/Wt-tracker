@@ -25,14 +25,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
 | [#9](https://github.com/midhun221B/Wt-tracker/pull/9) | Weekly weigh-in (weigh-in day setting, Room v3, forecast falls back to 42 days with 4+ weigh-ins over 3+ weeks, alert after 8 days); Mon–Sun weeks (runs before week 1 count as week 0, −1, …); collapsed older run weeks; `FormDialog` and dark fields for every pop-up; top-bar import removed (Strava CSV moved into Add run); Plan tab in "B orange" |
 | [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
+| [#11](https://github.com/midhun221B/Wt-tracker/pull/11) | Today: "Change day" on the Next weigh-in card, one running card (run, rest day, week numbers), hunger no longer asked; Settings in the new style; `8-settings` screenshot |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - **Today:** the "Next weigh-in" card has a "Change day" button that opens the weekday chips.
-    The run card, rest-day card and week strip are merged into one running card.
-    Hunger is no longer asked; the stored column is kept, and saving keeps an old value.
-  - **Settings** use the new buttons and the shared `WeekdayPicker`.
-  - New screenshot `8-settings`.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with sleep, snacks and note; other days a "Next weigh-in" card with "Change day".
