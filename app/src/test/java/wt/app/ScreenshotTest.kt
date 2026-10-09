@@ -2,6 +2,7 @@ package wt.app
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.core.view.drawToBitmap
@@ -16,7 +17,10 @@ import wt.app.data.PlanEntity
 import wt.app.data.ProfileEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
+import wt.app.ui.BodyDialog
 import wt.app.ui.BodyScreen
+import wt.app.ui.LocalInlineDialogs
+import wt.app.ui.RunDialog
 import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
@@ -31,7 +35,7 @@ import java.util.Random
 
 /**
  * Renders screens with sample data and saves PNGs to app/build/screenshots (uploaded by CI).
- * Sample: 4 weeks of noisy weigh-ins losing ~0.35 kg/week, a run most days.
+ * Sample: the start weight, then weekly Monday weigh-ins losing ~0.35 kg/week, and a run most days.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -43,12 +47,12 @@ class ScreenshotTest {
 
     private fun sampleState(): UiState {
         val rnd = Random(7)
-        val weights = (0..28).filter { it % 9 != 4 }.map { d ->
+        val weights = listOf(0, 4, 11, 18, 25).map { d -> // 8 Oct, then Mondays 12 Oct to 2 Nov
             WeightEntity(Defaults.START.plusDays(d.toLong()), Math.round((88.3 - 0.05 * d + rnd.nextGaussian() * 0.35) * 10) / 10.0)
         }
         val runs = (0..28).filter { it % 7 !in setOf(2, 5) }.mapIndexed { i, d ->
             RunEntity(i + 1L, Defaults.START.plusDays(d.toLong()), 3.0 + (d / 25) * 0.5, 1260 + rnd.nextInt(120))
-        } + RunEntity(100, null, 2.81, 1216)
+        } + RunEntity(100, null, 2.81, 1216) + RunEntity(101, LocalDate.of(2026, 10, 4), 3.0, 1290) // a run before the plan
         val body = listOf(
             BodyCompEntity(Defaults.START, 29.2, 16.0, 60.1, 37.0, 62.5, 1818.0),
             BodyCompEntity(Defaults.START.plusDays(14), 28.8, 15.5, 60.0, 37.1, 62.3, 1810.0),
@@ -82,14 +86,33 @@ class ScreenshotTest {
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
 
-    @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}) }
+    // 5 Nov is a Thursday; the default weigh-in day is Monday, so this is an off day.
+    @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
+
+    @Test fun weighIn() = shoot("2b-weigh-in") {
+        val s = sampleState()
+        LogScreen(s.copy(profile = s.profile.copy(weighInDay = 4)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+    }
 
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()
-        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, programStart = Defaults.START)
+        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
     }
 
     @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
+
+    // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.
+    @Test fun addRun() = shoot("6-add-run") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            RunDialog(null, today, onDismiss = {}, onSave = {}, onFromScreenshot = {}, onImportCsv = {})
+        }
+    }
+
+    @Test fun addMeasurement() = shoot("7-add-measurement") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            BodyDialog(null, today, sampleState().body.last(), {}, { _, _ -> }, onFromScreenshot = {})
+        }
+    }
 }

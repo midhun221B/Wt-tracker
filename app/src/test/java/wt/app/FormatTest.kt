@@ -5,6 +5,7 @@ import wt.app.ui.duration
 import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
+import wt.app.ui.weekRange
 import wt.core.model.TOKYO
 import java.time.Duration
 import java.time.ZonedDateTime
@@ -13,6 +14,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class FormatTest {
+    @Test
+    fun weekRanges() {
+        assertEquals("12 – 18 Oct", weekRange(java.time.LocalDate.of(2026, 10, 12)))
+        assertEquals("28 Sep – 4 Oct", weekRange(java.time.LocalDate.of(2026, 9, 28)))
+    }
+
     @Test
     fun durations() {
         assertEquals(20 * 60 + 16, parseDuration("20:16"))

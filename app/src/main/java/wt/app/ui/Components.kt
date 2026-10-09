@@ -1,6 +1,16 @@
 package wt.app.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
@@ -34,9 +44,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -185,6 +193,7 @@ fun TileRow(content: @Composable (Modifier) -> Unit) {
     }
 }
 
+/** Filled dark field with its label inside, above the value, and an optional unit on the right. */
 @Composable
 fun NumberField(
     label: String,
@@ -195,34 +204,74 @@ fun NumberField(
     keyboardType: KeyboardType = KeyboardType.Decimal,
     isError: Boolean = false,
 ) {
-    OutlinedTextField(
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        suffix = suffix?.let { { Text(it) } },
         singleLine = true,
-        isError = isError,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = Palette.Text),
+        cursorBrush = SolidColor(Palette.Accent),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = label },
+        decorationBox = { inner -> FieldBox(label, isError, trailing = suffix?.let { { Text(it, color = Palette.Muted) } }) { inner() } },
     )
 }
 
-/** Read-only date field that opens a date picker. */
+/** Shared look of [NumberField] and [DateField]: raised fill, rounded 12, label on top, red outline on error. */
+@Composable
+private fun FieldBox(
+    label: String,
+    isError: Boolean,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+    value: @Composable () -> Unit,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 58.dp)
+            .background(Palette.CardHigh, RoundedCornerShape(12.dp))
+            .then(if (isError) Modifier.border(1.dp, Palette.Error, RoundedCornerShape(12.dp)) else Modifier)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = if (isError) Palette.Error else Palette.Muted)
+            value()
+        }
+        if (trailing != null) trailing()
+    }
+}
+
+private val fieldDateFmt = java.time.format.DateTimeFormatter.ofPattern("EEE, d MMM yyyy", java.util.Locale.ENGLISH)
+private val compactDateFmt = java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.ENGLISH)
+
+/**
+ * Read-only date field in the same style as [NumberField]; tapping it opens a date picker.
+ * [withWeekday] = false drops the weekday ("8 Nov 2026") for narrow rows.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateField(label: String, date: LocalDate?, onChange: (LocalDate) -> Unit, modifier: Modifier = Modifier, isError: Boolean = false) {
+fun DateField(
+    label: String,
+    date: LocalDate?,
+    onChange: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    withWeekday: Boolean = true,
+) {
     var open by remember { mutableStateOf(false) }
-    OutlinedTextField(
-        value = date?.toString() ?: "",
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(label) },
-        placeholder = { Text("Set date") },
-        isError = isError,
-        trailingIcon = { IconButton(onClick = { open = true }) { Icon(Icons.Default.DateRange, "Pick date") } },
-        singleLine = true,
-        modifier = modifier,
-    )
+    FieldBox(
+        label, isError,
+        modifier = modifier.clip(RoundedCornerShape(12.dp)).clickable(onClickLabel = "Pick date") { open = true },
+        trailing = { Icon(Icons.Default.DateRange, null, tint = Palette.Muted) },
+    ) {
+        Text(
+            date?.format(if (withWeekday) fieldDateFmt else compactDateFmt) ?: "Set date",
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (date == null) Palette.Muted else Palette.Text,
+            maxLines = 1,
+        )
+    }
     if (open) {
         val state = rememberDatePickerState(
             initialSelectedDateMillis = (date ?: todayInTokyo()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
@@ -238,6 +287,87 @@ fun DateField(label: String, date: LocalDate?, onChange: (LocalDate) -> Unit, mo
             dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
         ) { DatePicker(state) }
     }
+}
+
+/** When true, [FormDialog] draws in place instead of in a window, so screenshot tests can capture it. */
+val LocalInlineDialogs = staticCompositionLocalOf { false }
+
+/**
+ * The app's pop-up form: a dark card with a title, the [content], a full-width orange [confirmLabel] button,
+ * then "Delete" (when [onDelete] is set) on the left and [dismissLabel] on the right.
+ */
+@Composable
+fun FormDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    confirmEnabled: Boolean = true,
+    dismissLabel: String? = "Cancel",
+    onDelete: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val sheet: @Composable () -> Unit = {
+        Card(
+            Modifier.fillMaxWidth().padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+        ) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                content()
+                Button(
+                    onClick = onConfirm,
+                    enabled = confirmEnabled,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Palette.Accent, contentColor = Palette.OnAccent,
+                        disabledContainerColor = Palette.CardHigh, disabledContentColor = Palette.Muted,
+                    ),
+                ) { Text(confirmLabel, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+                if (onDelete != null || dismissLabel != null) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        if (onDelete != null) TextButton(onClick = onDelete) { Text("Delete", color = Palette.Error) }
+                        Spacer(Modifier.weight(1f))
+                        if (dismissLabel != null) TextButton(onClick = onDismiss) { Text(dismissLabel, color = Palette.Muted) }
+                    }
+                }
+            }
+        }
+    }
+    if (LocalInlineDialogs.current) {
+        sheet()
+    } else {
+        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) { sheet() }
+    }
+}
+
+/** Orange filled button for a card's main action; grey when disabled. */
+@Composable
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = 48.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Palette.Accent, contentColor = Palette.OnAccent,
+            disabledContainerColor = Palette.CardHigh, disabledContentColor = Palette.Muted,
+        ),
+    ) { Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold) }
+}
+
+/** Raised grey button for secondary actions next to a [PrimaryButton]. */
+@Composable
+fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = 48.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Palette.CardHigh, contentColor = Palette.Text),
+    ) { Text(text, style = MaterialTheme.typography.labelLarge) }
 }
 
 /** Full-width button at the top of the add dialogs that fills the entry from a screenshot instead. */

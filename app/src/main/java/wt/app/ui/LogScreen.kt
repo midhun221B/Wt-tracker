@@ -46,12 +46,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
+import wt.core.summary.WeekSummary
+import wt.core.summary.weekStart
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import kotlin.math.round
 
 private val hungerLabels = listOf("None", "Low", "Okay", "High", "Very")
 
-/** Phone-first daily log: weight (with ±0.1 steppers), optional notes, rest day, quick run. */
+/**
+ * The day's page: run, rest day and this week's numbers. On the weekly weigh-in day (or when the day already has
+ * a weight, or after "Weigh in now") it also shows the weigh-in card with ±0.1 steppers and the weekly check-in.
+ */
 @Composable
 fun LogScreen(
     state: UiState,
@@ -65,6 +72,9 @@ fun LogScreen(
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
     val existing = state.weights.firstOrNull { it.date == date }
+    val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
+    var weighInOpen by remember(date) { mutableStateOf(false) }
+    val showWeighIn = date.dayOfWeek == weighInDay || existing != null || weighInOpen
     val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg ?: 80.0
 
     // Field state resets when the date (or its stored entry) changes.
@@ -98,65 +108,104 @@ fun LogScreen(
             }
         }
 
-        DarkCard(radius = 24) {
-            Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Morning weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it - 0.1) * 10) / 10) } }, label = "Decrease by 0.1 kg", size = 56) {
-                        Text("−", fontSize = 26.sp)
-                    }
-                    BasicTextField(
-                        value = weight,
-                        onValueChange = { weight = it },
-                        singleLine = true,
-                        textStyle = numberStyle(80.sp, if (weightValid) Palette.Text else Palette.Error).copy(textAlign = TextAlign.Center),
-                        cursorBrush = SolidColor(Palette.Accent),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.width(150.dp).semantics { contentDescription = "Weight in kg" },
-                    )
-                    SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it + 0.1) * 10) / 10) } }, label = "Increase by 0.1 kg", size = 56) {
-                        Text("+", fontSize = 26.sp)
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Pill("Plan %.1f kg".format(planned))
-                    if (kgValue != null) {
-                        val diff = kgValue - planned
-                        if (diff <= 0.05) {
-                            Pill(if (diff < -0.05) "%.1f kg under plan".format(-diff) else "On plan", filled = true)
-                        } else {
-                            Pill("%.1f kg over plan".format(diff), textColor = Palette.Warn)
+        if (showWeighIn) {
+            DarkCard(radius = 24) {
+                Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(if (date.dayOfWeek == weighInDay) "Weekly weigh-in" else "Extra weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it - 0.1) * 10) / 10) } }, label = "Decrease by 0.1 kg", size = 56) {
+                            Text("−", fontSize = 26.sp)
+                        }
+                        BasicTextField(
+                            value = weight,
+                            onValueChange = { weight = it },
+                            singleLine = true,
+                            textStyle = numberStyle(80.sp, if (weightValid) Palette.Text else Palette.Error).copy(textAlign = TextAlign.Center),
+                            cursorBrush = SolidColor(Palette.Accent),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.width(150.dp).semantics { contentDescription = "Weight in kg" },
+                        )
+                        SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it + 0.1) * 10) / 10) } }, label = "Increase by 0.1 kg", size = 56) {
+                            Text("+", fontSize = 26.sp)
                         }
                     }
-                }
-            }
-        }
-
-        DarkCard {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Hunger", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    hungerLabels.forEachIndexed { i, label ->
-                        val level = i + 1
-                        val selected = hunger == level
-                        Button(
-                            onClick = { hunger = if (selected) null else level },
-                            modifier = Modifier.weight(1f).height(44.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(0.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selected) Palette.Accent else Palette.CardHigh,
-                                contentColor = if (selected) Palette.OnAccent else Palette.Text,
-                            ),
-                        ) { Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Pill("Plan %.1f kg".format(planned))
+                        if (kgValue != null) {
+                            val diff = kgValue - planned
+                            if (diff <= 0.05) {
+                                Pill(if (diff < -0.05) "%.1f kg under plan".format(-diff) else "On plan", filled = true)
+                            } else {
+                                Pill("%.1f kg over plan".format(diff), textColor = Palette.Warn)
+                            }
+                        }
+                    }
+                    if (onScreenshot != null) {
+                        TextButton(onClick = onScreenshot) { Text("Fill from a scale screenshot", color = Palette.Accent) }
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DarkField(sleep, { sleep = it }, "Sleep (h)", Modifier.width(104.dp), KeyboardType.Decimal, isError = !sleepValid)
-                    DarkField(snacks, { snacks = it }, "Snacks", Modifier.weight(1f))
-                }
-                DarkField(note, { note = it }, "Note", Modifier.fillMaxWidth())
             }
+
+            DarkCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Hunger", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        hungerLabels.forEachIndexed { i, label ->
+                            val level = i + 1
+                            val selected = hunger == level
+                            Button(
+                                onClick = { hunger = if (selected) null else level },
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(0.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selected) Palette.Accent else Palette.CardHigh,
+                                    contentColor = if (selected) Palette.OnAccent else Palette.Text,
+                                ),
+                            ) { Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) }
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DarkField(sleep, { sleep = it }, "Sleep (h)", Modifier.width(104.dp), KeyboardType.Decimal, isError = !sleepValid)
+                        DarkField(snacks, { snacks = it }, "Snacks", Modifier.weight(1f))
+                    }
+                    DarkField(note, { note = it }, "Note", Modifier.fillMaxWidth())
+                }
+            }
+
+            Button(
+                onClick = {
+                    onSaveWeight(
+                        WeightEntity(
+                            date = date,
+                            kg = round(kgValue!! * 100) / 100,
+                            sleepHours = sleepValue,
+                            hunger = hunger,
+                            snacks = snacks.trim().ifBlank { null },
+                            note = note.trim().ifBlank { null },
+                        ),
+                    )
+                },
+                enabled = weightValid && sleepValid,
+                modifier = Modifier.fillMaxWidth().height(58.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Accent, contentColor = Palette.OnAccent),
+            ) {
+                Text(
+                    (if (existing == null) "Save " else "Update ") + (kgValue?.let { "%.1f kg".format(it) } ?: ""),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            if (existing != null) {
+                TextButton(onClick = { onDeleteWeight(date) }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
+            }
+        } else {
+            NextWeighInCard(
+                next = date.with(TemporalAdjusters.next(weighInDay)),
+                last = state.weights.lastOrNull { it.date <= date },
+                onWeighInNow = { weighInOpen = true },
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -167,12 +216,7 @@ fun LogScreen(
                         if (ranToday.isEmpty()) "No run" else "%.2f km".format(ranToday.sumOf { it.km }),
                         style = numberStyle(28.sp),
                     )
-                    val streak = state.dashboard.runStreak
-                    Text(
-                        (if (streak > 0) "$streak-day streak · " else "") + "add a run",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Palette.Muted,
-                    )
+                    Text("Tap to add a run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 }
             }
             DarkCard(Modifier.weight(1f)) {
@@ -183,33 +227,7 @@ fun LogScreen(
             }
         }
 
-        Button(
-            onClick = {
-                onSaveWeight(
-                    WeightEntity(
-                        date = date,
-                        kg = round(kgValue!! * 100) / 100,
-                        sleepHours = sleepValue,
-                        hunger = hunger,
-                        snacks = snacks.trim().ifBlank { null },
-                        note = note.trim().ifBlank { null },
-                    ),
-                )
-            },
-            enabled = weightValid && sleepValid,
-            modifier = Modifier.fillMaxWidth().height(58.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.Accent, contentColor = Palette.OnAccent),
-        ) {
-            Text(
-                (if (existing == null) "Save " else "Update ") + (kgValue?.let { "%.1f kg".format(it) } ?: ""),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        if (existing != null) {
-            TextButton(onClick = { onDeleteWeight(date) }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
-        }
+        WeekStrip(state.dashboard.weekly.firstOrNull { it.start == weekStart(date) }, if (date == state.today) state.dashboard.runStreak else null)
 
         Disclaimer()
     }
@@ -222,6 +240,46 @@ fun LogScreen(
             onSave = { onSaveRun(it); showRunDialog = false },
             onFromScreenshot = onScreenshot?.let { pick -> { showRunDialog = false; pick() } },
         )
+    }
+}
+
+/** Off-day card: when the next weigh-in is and the last weight, with a way to weigh in anyway. */
+@Composable
+private fun NextWeighInCard(next: LocalDate, last: WeightEntity?, onWeighInNow: () -> Unit) {
+    DarkCard(radius = 24) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Next weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            Text(longDay(next), style = numberStyle(30.sp))
+            if (last != null) {
+                Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            }
+            TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text("Weigh in now", color = Palette.Accent) }
+        }
+    }
+}
+
+/** Runs, distance and rest days of the week holding the shown day; [streak] only for today. */
+@Composable
+private fun WeekStrip(week: WeekSummary?, streak: Int?) {
+    if (week == null) return
+    DarkCard {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Week of ${weekRange(week.start)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            Row(Modifier.fillMaxWidth()) {
+                WeekFigure("${week.runs}", if (week.runs == 1) "run" else "runs", Modifier.weight(1f))
+                WeekFigure("%.1f".format(week.km), "km", Modifier.weight(1f))
+                WeekFigure("${week.restDays}", if (week.restDays == 1) "rest day" else "rest days", Modifier.weight(1f))
+                if (streak != null) WeekFigure("$streak", "day streak", Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeekFigure(value: String, label: String, modifier: Modifier) {
+    Column(modifier) {
+        Text(value, style = numberStyle(26.sp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
     }
 }
 

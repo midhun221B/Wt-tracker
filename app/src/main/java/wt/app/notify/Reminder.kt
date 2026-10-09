@@ -26,7 +26,10 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
-/** Daily weigh-in reminder: fires at the chosen Tokyo time if today's weight isn't logged yet. */
+/**
+ * Weekly weigh-in reminder. A daily job runs at the chosen Tokyo time and notifies only on the weigh-in day,
+ * if that day's weight isn't logged yet, so changing the day needs no rescheduling.
+ */
 object Reminder {
     private const val CHANNEL_ID = "weigh_in"
     private const val WORK_NAME = "daily-weigh-in"
@@ -67,8 +70,8 @@ object Reminder {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Time to weigh in")
-            .setContentText("Log today's weight to keep the forecast accurate.")
+            .setContentTitle("Weigh-in day")
+            .setContentText("Log this morning's weight.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
@@ -83,7 +86,9 @@ object Reminder {
 class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val db = AppDatabase.get(applicationContext)
-        if (db.weights().get(todayInTokyo()) == null) Reminder.show(applicationContext)
+        val today = todayInTokyo()
+        val weighInDay = db.profile().get()?.weighInDay ?: 1
+        if (today.dayOfWeek.value == weighInDay && db.weights().get(today) == null) Reminder.show(applicationContext)
         return Result.success()
     }
 }

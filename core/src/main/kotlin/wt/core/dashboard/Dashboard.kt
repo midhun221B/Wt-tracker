@@ -15,6 +15,8 @@ import wt.core.plan.PlannedLine
 import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
 import wt.core.summary.WeekSummary
+import wt.core.summary.programWeekIndex
+import wt.core.summary.weekStart
 import wt.core.summary.weeklySummary
 import wt.core.trend.DatedValue
 import wt.core.trend.Forecast
@@ -38,7 +40,14 @@ data class Dashboard(
     val body: List<BodyComp>,
     val latestWeight: WeightEntry?,
     val runStreak: Int,
+    /** Monday of program week 1: the week of the first weigh-in (or of the plan start before any). */
+    val week1: LocalDate,
 ) {
+    /** Current program week and the week of the goal date, e.g. 1 to 14 for "Week 1 of 14". */
+    fun programWeek(): Pair<Int, Int> =
+        programWeekIndex(week1, asOf).coerceAtLeast(1) to programWeekIndex(week1, plan.goal.date).coerceAtLeast(1)
+
+
     /** Preview of re-baselining from today to the current goal; null without any weigh-in. */
     fun rebaselinePreview(): RebaselineResult? =
         if (latestWeight == null) null else rebaseline(weights, asOf, plan.goal.date, plan.goal.kg)
@@ -46,7 +55,7 @@ data class Dashboard(
 
 /**
  * The goal (date and kg) is the last checkpoint of the active plan.
- * Weekly rows are anchored on the first weigh-in, so re-baselining doesn't renumber weeks.
+ * Weeks run Monday to Sunday; week 1 is the week of the first weigh-in, so re-baselining doesn't renumber weeks.
  */
 fun buildDashboard(
     weights: List<WeightEntry>,
@@ -61,6 +70,7 @@ fun buildDashboard(
     val plan = PlannedLine(checkpoints)
     val sorted = weights.filter { it.date <= asOf }.sortedBy { it.date }
     val fit = fitTrend(sorted, asOf)
+    val week1 = weekStart(sorted.firstOrNull()?.date ?: plan.start.date)
     val energy = fit?.let { energyBalance(it, runs, profile, plan.goal.kg, plan.goal.date) }
     return Dashboard(
         asOf = asOf,
@@ -71,9 +81,10 @@ fun buildDashboard(
         forecast = fit?.let { forecast(it, plan) },
         energy = energy,
         alerts = evaluateAlerts(sorted, runs, restDays, asOf, energy?.estimatedIntake, alertSettings),
-        weekly = weeklySummary(sorted, runs, sorted.firstOrNull()?.date ?: plan.start.date, asOf).reversed(),
+        weekly = weeklySummary(sorted, runs, week1, asOf).reversed(),
         body = body.sortedBy { it.date },
         latestWeight = sorted.lastOrNull(),
         runStreak = runStreak(runs, restDays, asOf),
+        week1 = week1,
     )
 }

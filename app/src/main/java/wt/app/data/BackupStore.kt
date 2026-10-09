@@ -20,7 +20,7 @@ suspend fun AppDatabase.loadAll(): AppData {
     )
 }
 
-/** Replaces all stored data with [data]; keeps the reminder settings. Runs in one transaction. */
+/** Replaces all stored data with [data]; keeps the reminder settings and weigh-in day. Runs in one transaction. */
 suspend fun AppDatabase.replaceAll(data: AppData) = withTransaction {
     val reminder = profile().get()
     weights().deleteAll()
@@ -32,7 +32,10 @@ suspend fun AppDatabase.replaceAll(data: AppData) = withTransaction {
     profile().upsert(
         ProfileEntity.from(data.profile).let {
             if (reminder == null) it
-            else it.copy(reminderHour = reminder.reminderHour, reminderMinute = reminder.reminderMinute, reminderEnabled = reminder.reminderEnabled)
+            else it.copy(
+                reminderHour = reminder.reminderHour, reminderMinute = reminder.reminderMinute,
+                reminderEnabled = reminder.reminderEnabled, weighInDay = reminder.weighInDay,
+            )
         },
     )
     weights().insertAll(data.weights.map { WeightEntity(it.date, it.kg, it.sleepHours, it.hunger, it.snacks, it.note) })

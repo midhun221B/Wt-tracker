@@ -15,12 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -35,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -113,12 +109,13 @@ fun AppScaffold(vm: AppViewModel) {
     }
     val importReport by vm.importReport.collectAsStateWithLifecycle()
     importReport?.let { report ->
-        AlertDialog(
-            onDismissRequest = { vm.importReport.value = null },
-            title = { Text("Strava import") },
-            text = { Text(report) },
-            confirmButton = { TextButton(onClick = { vm.importReport.value = null }) { Text("OK") } },
-        )
+        FormDialog(
+            title = "Strava import",
+            onDismiss = { vm.importReport.value = null },
+            confirmLabel = "OK",
+            onConfirm = { vm.importReport.value = null },
+            dismissLabel = null,
+        ) { Text(report) }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         notificationsAllowed = granted
@@ -131,7 +128,7 @@ fun AppScaffold(vm: AppViewModel) {
             val (subtitle, title) = when {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
-                tab == Tab.DASHBOARD -> programWeek(s.dashboard).let { (w, n) -> longDay(s.today) to "Week $w of $n" }
+                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> longDay(s.today) to "Week $w of $n" }
                 else -> longDay(s.today) to tab.label
             }
             TopAppBar(
@@ -145,9 +142,6 @@ fun AppScaffold(vm: AppViewModel) {
                     if (settingsOpen) IconButton(onClick = { settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
                 actions = {
-                    if (!settingsOpen && tab in listOf(Tab.LOG, Tab.RUNS, Tab.BODY)) {
-                        ImportButton(withStravaCsv = tab == Tab.RUNS, onScreenshot = pickScreenshot, onStravaCsv = pickStravaCsv)
-                    }
                     if (!settingsOpen) {
                         FilledIconButton(
                             onClick = { settingsOpen = true },
@@ -200,6 +194,7 @@ fun AppScaffold(vm: AppViewModel) {
                     }
                     vm.setReminder(on, h, m)
                 },
+                onWeighInDay = vm::setWeighInDay,
                 onExport = { kind ->
                     if (kind == ExportKind.BACKUP_JSON) {
                         jsonLauncher.launch("wt-tracker-backup-${s.today}.json")
@@ -221,28 +216,11 @@ fun AppScaffold(vm: AppViewModel) {
                 onImportStrava = pickStravaCsv,
                 modifier = modifier,
                 weeks = s.dashboard.weekly,
-                programStart = s.dashboard.weights.firstOrNull()?.date ?: s.dashboard.plan.start.date,
+                week1 = s.dashboard.week1,
                 onScreenshot = pickScreenshot,
             )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot)
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
-        }
-    }
-}
-
-/** "Import" in the top bar: a screenshot (Strava run or body scale), plus Strava's activities.csv on the Runs tab. */
-@Composable
-private fun ImportButton(withStravaCsv: Boolean, onScreenshot: () -> Unit, onStravaCsv: () -> Unit) {
-    var menuOpen by remember { mutableStateOf(false) }
-    Box(Modifier.padding(end = 8.dp)) {
-        Button(
-            onClick = { if (withStravaCsv) menuOpen = true else onScreenshot() },
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.Card, contentColor = Palette.Text),
-        ) { Text(if (withStravaCsv) "Import" else "From screenshot") }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(text = { Text("Screenshot of a run") }, onClick = { menuOpen = false; onScreenshot() })
-            DropdownMenuItem(text = { Text("Strava activities.csv") }, onClick = { menuOpen = false; onStravaCsv() })
         }
     }
 }

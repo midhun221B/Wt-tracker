@@ -70,8 +70,8 @@ class AlertsTest {
         val today = LocalDate.of(2026, 10, 20)
         val data = Synthetic.series(days = 10)
         val last = data.last().date
-        assertFalse(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(data, emptyList(), emptySet(), last.plusDays(2))))
-        assertTrue(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(data, emptyList(), emptySet(), last.plusDays(3))))
+        assertFalse(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(data, emptyList(), emptySet(), last.plusDays(7))))
+        assertTrue(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(data, emptyList(), emptySet(), last.plusDays(8))))
         assertTrue(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(emptyList(), emptyList(), emptySet(), today)))
     }
 }

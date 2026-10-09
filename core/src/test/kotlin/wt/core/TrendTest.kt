@@ -77,10 +77,23 @@ class TrendTest {
     }
 
     @Test
+    fun weeklyWeighInsGiveAConfidentFit() {
+        val daily = Synthetic.series(days = 36, kgPerWeek = 0.5, noiseSd = 0.3, seed = 12)
+        val weekly = daily.filterIndexed { i, _ -> i % 7 == 0 } // 6 weigh-ins, one a week
+        val fit = assertNotNull(fitTrend(weekly, weekly.last().date))
+        assertFalse(fit.lowConfidence)
+        assertEquals(6, fit.n)
+        assertEquals(-0.5, fit.kgPerWeek, 0.35)
+        // Four weekly weigh-ins are enough; three are not.
+        assertFalse(assertNotNull(fitTrend(weekly.take(4), weekly[3].date)).lowConfidence)
+        assertTrue(assertNotNull(fitTrend(weekly.take(3), weekly[2].date)).lowConfidence)
+    }
+
+    @Test
     fun sparseRecentWindowFallsBackToAllData() {
-        // 30 daily logs, then only 2 in the last 21 days.
+        // 30 daily logs, then a single one 45 days later: too few in both the 21- and the 42-day window.
         val early = Synthetic.series(days = 30, seed = 4)
-        val late = listOf(early.last().copy(date = early.last().date.plusDays(20)))
+        val late = listOf(early.last().copy(date = early.last().date.plusDays(45)))
         val asOf = late.last().date
         val fit = assertNotNull(fitTrend(early + late, asOf))
         assertTrue(fit.lowConfidence)

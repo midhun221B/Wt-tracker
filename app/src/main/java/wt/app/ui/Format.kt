@@ -25,8 +25,19 @@ fun withWeekday(d: LocalDate): String = d.format(weekdayDate)
 /** "Thursday, 5 November" */
 fun longDay(d: LocalDate): String = d.format(longDayFmt)
 
+private val dayMonthYearFmt = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+
+/** "8 Oct 2026" */
+fun dayMonthYear(d: LocalDate): String = d.format(dayMonthYearFmt)
+
 /** "7 Jan" */
 fun dayMonth(d: LocalDate): String = d.format(dayMonthFmt)
+
+/** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
+fun weekRange(monday: LocalDate): String {
+    val sunday = monday.plusDays(6)
+    return if (monday.month == sunday.month) "${monday.dayOfMonth} – ${dayMonth(sunday)}" else "${dayMonth(monday)} – ${dayMonth(sunday)}"
+}
 
 fun pace(secPerKm: Double) = formatMinSec(secPerKm) + " /km"
 
@@ -54,3 +65,6 @@ fun fieldText(v: Double?): String = when {
     v == Math.rint(v) -> v.toLong().toString()
     else -> v.toString()
 }
+
+/** Short bar label for a week: its Monday ("5 Oct"), or "Before" for weeks before the plan. */
+fun weekLabel(w: wt.core.summary.WeekSummary): String = if (w.index < 1) "Before" else dayMonth(w.start)

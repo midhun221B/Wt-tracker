@@ -12,7 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +32,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import wt.app.data.RunEntity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,12 +41,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import wt.core.io.RunReading
 import wt.core.model.formatMinSec
 import wt.core.summary.WeekSummary
-import java.time.temporal.ChronoUnit
+import wt.core.summary.programWeekIndex
+import wt.core.summary.weekStart
 import java.time.LocalDate
 
 @Composable
@@ -54,19 +57,21 @@ fun RunsScreen(
     onImportStrava: () -> Unit,
     modifier: Modifier = Modifier,
     weeks: List<WeekSummary> = emptyList(),
-    programStart: LocalDate? = null,
+    week1: LocalDate? = null,
     onScreenshot: (() -> Unit)? = null,
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
+    // Older weeks start collapsed to one line; tapping toggles them.
+    val toggled = remember { mutableStateMapOf<LocalDate, Boolean>() }
 
     val dated = runs.filter { it.date != null }
     val last28 = dated.filter { it.date!! > today.minusDays(28) }
     // Fastest pace over runs of at least 1 km, so a short sprint doesn't win.
     val fastest = dated.filter { it.km >= 1.0 }.minByOrNull { it.durationSec / it.km }
-    val start = programStart ?: dated.minOfOrNull { it.date!! } ?: today
-    val currentWeek = weekIndex(start, today)
-    val groups = dated.sortedByDescending { it.date }.groupBy { weekIndex(start, it.date!!) }
+    val anchor = week1 ?: dated.minOfOrNull { it.date!! } ?: today
+    val thisWeek = weekStart(today)
+    val groups = dated.sortedByDescending { it.date }.groupBy { weekStart(it.date!!) }
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
@@ -88,15 +93,24 @@ fun RunsScreen(
                 item { GroupHeader("Date not set · tap a run to set it") }
                 items(undated, key = { it.id }) { run -> RunCard(run, fastest = false) { editing = run } }
             }
-            groups.forEach { (week, list) ->
-                item(key = "week-$week") {
-                    val first = start.plusDays((week - 1) * 7L)
-                    GroupHeader(
-                        if (week == currentWeek) "This week"
-                        else "Week $week · ${dayMonth(first)} – ${dayMonth(first.plusDays(6))} · %.1f km".format(list.sumOf { it.km }),
-                    )
+            groups.forEach { (monday, list) ->
+                val index = programWeekIndex(anchor, monday)
+                val title = when {
+                    monday == thisWeek -> "This week"
+                    index < 1 -> "Before the plan · ${weekRange(monday)}"
+                    else -> "Week $index · ${weekRange(monday)}"
                 }
-                items(list, key = { it.id }) { run -> RunCard(run, fastest = run.id == fastest?.id) { editing = run } }
+                val km = "%.1f km".format(list.sumOf { it.km })
+                val recent = monday >= thisWeek.minusWeeks(1)
+                val expanded = toggled[monday] ?: recent
+                item(key = "week-$monday") {
+                    when {
+                        recent -> GroupHeader("$title · $km")
+                        expanded -> GroupHeader("$title · $km", expanded = true) { toggled[monday] = false }
+                        else -> CollapsedWeek(title, list, km) { toggled[monday] = true }
+                    }
+                }
+                if (expanded) items(list, key = { it.id }) { run -> RunCard(run, fastest = run.id == fastest?.id) { editing = run } }
             }
             if (runs.isEmpty()) {
                 item {
@@ -120,6 +134,7 @@ fun RunsScreen(
         RunDialog(
             null, today, onDismiss = { adding = false }, onSave = { onSave(it); adding = false },
             onFromScreenshot = onScreenshot?.let { pick -> { adding = false; pick() } },
+            onImportCsv = { adding = false; onImportStrava() },
         )
     }
     editing?.let { run ->
@@ -133,13 +148,44 @@ fun RunsScreen(
     }
 }
 
-/** 1-based program week of [date], counted from [start] (e.g. Thursday to Wednesday). */
-private fun weekIndex(start: LocalDate, date: LocalDate): Int =
-    (ChronoUnit.DAYS.between(start, date).coerceAtLeast(0) / 7 + 1).toInt()
-
+/** Muted label above a group of runs; with [onClick] it shows a chevron and collapses the group. */
 @Composable
-private fun GroupHeader(text: String) {
-    Text(text, style = MaterialTheme.typography.labelLarge, color = Palette.Muted, modifier = Modifier.padding(start = 4.dp, top = 8.dp))
+private fun GroupHeader(text: String, expanded: Boolean = true, onClick: (() -> Unit)? = null) {
+    Row(
+        Modifier.fillMaxWidth()
+            .then(if (onClick != null) Modifier.heightIn(min = 44.dp).clickable(onClick = onClick) else Modifier)
+            .padding(start = 4.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge, color = Palette.Muted, modifier = Modifier.weight(1f))
+        if (onClick != null) {
+            Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, if (expanded) "Collapse" else "Expand", tint = Palette.Muted)
+        }
+    }
+}
+
+/** An older week as one line: dates, run count, distance and best pace. Tap to show its runs. */
+@Composable
+private fun CollapsedWeek(title: String, runs: List<RunEntity>, km: String, onClick: () -> Unit) {
+    val best = runs.filter { it.km >= 1.0 }.minOfOrNull { it.durationSec / it.km }
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    listOfNotNull("${runs.size} run" + if (runs.size == 1) "" else "s", km, best?.let { "best ${formatMinSec(it)}" }).joinToString(" · "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Palette.Muted,
+                )
+            }
+            Icon(Icons.Default.KeyboardArrowDown, "Expand", tint = Palette.Muted)
+        }
+    }
 }
 
 @Composable
@@ -172,7 +218,7 @@ private fun KmBars(weeks: List<WeekSummary>) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         shown.forEach { w ->
             Text(
-                if (w == newest) "This week" else "Wk ${w.index}",
+                if (w == newest) "This week" else weekLabel(w),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (w == newest) Palette.Text else Palette.Muted,
                 textAlign = TextAlign.Center,
@@ -224,7 +270,8 @@ private fun RunFigure(value: String, unit: String?, label: String, modifier: Mod
 
 /**
  * Add or edit a run, or confirm one read from a screenshot ([prefill]). Pace is computed from distance and time.
- * When adding, [onFromScreenshot] shows a button that picks a Strava screenshot instead of typing.
+ * When adding, [onFromScreenshot] and [onImportCsv] show buttons that read a Strava screenshot or Strava's
+ * activities.csv instead of typing.
  */
 @Composable
 fun RunDialog(
@@ -235,6 +282,7 @@ fun RunDialog(
     onDelete: (() -> Unit)? = null,
     prefill: RunReading? = null,
     onFromScreenshot: (() -> Unit)? = null,
+    onImportCsv: (() -> Unit)? = null,
 ) {
     var date by remember { mutableStateOf(if (initial == null) defaultDate else initial.date) }
     var km by remember { mutableStateOf(fieldText(initial?.km ?: prefill?.km)) }
@@ -247,39 +295,38 @@ fun RunDialog(
     val kcalValid = kcalText.isBlank() || (kcalValue != null && kcalValue in 0.0..5000.0)
     val valid = date != null && kmValue != null && seconds != null && kcalValid
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (prefill != null) "Run from screenshot" else if (initial == null) "Add run" else "Edit run") },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (prefill != null) {
-                    val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
-                    Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
-                }
-                if (initial == null && prefill == null && onFromScreenshot != null) ScreenshotButton("Import from a Strava screenshot", onFromScreenshot)
-                DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
-                NumberField("Distance", km, { km = it }, Modifier.fillMaxWidth(), suffix = "km", isError = km.isNotBlank() && kmValue == null)
-                NumberField("Time (mm:ss)", time, { time = it }, Modifier.fillMaxWidth(), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)
-                NumberField("Calories (optional)", kcalText, { kcalText = it }, Modifier.fillMaxWidth(), suffix = "kcal", isError = !kcalValid)
-                if (kmValue != null && seconds != null) Text("Pace ${pace(seconds / kmValue)}")
+    FormDialog(
+        title = if (prefill != null) "Run from screenshot" else if (initial == null) "Add run" else "Edit run",
+        onDismiss = onDismiss,
+        confirmLabel = "Save run",
+        confirmEnabled = valid,
+        onConfirm = {
+            onSave(
+                (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0, source = if (prefill != null) "strava" else "manual"))
+                    .copy(date = date, km = kmValue!!, durationSec = seconds!!, kcal = kcalValue),
+            )
+        },
+        onDelete = onDelete,
+    ) {
+        if (prefill != null) {
+            val notes = listOf("Check the values, and set the date if the run wasn't today.") + prefill.notes
+            Text(notes.joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+        }
+        if (initial == null && prefill == null) {
+            onFromScreenshot?.let { ScreenshotButton("Import from a Strava screenshot", it) }
+            onImportCsv?.let { ScreenshotButton("Import Strava activities.csv", it) }
+        }
+        DateField("Date", date, { date = it }, Modifier.fillMaxWidth(), isError = date == null)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField("Distance", km, { km = it }, Modifier.weight(1f), suffix = "km", isError = km.isNotBlank() && kmValue == null)
+            NumberField("Time (mm:ss)", time, { time = it }, Modifier.weight(1f), keyboardType = KeyboardType.Text, isError = time.isNotBlank() && seconds == null)
+        }
+        NumberField("Calories (optional)", kcalText, { kcalText = it }, Modifier.fillMaxWidth(), suffix = "kcal", isError = !kcalValid)
+        if (kmValue != null && seconds != null) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("Pace ", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                Text(pace(seconds / kmValue), style = numberStyle(22.sp), color = Palette.Accent)
             }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = valid,
-                onClick = {
-                    onSave(
-                        (initial ?: RunEntity(date = date, km = 0.0, durationSec = 0, source = if (prefill != null) "strava" else "manual"))
-                            .copy(date = date, km = kmValue!!, durationSec = seconds!!, kcal = kcalValue),
-                    )
-                },
-            ) { Text("Save") }
-        },
-        dismissButton = {
-            Row {
-                if (onDelete != null) TextButton(onClick = onDelete) { Text("Delete") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-            }
-        },
-    )
+        }
+    }
 }
