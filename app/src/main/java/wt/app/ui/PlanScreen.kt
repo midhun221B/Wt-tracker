@@ -159,7 +159,7 @@ private fun CheckpointEditor(checkpoints: List<Checkpoint>, onSave: (List<Checkp
         points.forEachIndexed { i, p ->
             val goal = i == points.lastIndex
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DateField(if (goal) "Goal date" else "Date", p.date, { d -> points = points.toMutableList().also { it[i] = p.copy(date = d) } }, Modifier.weight(1.5f))
+                DateField(if (goal) "Goal date" else "Date", p.date, { d -> points = points.toMutableList().also { it[i] = p.copy(date = d) } }, Modifier.weight(1.5f), withWeekday = false)
                 NumberField(
                     if (goal) "Goal" else "Weight", p.kg, { v -> points = points.toMutableList().also { it[i] = p.copy(kg = v) } }, Modifier.weight(1f),
                     suffix = "kg", isError = parsed[i] == null,

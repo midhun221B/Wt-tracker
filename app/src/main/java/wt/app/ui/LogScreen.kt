@@ -266,9 +266,9 @@ private fun WeekStrip(week: WeekSummary?, streak: Int?) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Week of ${weekRange(week.start)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             Row(Modifier.fillMaxWidth()) {
-                WeekFigure("${week.runs}", "runs", Modifier.weight(1f))
+                WeekFigure("${week.runs}", if (week.runs == 1) "run" else "runs", Modifier.weight(1f))
                 WeekFigure("%.1f".format(week.km), "km", Modifier.weight(1f))
-                WeekFigure("${week.restDays}", "rest days", Modifier.weight(1f))
+                WeekFigure("${week.restDays}", if (week.restDays == 1) "rest day" else "rest days", Modifier.weight(1f))
                 if (streak != null) WeekFigure("$streak", "day streak", Modifier.weight(1f))
             }
         }

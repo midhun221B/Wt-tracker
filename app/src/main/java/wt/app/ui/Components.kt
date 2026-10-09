@@ -243,18 +243,34 @@ private fun FieldBox(
 }
 
 private val fieldDateFmt = java.time.format.DateTimeFormatter.ofPattern("EEE, d MMM yyyy", java.util.Locale.ENGLISH)
+private val compactDateFmt = java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.ENGLISH)
 
-/** Read-only date field in the same style as [NumberField]; tapping it opens a date picker. */
+/**
+ * Read-only date field in the same style as [NumberField]; tapping it opens a date picker.
+ * [withWeekday] = false drops the weekday ("8 Nov 2026") for narrow rows.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateField(label: String, date: LocalDate?, onChange: (LocalDate) -> Unit, modifier: Modifier = Modifier, isError: Boolean = false) {
+fun DateField(
+    label: String,
+    date: LocalDate?,
+    onChange: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    withWeekday: Boolean = true,
+) {
     var open by remember { mutableStateOf(false) }
     FieldBox(
         label, isError,
         modifier = modifier.clip(RoundedCornerShape(12.dp)).clickable(onClickLabel = "Pick date") { open = true },
         trailing = { Icon(Icons.Default.DateRange, null, tint = Palette.Muted) },
     ) {
-        Text(date?.format(fieldDateFmt) ?: "Set date", style = MaterialTheme.typography.bodyLarge, color = if (date == null) Palette.Muted else Palette.Text)
+        Text(
+            date?.format(if (withWeekday) fieldDateFmt else compactDateFmt) ?: "Set date",
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (date == null) Palette.Muted else Palette.Text,
+            maxLines = 1,
+        )
     }
     if (open) {
         val state = rememberDatePickerState(

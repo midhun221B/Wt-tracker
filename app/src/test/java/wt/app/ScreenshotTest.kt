@@ -35,7 +35,7 @@ import java.util.Random
 
 /**
  * Renders screens with sample data and saves PNGs to app/build/screenshots (uploaded by CI).
- * Sample: 4 weeks of noisy weigh-ins losing ~0.35 kg/week, a run most days.
+ * Sample: the start weight, then weekly Monday weigh-ins losing ~0.35 kg/week, and a run most days.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -47,7 +47,7 @@ class ScreenshotTest {
 
     private fun sampleState(): UiState {
         val rnd = Random(7)
-        val weights = (0..28).filter { it % 9 != 4 }.map { d ->
+        val weights = listOf(0, 4, 11, 18, 25).map { d -> // 8 Oct, then Mondays 12 Oct to 2 Nov
             WeightEntity(Defaults.START.plusDays(d.toLong()), Math.round((88.3 - 0.05 * d + rnd.nextGaussian() * 0.35) * 10) / 10.0)
         }
         val runs = (0..28).filter { it % 7 !in setOf(2, 5) }.mapIndexed { i, d ->
