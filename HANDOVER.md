@@ -33,16 +33,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#16](https://github.com/midhun221B/Wt-tracker/pull/16) | Today polish: one-line Next weigh-in card (tap to change day), pace and "+ Add another" on one row, dash for missed days in the week dots, "Run logged" banner under the top bar for every new run (form or screenshot) |
 | [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
 | [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
+| [#19](https://github.com/midhun221B/Wt-tracker/pull/19) | One trend-based "kg lost" and "over plan" (`goalProgress`, `gapKg`; the live weigh-in line is labelled "Scale"); fresh-install empty states (blank days before start, "Trend in N more weigh-ins", no empty km chart, Body hint card, re-baseline waits for a trend); ruler notch for marks; banner word order; screenshots `9a`–`9e` |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - One "kg lost" number: the "Weigh-in saved" ring uses the trend like the Trend tab (shared `goalProgress` in `core/summary`), labelled "· trend"; the scale shows as "kg on the scale" and the change since the last weigh-in.
-  - "Run logged" banner reads "3 runs · 10.5 km this week", the same order as the card.
-  - Ruler: plan and last-week marks get a notch above the ticks, so last week shows even when the ruler starts on it.
-  - "Over plan" is the trend minus the plan everywhere (Trend, "Weigh-in saved" card with "· trend"); only the live line on the weigh-in card uses the scale, labelled "Scale: … today's plan".
-  - Body: a "What the scale numbers add" card until there are two measurements.
-  - Runs: the empty state points to Add run only (no separate Import link).
-  - Fresh install (screenshots `9a`–`9e`, one weigh-in, no runs): week dots before the first entry stay blank instead of "missed"; Trend says "Trend in N more weigh-ins" and hides the Realistic / 80 % legend until there is a trend; Runs hides the empty km chart; Plan explains that re-baseline opens once the trend shows.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
