@@ -27,6 +27,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
 | [#11](https://github.com/midhun221B/Wt-tracker/pull/11) | Today: "Change day" on the Next weigh-in card, one running card (run, rest day, week numbers), hunger no longer asked; Settings in the new style; `8-settings` screenshot |
 | [#12](https://github.com/midhun221B/Wt-tracker/pull/12) | Body: weekly measurement card (scale screenshot first) and muscle chart; weigh-in is weight only; Trend Weeks/Body sections collapsible; Runs opens only this week |
+| [#13](https://github.com/midhun221B/Wt-tracker/pull/13) | Weigh-in status by Mon–Sun week (`weighInStatus`: no prompt once the week has a weight, due until logged) for Today, Body and the reminder; one-line Body card unless due; collapsible Plan sections; screenshots at 411 dp (Nothing Phone (3a)) |
 
 ### Not merged
 - Nothing pending. Start the next change from the latest `main`.
@@ -63,7 +64,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
        It's shown as an optional field with a note. When saved, it updates that day's weigh-in and keeps the sleep, hunger and notes.
    - Not tested yet: Strava in Japanese (labels 距離/ペース/時間 are handled, but the
      units are guessed), and other scale apps. The confirm dialogs filled from a screenshot aren't in the Robolectric screenshots; the add forms are.
-2. **Not yet verified on a real device:**
+2. **Not yet verified on a real device** (owner's phone: Nothing Phone (3a)):
    - status-bar icon colour and the dark launch window
    - Room v1→v2→v3 migrations on a real install
    - reminder notifications

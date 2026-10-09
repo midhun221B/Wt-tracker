@@ -155,7 +155,12 @@ private fun CheckpointEditor(checkpoints: List<Checkpoint>, onSave: (List<Checkp
     val valid = complete.size == points.size && complete.size >= 2 && complete.map { it.date }.toSet().size == complete.size
     val sorted = complete.sortedBy { it.date }
 
-    SectionCard("Planned checkpoints", trailing = "the last one is the goal") {
+    val goal = checkpoints.maxByOrNull { it.date }
+    CollapsibleSection(
+        "Planned checkpoints",
+        "${checkpoints.size} points" + (goal?.let { " · goal ${kg(it.kg)} on ${dayMonth(it.date)}" } ?: ""),
+    ) {
+        Text("The last checkpoint is the goal.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
         points.forEachIndexed { i, p ->
             val goal = i == points.lastIndex
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -208,7 +213,10 @@ private fun EnergySettings(profile: ProfileEntity, onSave: (ProfileEntity) -> Un
     val deficitV = parseDecimal(deficit)?.takeIf { it in 0.0..1000.0 }
     val changed = bmrV != profile.bmrKcal || factorV != profile.activityFactor || deficitV != profile.plannedFoodDeficitKcal
 
-    SectionCard("Energy estimate") {
+    CollapsibleSection(
+        "Energy estimate",
+        "BMR %,.0f · activity ×%s · food deficit %,.0f".format(profile.bmrKcal, fieldText(profile.activityFactor), profile.plannedFoodDeficitKcal),
+    ) {
         Text(
             "Maintenance ≈ BMR × activity factor (daily life, not running). Running is added from your run log.",
             style = MaterialTheme.typography.bodySmall,

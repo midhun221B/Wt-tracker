@@ -21,14 +21,15 @@ import wt.app.R
 import wt.app.data.AppDatabase
 import wt.core.model.TOKYO
 import wt.core.model.todayInTokyo
+import wt.core.summary.weighInStatus
 import java.time.Duration
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 /**
- * Weekly weigh-in reminder. A daily job runs at the chosen Tokyo time and notifies only on the weigh-in day,
- * if that day's weight isn't logged yet, so changing the day needs no rescheduling.
+ * Weekly weigh-in reminder. A daily job runs at the chosen Tokyo time and notifies only while this week's
+ * weigh-in is due (see `weighInStatus`), so changing the day needs no rescheduling.
  */
 object Reminder {
     private const val CHANNEL_ID = "weigh_in"
@@ -88,7 +89,8 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val db = AppDatabase.get(applicationContext)
         val today = todayInTokyo()
         val weighInDay = db.profile().get()?.weighInDay ?: 1
-        if (today.dayOfWeek.value == weighInDay && db.weights().get(today) == null) Reminder.show(applicationContext)
+        // Due = no weight yet this Monday–Sunday week and the weigh-in day has come (so a missed day keeps reminding).
+        if (weighInStatus(db.weights().all().map { it.date }, today, weighInDay).due) Reminder.show(applicationContext)
         return Result.success()
     }
 }

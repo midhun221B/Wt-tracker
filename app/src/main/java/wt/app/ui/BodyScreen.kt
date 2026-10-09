@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.sp
 import wt.app.chart.MiniLineChart
 import wt.app.data.BodyCompEntity
 import wt.core.io.BodyReading
-import java.time.DayOfWeek
+import wt.core.summary.WeighInStatus
+import wt.core.summary.weighInStatus
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
 
 /**
  * Body-scale measurements: the next weekly measurement (same morning as the weigh-in) with a scale-screenshot
@@ -54,7 +54,7 @@ fun BodyScreen(
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { NextMeasurementCard(today, weighInDay, measuredToday = sorted.lastOrNull()?.date == today, onScreenshot, onAdd = { adding = true }) }
+            item { NextMeasurementCard(weighInStatus(sorted.map { it.date }, today, weighInDay), today, onScreenshot, onAdd = { adding = true }) }
             if (sorted.isNotEmpty()) item {
                 val first = sorted.first()
                 val last = sorted.last()
@@ -119,34 +119,40 @@ fun BodyScreen(
 }
 
 /**
- * When to measure next (the weigh-in day, as both come from the same scale), with the scale-screenshot import
- * as the main action and manual entry as the fallback.
+ * The weekly measurement (same morning as the weigh-in, from the same scale). When it's due: a full card with the
+ * scale-screenshot import as the main action. Otherwise one line with the next date and a small "Add".
  */
 @Composable
-private fun NextMeasurementCard(today: LocalDate, weighInDay: Int, measuredToday: Boolean, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
-    val next = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(weighInDay.coerceIn(1, 7))))
+private fun NextMeasurementCard(status: WeighInStatus, today: LocalDate, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(if (status.due) 24.dp else 16.dp),
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
     ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Weekly measurement", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            Text(
-                when {
-                    measuredToday -> "Done for today"
-                    next == today -> "Today"
-                    else -> longDay(next)
-                },
-                style = numberStyle(30.sp),
-            )
-            Text(
-                "Same morning as your weigh-in. A scale screenshot fills the weight too.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Palette.Muted,
-            )
-            if (onScreenshot != null) PrimaryButton("Import scale screenshot", onScreenshot, Modifier.fillMaxWidth())
-            TextButton(onClick = onAdd, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Add by hand", color = Palette.Muted) }
+        if (status.due) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Weekly measurement", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                Text(if (status.next == today) "Today" else "Due since ${dayMonth(status.next)}", style = numberStyle(30.sp))
+                Text(
+                    "Same morning as your weigh-in. A scale screenshot fills the weight too.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Palette.Muted,
+                )
+                if (onScreenshot != null) PrimaryButton("Import scale screenshot", onScreenshot, Modifier.fillMaxWidth())
+                TextButton(onClick = onAdd, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Add by hand", color = Palette.Muted) }
+            }
+        } else {
+            Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        status.doneOn?.let { "Measured this week (${dayMonth(it)})" } ?: "Next measurement",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (status.doneOn != null) Palette.Accent else Palette.Muted,
+                    )
+                    Text("Next: ${longDay(status.next)}", style = MaterialTheme.typography.titleSmall)
+                }
+                TextButton(onClick = onScreenshot ?: onAdd) { Text("Add", color = Palette.Accent) }
+            }
         }
     }
 }

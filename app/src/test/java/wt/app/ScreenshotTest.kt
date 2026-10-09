@@ -40,7 +40,7 @@ import java.util.Random
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [34], qualifiers = "w400dp-h1500dp-xhdpi")
+@Config(sdk = [34], qualifiers = "w411dp-h1500dp-xhdpi") // owner's Nothing Phone (3a) is about 411 dp wide
 class ScreenshotTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
@@ -87,12 +87,16 @@ class ScreenshotTest {
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
 
-    // 5 Nov is a Thursday; the default weigh-in day is Monday, so this is an off day.
+    // 5 Nov is a Thursday; the Monday 2 Nov weigh-in is done, so the card shows next week's.
     @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
 
+    // Weigh-in day Thursday and this week's Monday weigh-in left out, so the weigh-in is due.
     @Test fun weighIn() = shoot("2b-weigh-in") {
         val s = sampleState()
-        LogScreen(s.copy(profile = s.profile.copy(weighInDay = 4)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+        LogScreen(
+            s.copy(profile = s.profile.copy(weighInDay = 4), weights = s.weights.filter { it.date < LocalDate.of(2026, 11, 2) }),
+            {}, {}, { _, _ -> }, {}, onScreenshot = {},
+        )
     }
 
     @Test fun runs() = shoot("3-runs") {
