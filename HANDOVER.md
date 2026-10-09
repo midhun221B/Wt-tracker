@@ -27,7 +27,12 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`:
+  - **Today:** the "Next weigh-in" card has a "Change day" button that opens the weekday chips.
+    The run card, rest-day card and week strip are merged into one running card.
+    Hunger is no longer asked; the stored column is kept, and saving keeps an old value.
+  - **Settings** use the new buttons and the shared `WeekdayPicker`.
+  - New screenshot `8-settings`.
 
 ### Features in the app today
 - **Today:** run, rest-day switch, week strip; on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with hunger, sleep, snacks and note.
@@ -74,7 +79,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 ## Product decisions
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
-- **Weekly weigh-ins** on a chosen day; hunger, sleep, snacks and notes are a weekly check-in stored with the weigh-in.
+- **Weekly weigh-ins** on a chosen day; sleep, snacks and notes are a weekly check-in stored with the weigh-in. Hunger is no longer asked (2026-10-09).
 
 ## Design decisions
 - **Chosen direction: "B orange".**

@@ -25,6 +25,7 @@ import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
 import wt.app.ui.RunsScreen
+import wt.app.ui.SettingsScreen
 import wt.app.ui.UiState
 import wt.app.ui.WtTheme
 import wt.core.dashboard.buildDashboard
@@ -102,6 +103,10 @@ class ScreenshotTest {
     @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}) }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
+
+    @Test fun settings() = shoot("8-settings") {
+        SettingsScreen(sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {})
+    }
 
     // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.
     @Test fun addRun() = shoot("6-add-run") {
