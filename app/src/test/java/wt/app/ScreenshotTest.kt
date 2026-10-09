@@ -109,6 +109,17 @@ class ScreenshotTest {
         LogScreen(s.copy(weights = s.weights + WeightEntity(today, 87.2)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
     }
 
+    // Today before the run is logged, and a rest day instead of a run.
+    @Test fun noRunYet() = shoot("2d-no-run-yet") {
+        val s = sampleState()
+        LogScreen(s.copy(runs = s.runs.filter { it.date != today }), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+    }
+
+    @Test fun restDay() = shoot("2e-rest-day") {
+        val s = sampleState()
+        LogScreen(s.copy(runs = s.runs.filter { it.date != today }, restDays = s.restDays + today), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+    }
+
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()
         RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
