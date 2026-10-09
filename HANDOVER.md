@@ -23,24 +23,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#5](https://github.com/midhun221B/Wt-tracker/pull/5) | Runs and Body screens in "B orange" (28-day summary, weekly km bars, runs grouped by program week, "Fastest yet"; Body change tiles, trend charts, measurement cards); this HANDOVER.md |
 | [#6](https://github.com/midhun221B/Wt-tracker/pull/6) | Screenshot import: Strava run and body-scale screenshots read on the phone (ML Kit, offline), confirm dialog before saving |
 | [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
+| [#9](https://github.com/midhun221B/Wt-tracker/pull/9) | Weekly weigh-in (weigh-in day setting, Room v3, forecast falls back to 42 days with 4+ weigh-ins over 3+ weeks, alert after 8 days); Mon–Sun weeks (runs before week 1 count as week 0, −1, …); collapsed older run weeks; `FormDialog` and dark fields for every pop-up; top-bar import removed (Strava CSV moved into Add run); Plan tab in "B orange" |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a` (owner review of the screens on 2026-10-09):
-  - **Weekly weigh-in.** A weigh-in day in Settings (Monday by default; Room v3, `MIGRATION_2_3` adds `profile.weighInDay`).
-    Today shows the weigh-in card only on that day, when the day already has a weight, or after "Weigh in now".
-    Other days show "Next weigh-in", the run card, rest day and a "Week of …" strip.
-    The reminder job still runs daily but only notifies on the weigh-in day.
-  - **Forecast for weekly data.** `fitTrend` falls back to the last 42 days with 4+ weigh-ins over at least 21 days.
-    The missed-weigh-in alert now fires after 8 days.
-  - **Calendar weeks (Mon–Sun).** Week 1 is the week of the first weigh-in (5–11 Oct). Runs before it count in week 0, −1, …
-    (at most 4 weeks back). This fixed runs on 4–7 Oct missing from the week totals: weeks used to start on Thu 8 Oct.
-  - **Runs:** this week and last week are expanded; older weeks are one line (runs, km, best pace) and expand on tap.
-  - **Forms:** every pop-up uses `FormDialog` (dark card, full-width orange save). Fields (`NumberField`, `DateField`) are
-    filled dark with the label inside. The top-bar import button is gone; the Strava CSV import moved into Add run.
-  - **Plan tab** in "B orange": big needed rate with a Realistic/Ambitious/Not allowed pill, checkpoint rows with the rate
-    between them, energy fields, plan history with an "Active" pill.
-  - Screenshot tests use weekly sample weigh-ins and add `2b-weigh-in`, `6-add-run` and `7-add-measurement`
-    (`LocalInlineDialogs` draws dialogs in place).
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** run, rest-day switch, week strip; on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with hunger, sleep, snacks and note.
