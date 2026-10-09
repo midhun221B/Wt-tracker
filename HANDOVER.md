@@ -32,7 +32,15 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#15](https://github.com/midhun221B/Wt-tracker/pull/15) | Today: "Run done" / rest-day done state, Mon–Sun week dots with "N runs · X km this week", 3 s "Run logged" banner after saving a run |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`:
+  - **Run done card:** the pace line and "+ Add another" share one row, so there's no empty gap.
+  - **Week dots:** a missed past day (no run, no rest) shows a dash, not the grey of days to come.
+  - **"Run logged" banner:** now under the top bar in `AppScaffold`, driven by `AppViewModel.runLogged`. It shows for
+    any new run (any Add run form or a Strava screenshot import), and new runs get it instead of the "Run saved"
+    snackbar. Editing a run, or importing a CSV, doesn't show it.
+  - **Next weigh-in card:** one line ("Next weigh-in · Mon, 9 Nov" plus "This week done …", with "Weigh in" or "Edit"
+    on the right). Tapping the text opens the weekday chips.
+  - New screenshot: `2f-run-logged`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".

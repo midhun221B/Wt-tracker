@@ -1,7 +1,11 @@
 package wt.app
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -24,6 +28,7 @@ import wt.app.ui.RunDialog
 import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
+import wt.app.ui.RunLoggedBanner
 import wt.app.ui.RunsScreen
 import wt.app.ui.SettingsScreen
 import wt.app.ui.UiState
@@ -118,6 +123,14 @@ class ScreenshotTest {
     @Test fun restDay() = shoot("2e-rest-day") {
         val s = sampleState()
         LogScreen(s.copy(runs = s.runs.filter { it.date != today }, restDays = s.restDays + today), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+    }
+
+    // The banner lives in the app scaffold; drawn here above Today to show how it looks.
+    @Test fun runLogged() = shoot("2f-run-logged") {
+        Column {
+            RunLoggedBanner(3, 10.5, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+        }
     }
 
     @Test fun runs() = shoot("3-runs") {

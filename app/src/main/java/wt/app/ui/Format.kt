@@ -38,6 +38,11 @@ private val dayMonthYearFmt = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.E
 /** "8 Oct 2026" */
 fun dayMonthYear(d: LocalDate): String = d.format(dayMonthYearFmt)
 
+private val shortDayFmt = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.ENGLISH)
+
+/** "Mon, 9 Nov" */
+fun shortDay(d: LocalDate): String = d.format(shortDayFmt)
+
 /** "7 Jan" */
 fun dayMonth(d: LocalDate): String = d.format(dayMonthFmt)
 

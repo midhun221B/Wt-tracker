@@ -151,7 +151,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (rest) db.restDays().insert(RestDayEntity(date)) else db.restDays().delete(date)
     }
 
-    fun saveRun(run: RunEntity) = launchWithMessage("Run saved") { db.runs().upsert(run) }
+    /** True for a few seconds after a new run is saved (form or screenshot); the scaffold shows the banner. */
+    val runLogged = MutableStateFlow(false)
+
+    /** New runs show the "Run logged" banner instead of a snackbar; edits get the snackbar. */
+    fun saveRun(run: RunEntity) = launchWithMessage(if (run.id == 0L) null else "Run saved") {
+        db.runs().upsert(run)
+        if (run.id == 0L) runLogged.value = true
+    }
 
     fun deleteRun(run: RunEntity) = launchWithMessage("Run deleted") { db.runs().delete(run) }
 
@@ -215,13 +222,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Saves a run read from a screenshot; a run already stored for that day with about the same distance is replaced. */
-    fun saveScreenshotRun(run: RunEntity) = launchWithMessage("Run saved") {
+    fun saveScreenshotRun(run: RunEntity) = launchWithMessage(null) {
         screenshot.value = null
         db.withTransaction {
             val existing = db.runs().all().map { StoredRun(it.id, it.toModel()) }
             val match = planStravaImport(existing, listOf(run.toModel())).updates.firstOrNull()
             db.runs().upsert(run.copy(id = match?.id ?: 0))
         }
+        runLogged.value = true
     }
 
     /** Saves a body measurement read from a screenshot and, when given, the weight for the same day. */
