@@ -7,6 +7,11 @@ import androidx.annotation.DrawableRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,6 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wt.app.R
 import wt.app.notify.Reminder
+import kotlinx.coroutines.delay
+import wt.core.model.todayInTokyo
+import wt.core.summary.weekStart
 import wt.core.io.BodyReading
 import wt.core.io.RunReading
 
@@ -107,6 +115,13 @@ fun AppScaffold(vm: AppViewModel) {
             null -> {}
         }
     }
+    val runLogged by vm.runLogged.collectAsStateWithLifecycle()
+    LaunchedEffect(runLogged) {
+        if (runLogged) {
+            delay(3_000)
+            vm.runLogged.value = false
+        }
+    }
     val importReport by vm.importReport.collectAsStateWithLifecycle()
     importReport?.let { report ->
         FormDialog(
@@ -123,7 +138,7 @@ fun AppScaffold(vm: AppViewModel) {
 
     Scaffold(
         containerColor = Palette.Background,
-        topBar = {
+        topBar = { Column {
             val s = state
             val (subtitle, title) = when {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
@@ -153,7 +168,13 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Palette.Background, titleContentColor = Palette.Text),
             )
-        },
+            // "Run logged" banner under the top bar for a few seconds after any new run is saved.
+            AnimatedVisibility(visible = runLogged && s != null, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                val monday = weekStart(s?.today ?: todayInTokyo())
+                val week = s?.runs.orEmpty().filter { it.date != null && it.date in monday..monday.plusDays(6) }
+                RunLoggedBanner(week.size, week.sumOf { it.km }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            }
+        } },
         bottomBar = {
             Column {
                 HorizontalDivider(color = Palette.CardHigh)

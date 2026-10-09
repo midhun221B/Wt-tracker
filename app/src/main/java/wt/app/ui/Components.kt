@@ -1,6 +1,8 @@
 package wt.app.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -467,5 +469,27 @@ fun LegendItem(color: Color, label: String, dashed: Boolean = false, thick: Bool
             )
         }
         Text(label, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+/** Orange banner after saving a run: what the week adds up to now. */
+@Composable
+fun RunLoggedBanner(runs: Int, km: Double, modifier: Modifier = Modifier) {
+    Row(
+        modifier.fillMaxWidth().background(Palette.Accent, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.size(28.dp).background(Palette.OnAccent, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.Check, null, tint = Palette.Accent, modifier = Modifier.size(16.dp))
+        }
+        Column {
+            Text("Run logged", color = Palette.OnAccent, fontWeight = FontWeight.SemiBold)
+            Text(
+                "%.1f km this week · %d %s".format(km, runs, if (runs == 1) "run" else "runs"),
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.OnAccent,
+            )
+        }
     }
 }

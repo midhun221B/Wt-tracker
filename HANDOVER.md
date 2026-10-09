@@ -30,6 +30,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#13](https://github.com/midhun221B/Wt-tracker/pull/13) | Weigh-in status by Mon–Sun week (`weighInStatus`: no prompt once the week has a weight, due until logged) for Today, Body and the reminder; one-line Body card unless due; collapsible Plan sections; screenshots at 411 dp (Nothing Phone (3a)) |
 | [#14](https://github.com/midhun221B/Wt-tracker/pull/14) | Today: small card once the day/week is logged (big card only when due or on Edit); scale measurements count as the weekly weigh-in; Body counts a typed weight; sample runs removed (startup cleanup); reminder time picker |
 | [#15](https://github.com/midhun221B/Wt-tracker/pull/15) | Today: "Run done" / rest-day done state, Mon–Sun week dots with "N runs · X km this week", 3 s "Run logged" banner after saving a run |
+| [#16](https://github.com/midhun221B/Wt-tracker/pull/16) | Today polish: one-line Next weigh-in card (tap to change day), pace and "+ Add another" on one row, dash for missed days in the week dots, "Run logged" banner under the top bar for every new run (form or screenshot) |
 
 ### Not merged
 - Nothing pending. Start the next change from the latest `main`.

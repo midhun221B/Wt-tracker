@@ -1,20 +1,15 @@
 package wt.app.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -84,14 +79,6 @@ fun LogScreen(
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
-    // Shown for a few seconds after a run is saved from this screen.
-    var runLogged by remember { mutableStateOf(false) }
-    LaunchedEffect(runLogged) {
-        if (runLogged) {
-            delay(3_000)
-            runLogged = false
-        }
-    }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
     // A scale measurement counts as the week's weigh-in too (it may have been saved without a weight).
@@ -116,9 +103,6 @@ fun LogScreen(
         modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AnimatedVisibility(visible = runLogged, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-            RunLoggedBanner(weekRuns.size, weekRuns.sumOf { it.km })
-        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             SquareButton(onClick = { date = date.minusDays(1) }, label = "Previous day") {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null)
@@ -209,7 +193,7 @@ fun LogScreen(
                 },
                 last = state.weights.lastOrNull { it.date <= date },
                 weighInDay = weighInDay.value,
-                actionLabel = if (existing != null) "Edit ${if (date == state.today) "today's" else "this day's"} weight" else "Weigh in now",
+                actionLabel = if (existing != null) "Edit" else "Weigh in",
                 onWeighInNow = { weighInOpen = true },
                 onWeighInDay = onWeighInDay,
             )
@@ -234,13 +218,16 @@ fun LogScreen(
             initial = null,
             defaultDate = date,
             onDismiss = { showRunDialog = false },
-            onSave = { onSaveRun(it); showRunDialog = false; runLogged = true },
+            onSave = { onSaveRun(it); showRunDialog = false },
             onFromScreenshot = onScreenshot?.let { pick -> { showRunDialog = false; pick() } },
         )
     }
 }
 
-/** Card when no weigh-in is due: the next weigh-in, this week's if already done, and ways to weigh in anyway or change the day. */
+/**
+ * One-line card when no weigh-in is due: the next weigh-in and this week's if done, with "Weigh in" (or "Edit")
+ * on the right. Tapping the text opens the weekday chips to change the day.
+ */
 @Composable
 private fun NextWeighInCard(
     next: LocalDate,
@@ -252,21 +239,26 @@ private fun NextWeighInCard(
     onWeighInDay: (Int) -> Unit,
 ) {
     var picking by remember { mutableStateOf(false) }
-    DarkCard(radius = 24) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Next weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            Text(longDay(next), style = numberStyle(30.sp))
-            when {
-                done != null -> Text(done, style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
-                last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text(actionLabel, color = Palette.Accent) }
-                TextButton(onClick = { picking = !picking }, contentPadding = PaddingValues(0.dp)) {
-                    Text(if (picking) "Done" else "Change day", color = Palette.Muted)
+    DarkCard {
+        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Tapping the text opens the weekday chips to change the weigh-in day.
+                Column(
+                    Modifier.weight(1f).heightIn(min = 44.dp).clickable(onClickLabel = "Change weigh-in day") { picking = !picking },
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text("Next weigh-in · ${shortDay(next)}", style = MaterialTheme.typography.titleSmall)
+                    when {
+                        done != null -> Text(done, style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
+                        last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    }
                 }
+                TextButton(onClick = onWeighInNow) { Text(actionLabel, color = Palette.Accent) }
             }
-            if (picking) WeekdayPicker(weighInDay, { onWeighInDay(it); picking = false })
+            if (picking) {
+                Text("Weigh-in day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
+                WeekdayPicker(weighInDay, { onWeighInDay(it); picking = false }, Modifier.padding(end = 8.dp, bottom = 8.dp))
+            }
         }
     }
 }
@@ -311,8 +303,10 @@ private fun RunningCard(
                             Text("%.2f km".format(km), style = numberStyle(28.sp))
                         }
                     }
-                    Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Add another run", color = Palette.Muted) }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.weight(1f))
+                        TextButton(onClick = onAddRun) { Text("+ Add another", color = Palette.Muted) }
+                    }
                 }
                 rest -> {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -342,7 +336,7 @@ private fun RunningCard(
             HorizontalDivider(color = Palette.CardHigh)
             val monday = weekStart(date)
             Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            WeekDots(monday, date, weekRuns.mapNotNull { it.date }.toSet(), restDays)
+            WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays)
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("${weekRuns.size} ${if (weekRuns.size == 1) "run" else "runs"}", style = numberStyle(22.sp))
                 Text("%.1f km this week".format(weekRuns.sumOf { it.km }), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
@@ -363,10 +357,10 @@ private fun DoneMark(filled: Boolean) {
 
 /**
  * Mon–Sun dots for the week: orange with a check on run days, a grey ring on rest days, an empty orange ring for
- * the shown day before anything is logged, raised grey for other days.
+ * the shown day before anything is logged, a dash for past days that were missed, raised grey for days to come.
  */
 @Composable
-private fun WeekDots(monday: LocalDate, shown: LocalDate, runDays: Set<LocalDate>, restDays: Set<LocalDate>) {
+private fun WeekDots(monday: LocalDate, shown: LocalDate, today: LocalDate, runDays: Set<LocalDate>, restDays: Set<LocalDate>) {
     Row(Modifier.fillMaxWidth()) {
         (0L..6L).map { monday.plusDays(it) }.forEach { d ->
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -383,11 +377,15 @@ private fun WeekDots(monday: LocalDate, shown: LocalDate, runDays: Set<LocalDate
                             ran -> dot.background(Palette.Accent, CircleShape)
                             rested -> dot.border(2.dp, Palette.Muted, CircleShape)
                             d == shown -> dot.border(2.dp, Palette.Accent, CircleShape)
+                            d < today -> dot // missed: no run, no rest; just a dash
                             else -> dot.background(Palette.CardHigh, CircleShape)
                         },
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (ran) Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(16.dp))
+                        when {
+                            ran -> Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(16.dp))
+                            !rested && d != shown && d < today -> Box(Modifier.size(width = 12.dp, height = 2.dp).background(Palette.Muted))
+                        }
                     }
                 }
                 Text(
@@ -397,28 +395,6 @@ private fun WeekDots(monday: LocalDate, shown: LocalDate, runDays: Set<LocalDate
                     fontWeight = if (d == shown) FontWeight.SemiBold else FontWeight.Normal,
                 )
             }
-        }
-    }
-}
-
-/** Orange banner after saving a run: what the week adds up to now. */
-@Composable
-private fun RunLoggedBanner(runs: Int, km: Double) {
-    Row(
-        Modifier.fillMaxWidth().background(Palette.Accent, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(Modifier.size(28.dp).background(Palette.OnAccent, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Check, null, tint = Palette.Accent, modifier = Modifier.size(16.dp))
-        }
-        Column {
-            Text("Run logged", color = Palette.OnAccent, fontWeight = FontWeight.SemiBold)
-            Text(
-                "%.1f km this week · %d %s".format(km, runs, if (runs == 1) "run" else "runs"),
-                style = MaterialTheme.typography.labelMedium,
-                color = Palette.OnAccent,
-            )
         }
     }
 }
