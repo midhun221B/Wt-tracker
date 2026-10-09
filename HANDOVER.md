@@ -35,7 +35,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - New screenshot `8-settings`.
 
 ### Features in the app today
-- **Today:** run, rest-day switch, week strip; on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with hunger, sleep, snacks and note.
+- **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with sleep, snacks and note; other days a "Next weigh-in" card with "Change day".
 - **Dashboard ("Trend"):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
@@ -72,7 +72,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - reminder notifications
    - the file pickers (export, restore, Strava CSV) and the date picker
    - only Strava's English date format has been tested
-3. Open questions: hunger, sleep, snacks and note are stored with a weigh-in, so they're now weekly. If daily notes matter,
+3. Open questions: sleep, snacks and note are stored with a weigh-in, so they're now weekly. If daily notes matter,
    they need their own table.
 4. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
 
