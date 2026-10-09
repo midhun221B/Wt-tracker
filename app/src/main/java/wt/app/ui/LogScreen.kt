@@ -83,10 +83,11 @@ fun LogScreen(
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
     // A scale measurement counts as the week's weigh-in too (it may have been saved without a weight).
     val status = weighInStatus(state.weights.map { it.date } + state.body.map { it.date }, date, weighInDay.value)
-    var weighInOpen by remember(date) { mutableStateOf(false) }
-    // Weekly: the big card shows only while this week's weigh-in is due, or when asked for ("Weigh in now" / "Edit").
+    // The day whose big card was opened with "Weigh in" / "Edit"; it survives the jump to the logged day.
+    var weighInFor by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    // Weekly: the big card shows only while this week's weigh-in is due, or when asked for ("Weigh in" / "Edit").
     // A day that already has a weight shows it in the small card instead.
-    val showWeighIn = (status.due && existing == null) || weighInOpen
+    val showWeighIn = (status.due && existing == null) || weighInFor == date
     val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg ?: 80.0
 
     // Field state resets when the date (or its stored entry) changes.
@@ -167,7 +168,7 @@ fun LogScreen(
                     // Only the weight is asked now; sleep, hunger, snacks and notes from older entries are kept.
                     val kg = round(kgValue!! * 100) / 100
                     onSaveWeight(existing?.copy(kg = kg) ?: WeightEntity(date = date, kg = kg))
-                    weighInOpen = false
+                    weighInFor = null
                 },
                 enabled = weightValid,
                 modifier = Modifier.fillMaxWidth().height(58.dp),
@@ -181,7 +182,7 @@ fun LogScreen(
                 )
             }
             if (existing != null) {
-                TextButton(onClick = { onDeleteWeight(date); weighInOpen = false }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
+                TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
         } else {
             NextWeighInCard(
@@ -193,8 +194,13 @@ fun LogScreen(
                 },
                 last = state.weights.lastOrNull { it.date <= date },
                 weighInDay = weighInDay.value,
-                actionLabel = if (existing != null) "Edit" else "Weigh in",
-                onWeighInNow = { weighInOpen = true },
+                // Once the week is logged, "Edit" opens that day's entry instead of starting an extra weigh-in.
+                actionLabel = if (status.doneOn != null || existing != null) "Edit" else "Weigh in",
+                onWeighInNow = {
+                    val target = status.doneOn ?: date
+                    date = target
+                    weighInFor = target
+                },
                 onWeighInDay = onWeighInDay,
             )
         }
@@ -225,8 +231,8 @@ fun LogScreen(
 }
 
 /**
- * One-line card when no weigh-in is due: the next weigh-in and this week's if done, with "Weigh in" (or "Edit")
- * on the right. Tapping the text opens the weekday chips to change the day.
+ * One-line card when no weigh-in is due: the next weigh-in and this week's if done, with "Weigh in" on the right,
+ * or "Edit" once the week is logged (it opens the logged day). Tapping the text opens the weekday chips to change the day.
  */
 @Composable
 private fun NextWeighInCard(
