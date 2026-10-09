@@ -178,16 +178,17 @@ private fun ForecastTiles(d: Dashboard) {
                     "Eating now", "≈" + roughKcal(e.estimatedIntake), m,
                     sub = "kcal/day · deficit ${roughDeficit(e.actualDeficit)}",
                 )
-                val change = e.intakeChange
+                // Difference of the rounded figures, so the three numbers on screen agree.
+                val change = round50(e.targetIntake) - round50(e.estimatedIntake)
                 StatTile(
                     if (e.requiredKgPerWeek == null) "Goal date passed" else "To get back on plan",
                     if (e.requiredKgPerWeek == null) "Re-baseline" else "≈" + roughKcal(e.targetIntake),
                     m,
                     sub = when {
                         e.requiredKgPerWeek == null -> "in Plan"
-                        abs(change) < 25 -> "kcal/day · on pace"
-                        change < 0 -> "kcal/day · ${roughKcal(-change)} less"
-                        else -> "kcal/day · ${roughKcal(change)} more"
+                        change == 0 -> "kcal/day · on pace"
+                        change < 0 -> "kcal/day · %,d less".format(-change)
+                        else -> "kcal/day · %,d more".format(change)
                     },
                     highlight = true,
                 )

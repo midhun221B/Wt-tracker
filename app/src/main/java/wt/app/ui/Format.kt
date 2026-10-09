@@ -17,7 +17,9 @@ fun signedKcal(v: Double) = "%+,.0f kcal".format(v)
  * Daily kcal rounded to the nearest 50 ("2,350"): intake is estimated from the weight trend and a BMR guess,
  * so more digits would look more precise than they are.
  */
-fun roughKcal(v: Double): String = "%,d".format((Math.round(v / 50.0) * 50).toInt())
+fun roughKcal(v: Double): String = "%,d".format(round50(v))
+
+fun round50(v: Double): Int = (Math.round(v / 50.0) * 50).toInt()
 
 private val shortDate = DateTimeFormatter.ofPattern("MM-dd")
 private val longDayFmt = DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.ENGLISH)
