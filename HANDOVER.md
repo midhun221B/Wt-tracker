@@ -38,6 +38,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 ### Not merged
 - Settings › About shows the app version (`BuildConfig.VERSION_NAME`; `buildConfig` enabled in `app/build.gradle.kts`).
+  Version 0.2.1 (`versionCode` 3); merging creates the `v0.2.1` release.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
