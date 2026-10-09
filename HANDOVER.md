@@ -25,22 +25,36 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a` (owner review of the screens on 2026-10-09):
+  - **Weekly weigh-in.** A weigh-in day in Settings (Monday by default; Room v3, `MIGRATION_2_3` adds `profile.weighInDay`).
+    Today shows the weigh-in card only on that day, when the day already has a weight, or after "Weigh in now".
+    Other days show "Next weigh-in", the run card, rest day and a "Week of …" strip.
+    The reminder job still runs daily but only notifies on the weigh-in day.
+  - **Forecast for weekly data.** `fitTrend` falls back to the last 42 days with 4+ weigh-ins over at least 21 days.
+    The missed-weigh-in alert now fires after 8 days.
+  - **Calendar weeks (Mon–Sun).** Week 1 is the week of the first weigh-in (5–11 Oct). Runs before it count in week 0, −1, …
+    (at most 4 weeks back). This fixed runs on 4–7 Oct missing from the week totals: weeks used to start on Thu 8 Oct.
+  - **Runs:** this week and last week are expanded; older weeks are one line (runs, km, best pace) and expand on tap.
+  - **Forms:** every pop-up uses `FormDialog` (dark card, full-width orange save). Fields (`NumberField`, `DateField`) are
+    filled dark with the label inside. The top-bar import button is gone; the Strava CSV import moved into Add run.
+  - **Plan tab** in "B orange": big needed rate with a Realistic/Ambitious/Not allowed pill, checkpoint rows with the rate
+    between them, energy fields, plan history with an "Active" pill.
+  - Screenshot tests use weekly sample weigh-ins and add `2b-weigh-in`, `6-add-run` and `7-add-measurement`
+    (`LocalInlineDialogs` draws dialogs in place).
 
 ### Features in the app today
-- **Today:** weigh-in with ±0.1 steppers, hunger (None–Very), sleep, snacks, note, rest-day switch, add run.
+- **Today:** run, rest-day switch, week strip; on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot) with hunger, sleep, snacks and note.
 - **Dashboard ("Trend"):**
-  - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days, 80 % band).
+  - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy balance with the intake change needed.
-  - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 3+ days.
-- **Screenshot import:** "From screenshot" on Today and Body, "Import → Screenshot of a run" on Runs, and an import
-  button inside the "Add run" and "Add measurement" dialogs.
+  - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
+- **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
-- **Runs:** manual entry and Strava `activities.csv` import. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
+- **Runs:** manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
 - **Plan:** edit checkpoints, re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy settings.
-- **Settings:** daily reminder (default 07:30 Tokyo), CSV export, JSON backup and restore.
+- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore.
 
 ## Open items / next steps
 1. **Screenshot import: merged via #6, confirmed working on the owner's phone with both screenshots.**
@@ -59,14 +73,16 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
      - The body screen has no weight row. Weight = lean / (1 − fat %) (88.3 kg for the sample, about ±0.1 kg), with BMI × height² as the fallback.
        It's shown as an optional field with a note. When saved, it updates that day's weigh-in and keeps the sleep, hunger and notes.
    - Not tested yet: Strava in Japanese (labels 距離/ペース/時間 are handled, but the
-     units are guessed), and other scale apps. The dialogs aren't in the Robolectric screenshots (they use a separate window).
+     units are guessed), and other scale apps. The confirm dialogs filled from a screenshot aren't in the Robolectric screenshots; the add forms are.
 2. **Not yet verified on a real device:**
    - status-bar icon colour and the dark launch window
-   - Room v1→v2 migration on a real install
+   - Room v1→v2→v3 migrations on a real install
    - reminder notifications
    - the file pickers (export, restore, Strava CSV) and the date picker
    - only Strava's English date format has been tested
-3. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
+3. Open questions: hunger, sleep, snacks and note are stored with a weigh-in, so they're now weekly. If daily notes matter,
+   they need their own table.
+4. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
 
 ## Design decisions
 - **Chosen direction: "B orange".**

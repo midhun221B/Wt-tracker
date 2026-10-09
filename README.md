@@ -10,13 +10,13 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
-- **Today:** quick weight entry with ±0.1 steppers; optional sleep, hunger, snacks and note; rest-day switch; add a run.
+- **Today:** run, rest-day switch and this week's numbers. On your weekly weigh-in day it shows the weight entry (±0.1 steppers, or from a scale screenshot) with hunger, sleep, snacks and note; other days show when the next weigh-in is.
 - **Dashboard:**
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.
   - Energy balance: actual vs expected deficit and the intake change needed.
   - Weekly table, body-fat and visceral-fat trends, alerts.
-- **Runs:** manual entry and **Strava `activities.csv` import**.
+- **Runs:** manual entry, a Strava screenshot, or **Strava `activities.csv` import** (all from Add run). Runs are grouped by Monday–Sunday week; older weeks collapse to one line.
   - Runs, trail runs and virtual runs are imported.
   - Re-importing the same file adds nothing new.
   - Runs you already logged are matched instead of duplicated (same day, about the same distance, or the undated sample runs).
@@ -25,11 +25,11 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
   - Edit checkpoints.
   - **Re-baseline** from today's trend weight to the same goal date. The weekly loss it would need is flagged as unrealistic above 0.7 kg/week and blocked above 1 kg/week.
   - Energy settings (BMR, activity factor, food deficit).
-- **Settings:** daily weigh-in reminder (Asia/Tokyo time), CSV export, JSON backup/restore.
+- **Settings:** weigh-in day and its reminder (Asia/Tokyo time), CSV export, JSON backup/restore.
 
 ## How the forecast works (`core/`)
 - **Smoothing:** 7-day trailing moving average.
-- **Trend:** a Theil–Sen robust line over the last 21 days, which ignores water-weight spikes. With fewer than 7 weigh-ins it uses all the data and is marked low-confidence.
+- **Trend:** a Theil–Sen robust line, which ignores water-weight spikes. It uses the last 21 days when they hold 7+ weigh-ins, otherwise the last 42 days when they hold 4+ weigh-ins over at least 3 weeks (weekly weigh-ins). With less it uses all the data and is marked low-confidence.
 - **Band:** an 80 % band from the line's standard error, using a MAD-based noise estimate. It widens with the forecast horizon.
 - **Energy:**
   - Actual deficit = −slope × 7700 kcal/kg.

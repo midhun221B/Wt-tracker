@@ -5,17 +5,17 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 
 ## Layout
 - `core/`: pure Kotlin (JVM, no Android). All the math and parsing lives here and is unit-tested.
-  - `trend/`: 7-day moving average, Theil–Sen fit over the last 21 days, forecast with an 80 % band and an ETA.
+  - `trend/`: 7-day moving average, Theil–Sen fit over the last 21 days (or 42 days for weekly weigh-ins), forecast with an 80 % band and an ETA.
   - `plan/`: planned line and re-baseline.
-  - `energy/`, `alerts/`, `summary/`: energy balance, alert rules, weekly table.
+  - `energy/`, `alerts/`, `summary/`: energy balance, alert rules, weekly table (Monday–Sunday weeks; week 1 is the week of the first weigh-in).
   - `dashboard/`: `buildDashboard()`, the single entry point the UI calls.
   - `io/`: CSV export, JSON backup/restore, Strava `activities.csv` parser and import matching.
   - `Safety.kt`: hard limits.
-- `app/`: Jetpack Compose + Room (schema v2) + WorkManager.
+- `app/`: Jetpack Compose + Room (schema v3) + WorkManager.
   - `data/`: entities, DAOs, migrations, seed data, backup and Strava import.
   - `ui/`: screens and `AppViewModel`.
   - `chart/`: Canvas charts.
-  - `notify/`: daily reminder.
+  - `notify/`: weigh-in-day reminder.
 - Tests:
   - `core/src/test`: synthetic noisy data.
   - `app/src/test`: format helpers, plus Robolectric screenshot tests that write PNGs to `app/build/screenshots`.
@@ -43,6 +43,7 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 - **Safety:**
   - Never suggest intake below 1800 kcal/day or loss above 1 kg/week (`Safety`).
   - Re-baseline flags anything above 0.7 kg/week as unrealistic.
+- Weigh-ins are weekly, on a weigh-in day the user picks (Settings). Don't design for daily weigh-ins.
 - Show the "Estimates, not medical advice" note wherever advice appears.
 - 7700 kcal per kg. Net running kcal = logged kcal − resting burn, or ≈ 0.9 × kg × km when no calories are logged.
 - Keep the math in `core/` with tests. The UI only formats values from `Dashboard`.
