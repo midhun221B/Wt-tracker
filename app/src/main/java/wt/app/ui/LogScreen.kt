@@ -210,7 +210,7 @@ fun LogScreen(
                 TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
         } else if (savedWeighIn == date && existing != null) {
-            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg)?.let { p ->
+            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg)?.let { p ->
                 WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, plannedKg = planned, onEdit = { onSavedSeen(); weighInFor = date })
             }
         } else {
@@ -286,10 +286,10 @@ fun LogScreen(
 @Composable
 private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Double, onEdit: () -> Unit) {
     val reduceMotion = rememberReduceMotion()
-    val ring = remember(p.kg) { Animatable(if (reduceMotion) p.fraction.toFloat() else p.previousFraction.toFloat()) }
+    val ring = remember(p.kg) { Animatable(if (reduceMotion) p.goal.fraction.toFloat() else p.previousFraction.toFloat()) }
     LaunchedEffect(ring) {
         delay(250)
-        ring.animateTo(p.fraction.toFloat(), tween(1200, easing = FastOutSlowInEasing))
+        ring.animateTo(p.goal.fraction.toFloat(), tween(1200, easing = FastOutSlowInEasing))
     }
     val shape = RoundedCornerShape(24.dp)
     Card(
@@ -306,7 +306,7 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Doub
             ProgressRing(ring.value, Modifier.size(180.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.1f".format(p.kg), style = numberStyle(48.sp))
-                    Text("kg", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Text("kg on the scale", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 }
             }
             p.changeKg?.let { c ->
@@ -316,7 +316,13 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Doub
                     color = if (c > 0.05) Palette.Warn else Palette.Accent,
                 )
             }
-            Text("%.1f of %.1f kg toward %.0f kg".format(p.lostKg, p.totalKg, goalKg), style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
+            // The ring is the trend, like the Trend tab; the scale shows only as the change above.
+            val g = p.goal
+            Text(
+                "%.1f of %.1f kg toward %.0f kg".format(g.lostKg, g.totalKg, goalKg) + if (g.fromTrend) " · trend" else "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Palette.Muted,
+            )
             val diff = p.kg - plannedKg
             Text(
                 when {

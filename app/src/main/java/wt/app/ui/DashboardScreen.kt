@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import wt.app.chart.WeightChart
+import wt.core.summary.goalProgress
 import wt.core.Safety
 import wt.core.alerts.Alert
 import wt.core.alerts.Severity
@@ -82,11 +83,9 @@ private fun AlertCard(alert: Alert) {
 @Composable
 private fun ProgressCard(d: Dashboard) {
     val f = d.forecast
-    val startKg = d.weights.firstOrNull()?.kg ?: d.plan.start.kg
-    val currentKg = f?.trendToday ?: d.latestWeight?.kg ?: startKg
     val goalKg = d.plan.goal.kg
-    val total = (startKg - goalKg).coerceAtLeast(0.1)
-    val lost = (startKg - currentKg).coerceAtLeast(0.0)
+    // Same rule as the "Weigh-in saved" card: first weigh-in to today's trend.
+    val g = goalProgress(d.weights, d.asOf, goalKg, d.plan.start.kg)
 
     Card(
         Modifier.fillMaxWidth(),
@@ -94,17 +93,17 @@ private fun ProgressCard(d: Dashboard) {
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
     ) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            ProgressRing((lost / total).toFloat(), Modifier.size(150.dp)) {
+            ProgressRing(g.fraction.toFloat(), Modifier.size(150.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("%.1f".format(currentKg), style = numberStyle(50.sp))
-                    Text(if (f != null) "kg trend" else "kg latest", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Text("%.1f".format(g.currentKg), style = numberStyle(50.sp))
+                    Text(if (g.fromTrend) "kg trend" else "kg latest", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (f != null) {
                     RingStat("%+.2f kg".format(f.kgPerWeek), "per week", Palette.Accent)
                 }
-                RingStat("%.1f of %.1f kg".format(lost, total), "lost toward %.0f kg".format(goalKg))
+                RingStat("%.1f of %.1f kg".format(g.lostKg, g.totalKg), "lost toward %.0f kg".format(goalKg))
                 if (f != null) {
                     val over = f.gapKgToday > 0.05
                     RingStat(

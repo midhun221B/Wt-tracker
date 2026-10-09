@@ -35,7 +35,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: one "kg lost" number. The "Weigh-in saved" ring now uses the trend like the Trend tab (shared `goalProgress` in `core/summary`), labelled "· trend"; the scale shows as "kg on the scale" and the change since the last weigh-in.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -80,6 +80,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 ## Product decisions
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
+- **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
