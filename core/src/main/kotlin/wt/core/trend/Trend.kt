@@ -79,8 +79,10 @@ const val THEIL_SEN_SE_FACTOR = 1.05 // ≈ 1 / sqrt(0.91 asymptotic efficiency)
 
 /**
  * Fits the trend on weights logged in the [windowDays] days up to [asOf].
- * If that window has fewer than [minPoints] weigh-ins, all data up to [asOf] is used
- * and the result is marked low-confidence. Returns null with fewer than 3 points or
+ * If that window has fewer than [minPoints] weigh-ins (e.g. weighing once a week), it tries the last
+ * [weeklyWindowDays] days, which need at least [weeklyMinPoints] weigh-ins spread over [weeklyMinSpanDays] days
+ * (four weekly weigh-ins). If that fails too, all data up to [asOf]
+ * is used and the result is marked low-confidence. Returns null with fewer than 3 points or
  * when all points fall on one day.
  */
 fun fitTrend(
@@ -88,17 +90,23 @@ fun fitTrend(
     asOf: LocalDate,
     windowDays: Int = 21,
     minPoints: Int = 7,
+    weeklyWindowDays: Int = 42,
+    weeklyMinPoints: Int = 4,
+    weeklyMinSpanDays: Long = 21,
 ): TrendFit? {
     val upToAsOf = entries.filter { it.date <= asOf }.sortedBy { it.date }
-    val windowFrom = asOf.minusDays(windowDays - 1L)
-    var used = upToAsOf.filter { it.date >= windowFrom }
+    fun window(days: Int) = upToAsOf.filter { it.date >= asOf.minusDays(days - 1L) }
+    var used = window(windowDays)
     var low = false
     if (used.size < minPoints) {
-        used = upToAsOf
-        low = true
+        used = window(weeklyWindowDays)
+        val span = if (used.isEmpty()) 0 else ChronoUnit.DAYS.between(used.first().date, used.last().date)
+        if (used.size < weeklyMinPoints || span < weeklyMinSpanDays) {
+            used = upToAsOf
+            low = true
+        }
     }
     if (used.size < 3) return null
-    if (used.size < minPoints) low = true
 
     val xs = DoubleArray(used.size) { ChronoUnit.DAYS.between(asOf, used[it].date).toDouble() }
     val ys = DoubleArray(used.size) { used[it].kg }

@@ -16,7 +16,7 @@ import wt.core.model.todayInTokyo
         WeightEntity::class, BodyCompEntity::class, RunEntity::class, RestDayEntity::class,
         PlanEntity::class, CheckpointEntity::class, ProfileEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -46,7 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun get(context: Context): AppDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "wt-tracker.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build().also { instance = it }
         }
 
@@ -54,6 +54,13 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE profile ADD COLUMN reminderEnabled INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        /** v3: weekly weigh-in day (ISO weekday, Monday by default). */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE profile ADD COLUMN weighInDay INTEGER NOT NULL DEFAULT 1")
             }
         }
     }

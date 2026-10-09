@@ -48,7 +48,7 @@ class ScreenshotTest {
         }
         val runs = (0..28).filter { it % 7 !in setOf(2, 5) }.mapIndexed { i, d ->
             RunEntity(i + 1L, Defaults.START.plusDays(d.toLong()), 3.0 + (d / 25) * 0.5, 1260 + rnd.nextInt(120))
-        } + RunEntity(100, null, 2.81, 1216)
+        } + RunEntity(100, null, 2.81, 1216) + RunEntity(101, LocalDate.of(2026, 10, 4), 3.0, 1290) // a run before the plan
         val body = listOf(
             BodyCompEntity(Defaults.START, 29.2, 16.0, 60.1, 37.0, 62.5, 1818.0),
             BodyCompEntity(Defaults.START.plusDays(14), 28.8, 15.5, 60.0, 37.1, 62.3, 1810.0),
@@ -82,7 +82,13 @@ class ScreenshotTest {
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
 
-    @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}) }
+    // 5 Nov is a Thursday; the default weigh-in day is Monday, so this is an off day.
+    @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
+
+    @Test fun weighIn() = shoot("2b-weigh-in") {
+        val s = sampleState()
+        LogScreen(s.copy(profile = s.profile.copy(weighInDay = 4)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
+    }
 
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()

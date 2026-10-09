@@ -2,6 +2,10 @@ package wt.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,12 +29,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import wt.app.data.ProfileEntity
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(
     profile: ProfileEntity,
     notificationsAllowed: Boolean,
     onReminder: (enabled: Boolean, hour: Int, minute: Int) -> Unit,
+    onWeighInDay: (Int) -> Unit,
     onExport: (ExportKind) -> Unit,
     onRestore: () -> Unit,
     modifier: Modifier = Modifier,
@@ -45,9 +53,25 @@ fun SettingsScreen(
         modifier.verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SectionCard("Daily weigh-in reminder") {
+        SectionCard("Weekly weigh-in") {
+            Text("Weigh-in day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                DayOfWeek.entries.forEach { day ->
+                    val selected = profile.weighInDay == day.value
+                    Button(
+                        onClick = { onWeighInDay(day.value) },
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selected) Palette.Accent else Palette.CardHigh,
+                            contentColor = if (selected) Palette.OnAccent else Palette.Text,
+                        ),
+                    ) { Text(day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), style = MaterialTheme.typography.labelLarge) }
+                }
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Remind me if I haven't logged by", Modifier.weight(1f))
+                Text("Remind me that morning if I haven't logged by", Modifier.weight(1f))
                 Switch(
                     checked = profile.reminderEnabled,
                     onCheckedChange = { on -> parsedTime?.let { onReminder(on, it.first, it.second) } },

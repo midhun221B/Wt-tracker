@@ -181,6 +181,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         Reminder.schedule(getApplication(), enabled, hour, minute)
     }
 
+    fun setWeighInDay(day: Int) = launchWithMessage("Weigh-in day set") {
+        val p = db.profile().get() ?: return@launchWithMessage
+        db.profile().upsert(p.copy(weighInDay = day))
+    }
+
     fun export(kind: ExportKind, uri: Uri) = launchWithMessage("Exported ${kind.fileName}") {
         val data = db.loadAll()
         val text = when (kind) {

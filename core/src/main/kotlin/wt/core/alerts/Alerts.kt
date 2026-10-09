@@ -17,7 +17,7 @@ data class AlertSettings(
     val slowKgPerWeek: Double = 0.3,
     val fastKgPerWeek: Double = 0.8,
     val maxConsecutiveRunDays: Int = 5,
-    val reminderAfterDays: Int = 3,
+    val reminderAfterDays: Int = 8, // one weigh-in a week, plus a day's grace
     val slowLossKcalCut: Double = 150.0,
 )
 
@@ -77,7 +77,7 @@ fun evaluateAlerts(
     if (gap == null || gap >= settings.reminderAfterDays) {
         alerts += Alert(
             AlertKind.LOG_REMINDER, Severity.INFO, "Log your weight",
-            if (gap == null) "No weight logged yet." else "No weight logged for $gap days. Daily weigh-ins keep the forecast accurate.",
+            if (gap == null) "No weight logged yet." else "No weight logged for $gap days. One weigh-in a week keeps the forecast on track.",
         )
     }
     return alerts

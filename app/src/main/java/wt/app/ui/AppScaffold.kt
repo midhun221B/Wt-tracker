@@ -200,6 +200,7 @@ fun AppScaffold(vm: AppViewModel) {
                     }
                     vm.setReminder(on, h, m)
                 },
+                onWeighInDay = vm::setWeighInDay,
                 onExport = { kind ->
                     if (kind == ExportKind.BACKUP_JSON) {
                         jsonLauncher.launch("wt-tracker-backup-${s.today}.json")
