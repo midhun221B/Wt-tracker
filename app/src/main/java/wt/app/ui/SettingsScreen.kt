@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import wt.app.BuildConfig
 import wt.app.data.ProfileEntity
 
 @Composable
@@ -78,6 +79,10 @@ fun SettingsScreen(
         }
 
         SectionCard("About") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Version", Modifier.weight(1f))
+                Text(BuildConfig.VERSION_NAME, color = Palette.Muted)
+            }
             Text("All data stays on this phone. No accounts, no cloud. Dates use Asia/Tokyo time.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
             Disclaimer()
         }
