@@ -28,19 +28,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#11](https://github.com/midhun221B/Wt-tracker/pull/11) | Today: "Change day" on the Next weigh-in card, one running card (run, rest day, week numbers), hunger no longer asked; Settings in the new style; `8-settings` screenshot |
 | [#12](https://github.com/midhun221B/Wt-tracker/pull/12) | Body: weekly measurement card (scale screenshot first) and muscle chart; weigh-in is weight only; Trend Weeks/Body sections collapsible; Runs opens only this week |
 | [#13](https://github.com/midhun221B/Wt-tracker/pull/13) | Weigh-in status by Mon–Sun week (`weighInStatus`: no prompt once the week has a weight, due until logged) for Today, Body and the reminder; one-line Body card unless due; collapsible Plan sections; screenshots at 411 dp (Nothing Phone (3a)) |
+| [#14](https://github.com/midhun221B/Wt-tracker/pull/14) | Today: small card once the day/week is logged (big card only when due or on Edit); scale measurements count as the weekly weigh-in; Body counts a typed weight; sample runs removed (startup cleanup); reminder time picker |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - **Body:** a weight typed on Today counts for the week. The card then says
-    "Weight logged this week (…) · no scale numbers" and keeps Add; it only asks for a measurement when the week has neither.
-  - **Sample runs removed:** fresh installs no longer seed `Defaults.sampleRuns`. On start, `removeSampleRuns()` deletes the
-    leftover ones that are still undated, manual, and have the exact sample km and time; dated or edited runs stay.
-  - **Settings:** the reminder time is a button that opens a Material3 `TimePicker` (24 h) instead of a typed field.
-  - **Fix (owner, 9 Oct, still seeing the big weigh-in card on the new build):**
-    - A day that already has a weight now shows the small card ("This week done: … kg today" plus "Edit today's weight")
-      instead of the big card.
-    - A scale measurement counts as the week's weigh-in (Today and the reminder), even if it was saved without a weight.
-    - New screenshot: `2c-logged-today`.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
