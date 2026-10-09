@@ -143,7 +143,7 @@ fun AppScaffold(vm: AppViewModel) {
             val (subtitle, title) = when {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
-                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> longDay(s.today) to "Week $w of $n" }
+                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "Week $w of $n · ${longDay(s.today)}" to tab.label }
                 else -> longDay(s.today) to tab.label
             }
             TopAppBar(

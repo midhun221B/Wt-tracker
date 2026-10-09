@@ -79,7 +79,7 @@ fun RunsScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                SectionCard("Last 28 days", trailing = "plan: 4–5 runs a week") {
+                SectionCard("Last 28 days") {
                     Row(Modifier.fillMaxWidth()) {
                         SummaryFigure("Runs", "${last28.size}", Modifier.weight(1f))
                         SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
