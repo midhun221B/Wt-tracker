@@ -165,12 +165,13 @@ fun LogScreen(
                         Text("kg", style = MaterialTheme.typography.titleMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 14.dp))
                     }
                     if (kgValue != null) {
+                        // Live while typing or dragging, so it is the scale reading; "over plan" elsewhere is the trend.
                         val diff = kgValue - planned
                         Text(
                             when {
-                                diff < -0.05 -> "%.1f kg under plan".format(-diff)
-                                diff <= 0.05 -> "On plan"
-                                else -> "%.1f kg over plan".format(diff)
+                                diff < -0.05 -> "Scale: %.1f kg under today's plan".format(-diff)
+                                diff <= 0.05 -> "Scale: on today's plan"
+                                else -> "Scale: %.1f kg over today's plan".format(diff)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
@@ -210,8 +211,8 @@ fun LogScreen(
                 TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
         } else if (savedWeighIn == date && existing != null) {
-            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg)?.let { p ->
-                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, plannedKg = planned, onEdit = { onSavedSeen(); weighInFor = date })
+            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg, planned)?.let { p ->
+                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, onEdit = { onSavedSeen(); weighInFor = date })
             }
         } else {
             NextWeighInCard(
@@ -251,6 +252,8 @@ fun LogScreen(
             onAddRun = { showRunDialog = true },
             onRest = { onSetRest(date, it) },
             justLogged = runJustLogged && date == state.today,
+            // Days before anything was logged are not "missed": the app wasn't in use yet.
+            firstDay = listOfNotNull(state.weights.minOfOrNull { it.date }, state.runs.mapNotNull { it.date }.minOrNull()).minOrNull(),
         )
 
         Disclaimer()
@@ -284,12 +287,12 @@ fun LogScreen(
  * new one, with the change since then and the gap to the plan. "Edit" reopens the weigh-in card.
  */
 @Composable
-private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Double, onEdit: () -> Unit) {
+private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> Unit) {
     val reduceMotion = rememberReduceMotion()
-    val ring = remember(p.kg) { Animatable(if (reduceMotion) p.fraction.toFloat() else p.previousFraction.toFloat()) }
+    val ring = remember(p.kg) { Animatable(if (reduceMotion) p.goal.fraction.toFloat() else p.previousFraction.toFloat()) }
     LaunchedEffect(ring) {
         delay(250)
-        ring.animateTo(p.fraction.toFloat(), tween(1200, easing = FastOutSlowInEasing))
+        ring.animateTo(p.goal.fraction.toFloat(), tween(1200, easing = FastOutSlowInEasing))
     }
     val shape = RoundedCornerShape(24.dp)
     Card(
@@ -306,7 +309,7 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Doub
             ProgressRing(ring.value, Modifier.size(180.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.1f".format(p.kg), style = numberStyle(48.sp))
-                    Text("kg", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Text("kg on the scale", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 }
             }
             p.changeKg?.let { c ->
@@ -316,13 +319,21 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Doub
                     color = if (c > 0.05) Palette.Warn else Palette.Accent,
                 )
             }
-            Text("%.1f of %.1f kg toward %.0f kg".format(p.lostKg, p.totalKg, goalKg), style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
-            val diff = p.kg - plannedKg
+            // The ring is the trend, like the Trend tab; the scale shows only as the change above.
+            val g = p.goal
+            Text(
+                "%.1f of %.1f kg toward %.0f kg".format(g.lostKg, g.totalKg, goalKg) + if (g.fromTrend) " · trend" else "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Palette.Muted,
+            )
+            // Trend minus plan, the same gap as the Trend tab.
+            val diff = p.gapKg
+            val basis = if (g.fromTrend) " · trend" else ""
             Text(
                 when {
-                    diff < -0.05 -> "%.1f kg under plan".format(-diff)
-                    diff <= 0.05 -> "On plan"
-                    else -> "%.1f kg over plan".format(diff)
+                    diff < -0.05 -> "%.1f kg under plan".format(-diff) + basis
+                    diff <= 0.05 -> "On plan$basis"
+                    else -> "%.1f kg over plan".format(diff) + basis
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
@@ -387,6 +398,7 @@ private fun RunningCard(
     onAddRun: () -> Unit,
     onRest: (Boolean) -> Unit,
     justLogged: Boolean = false,
+    firstDay: LocalDate? = null,
 ) {
     val done = runs.isNotEmpty() || rest
     val shape = RoundedCornerShape(20.dp)
@@ -444,7 +456,7 @@ private fun RunningCard(
             HorizontalDivider(color = Palette.CardHigh)
             val monday = weekStart(date)
             Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays, pop = date.takeIf { justLogged })
+            WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays, pop = date.takeIf { justLogged }, firstDay = firstDay)
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("${weekRuns.size} ${if (weekRuns.size == 1) "run" else "runs"}", style = numberStyle(22.sp))
                 Text("%.1f km this week".format(weekRuns.sumOf { it.km }), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
@@ -503,6 +515,7 @@ private fun rememberPulse(active: Boolean): Pair<Animatable<Float, AnimationVect
 /**
  * Mon–Sun dots for the week: orange with a check on run days, a grey ring on rest days, an empty orange ring for
  * the shown day before anything is logged, a dash for past days that were missed, raised grey for days to come.
+ * Past days before [firstDay] (the first weigh-in or run) stay blank: they are not missed, the app wasn't in use yet.
  */
 @Composable
 private fun WeekDots(
@@ -512,6 +525,7 @@ private fun WeekDots(
     runDays: Set<LocalDate>,
     restDays: Set<LocalDate>,
     pop: LocalDate? = null,
+    firstDay: LocalDate? = null,
 ) {
     Row(Modifier.fillMaxWidth()) {
         (0L..6L).map { monday.plusDays(it) }.forEach { d ->
@@ -519,6 +533,7 @@ private fun WeekDots(
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val ran = d in runDays
                 val rested = d in restDays
+                val beforeStart = firstDay == null || d < firstDay
                 val dot = Modifier.size(30.dp)
                 // The shown day gets an orange outer ring once it has a run or a rest day.
                 Box(
@@ -532,14 +547,14 @@ private fun WeekDots(
                             ran -> dot.background(Palette.Accent, CircleShape)
                             rested -> dot.border(2.dp, Palette.Muted, CircleShape)
                             d == shown -> dot.border(2.dp, Palette.Accent, CircleShape)
-                            d < today -> dot // missed: no run, no rest; just a dash
+                            d < today -> dot // missed (a dash) or before the first entry (blank)
                             else -> dot.background(Palette.CardHigh, CircleShape)
                         },
                         contentAlignment = Alignment.Center,
                     ) {
                         when {
                             ran -> Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(16.dp))
-                            !rested && d != shown && d < today -> Box(Modifier.size(width = 12.dp, height = 2.dp).background(Palette.Muted))
+                            !rested && d != shown && d < today && !beforeStart -> Box(Modifier.size(width = 12.dp, height = 2.dp).background(Palette.Muted))
                         }
                     }
                 }

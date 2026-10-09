@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -80,7 +81,7 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
         val step = Step.toPx()
         val cx = size.width / 2
         val baseline = size.height - 30.dp.toPx()
-        val markTop = 40.dp.toPx()
+        val markTop = 42.dp.toPx()
         val reach = (cx / step).toInt() + 1
 
         // Ticks: whole kilograms tall and labelled, half kilograms medium, tenths short.
@@ -116,6 +117,9 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
                     color, Offset(x, markTop), Offset(x, baseline), 2.dp.toPx(),
                     pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())) else null,
                 )
+                // A small notch on top, above the centre mark's reach, so the mark still shows when it sits on the centre.
+                val n = 5.dp.toPx()
+                drawPath(Path().apply { moveTo(x - n, markTop - n); lineTo(x + n, markTop - n); lineTo(x, markTop + 1.dp.toPx()); close() }, color)
                 // Centred on the mark, but kept inside the ruler.
                 val layout = measurer.measure("$name %.1f".format(kgMark), style)
                 drawText(layout, topLeft = Offset((x - layout.size.width / 2f).coerceIn(0f, size.width - layout.size.width), top))
@@ -129,7 +133,7 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
         planKg?.let { mark(it, "Plan", Palette.Planned, 20.dp.toPx(), dashed = true) }
 
         // Fixed centre mark on top.
-        drawLine(Palette.Accent, Offset(cx, baseline - 60.dp.toPx()), Offset(cx, baseline + 4.dp.toPx()), 4.dp.toPx(), StrokeCap.Round)
+        drawLine(Palette.Accent, Offset(cx, markTop + 4.dp.toPx()), Offset(cx, baseline + 4.dp.toPx()), 4.dp.toPx(), StrokeCap.Round)
     }
 }
 

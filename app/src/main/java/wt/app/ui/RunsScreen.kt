@@ -85,7 +85,7 @@ fun RunsScreen(
                         SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
                         SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), Palette.Accent)
                     }
-                    if (weeks.isNotEmpty()) KmBars(weeks)
+                    if (weeks.isNotEmpty() && dated.isNotEmpty()) KmBars(weeks) // no empty chart before the first run
                 }
             }
             val undated = runs.filter { it.date == null }
@@ -114,10 +114,8 @@ fun RunsScreen(
             }
             if (runs.isEmpty()) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("No runs yet.", color = Palette.Muted)
-                        TextButton(onClick = onImportStrava) { Text("Import from Strava") }
-                    }
+                    // One way in: Add run also imports Strava screenshots and files.
+                    Text("No runs yet. Tap Add run to log one, or to import a Strava screenshot or file.", color = Palette.Muted)
                 }
             }
         }

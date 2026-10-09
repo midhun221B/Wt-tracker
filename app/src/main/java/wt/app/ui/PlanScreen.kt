@@ -87,6 +87,15 @@ private fun RebaselineCard(state: UiState, onApply: (List<Checkpoint>) -> Unit) 
     val preview = d.rebaselinePreview()
     var open by remember { mutableStateOf(false) }
     SectionCard("Re-baseline", trailing = "goal ${kg(d.plan.goal.kg)} · ${dayMonth(d.plan.goal.date)}") {
+        // Without a trend there is nothing to re-baseline from yet (e.g. day 1 of the plan).
+        if (d.fit == null) {
+            Text(
+                "Re-baseline opens once your trend shows (after 3 weigh-ins). Until then you're on the plan.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Palette.Muted,
+            )
+            return@SectionCard
+        }
         val rate = preview?.requiredKgPerWeek
         when {
             preview == null -> Text("Log a weight first.", color = Palette.Muted)

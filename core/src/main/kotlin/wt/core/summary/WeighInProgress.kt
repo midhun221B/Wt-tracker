@@ -1,36 +1,64 @@
 package wt.core.summary
 
 import wt.core.model.WeightEntry
+import wt.core.trend.fitTrend
 import java.time.LocalDate
 
 /**
- * Progress toward the goal right after the weigh-in on a day, from raw weights (not the trend), for the
- * "Weigh-in saved" card. [changeKg] is the change since the previous weigh-in (negative = lost), null for the first.
- * [fraction] and [previousFraction] are the share of start → goal done after this and the previous weigh-in, 0..1.
+ * Progress toward the goal on a day, the one rule every screen uses: from the first weigh-in ([startKg]) to the
+ * trend on that day ([currentKg], [fromTrend]), or to the latest weight when there are too few weigh-ins to fit one.
+ */
+data class GoalProgress(
+    val startKg: Double,
+    val currentKg: Double,
+    val fromTrend: Boolean,
+    val lostKg: Double,
+    val totalKg: Double,
+    val fraction: Double,
+)
+
+/** [planStartKg] stands in for the start and current weight before the first weigh-in. */
+fun goalProgress(weights: List<WeightEntry>, asOf: LocalDate, goalKg: Double, planStartKg: Double): GoalProgress {
+    val sorted = weights.filter { it.date <= asOf }.sortedBy { it.date }
+    val startKg = sorted.firstOrNull()?.kg ?: planStartKg
+    val trend = fitTrend(sorted, asOf)?.valueAt(asOf)
+    val currentKg = trend ?: sorted.lastOrNull()?.kg ?: startKg
+    val totalKg = (startKg - goalKg).coerceAtLeast(0.1)
+    val lostKg = (startKg - currentKg).coerceAtLeast(0.0)
+    return GoalProgress(startKg, currentKg, trend != null, lostKg, totalKg, (lostKg / totalKg).coerceIn(0.0, 1.0))
+}
+
+/**
+ * The "Weigh-in saved" card's numbers for the weigh-in on a day. [changeKg] is the scale change since the previous
+ * weigh-in (negative = lost), null for the first. [goal] is [goalProgress] with this weigh-in, and
+ * [previousFraction] the same without it, so the ring can move from one to the other. [gapKg] is the trend minus
+ * the plan for that day (positive = behind), the same gap the Trend tab shows.
  */
 data class WeighInProgress(
     val kg: Double,
     val changeKg: Double?,
-    val lostKg: Double,
-    val totalKg: Double,
-    val fraction: Double,
+    val goal: GoalProgress,
     val previousFraction: Double,
+    val gapKg: Double,
 )
 
-/** Null when [date] has no weight. The start weight is the first weigh-in. */
-fun weighInProgress(weights: List<WeightEntry>, date: LocalDate, goalKg: Double): WeighInProgress? {
-    val sorted = weights.sortedBy { it.date }
-    val entry = sorted.lastOrNull { it.date == date } ?: return null
-    val startKg = sorted.first().kg
-    val previous = sorted.lastOrNull { it.date < date }
-    val totalKg = (startKg - goalKg).coerceAtLeast(0.1)
-    fun done(kg: Double) = ((startKg - kg) / totalKg).coerceIn(0.0, 1.0)
+/** Null when [date] has no weight. [plannedKg] is the planned weight on [date]. */
+fun weighInProgress(
+    weights: List<WeightEntry>,
+    date: LocalDate,
+    goalKg: Double,
+    planStartKg: Double,
+    plannedKg: Double,
+): WeighInProgress? {
+    val upToDate = weights.filter { it.date <= date }.sortedBy { it.date }
+    val entry = upToDate.lastOrNull { it.date == date } ?: return null
+    val before = upToDate.filter { it.date < date }
+    val goal = goalProgress(upToDate, date, goalKg, planStartKg)
     return WeighInProgress(
         kg = entry.kg,
-        changeKg = previous?.let { entry.kg - it.kg },
-        lostKg = (startKg - entry.kg).coerceAtLeast(0.0),
-        totalKg = totalKg,
-        fraction = done(entry.kg),
-        previousFraction = previous?.let { done(it.kg) } ?: done(entry.kg),
+        changeKg = before.lastOrNull()?.let { entry.kg - it.kg },
+        goal = goal,
+        previousFraction = if (before.isEmpty()) goal.fraction else goalProgress(before, date, goalKg, planStartKg).fraction,
+        gapKg = goal.currentKg - plannedKg,
     )
 }

@@ -61,6 +61,18 @@ fun BodyScreen(
                 val status = weighInStatus(sorted.map { it.date } + weightDates, today, weighInDay)
                 NextMeasurementCard(status, weightOnly = measured.doneOn == null && status.doneOn != null, today, onScreenshot, onAdd = { adding = true })
             }
+            // Until there are two measurements to compare, say what the scale numbers are for.
+            if (sorted.size < 2) item {
+                SectionCard("What the scale numbers add") {
+                    Text(
+                        "Body fat, visceral fat and muscle show whether the weight you lose is fat, not muscle. " +
+                            "Once a week, import a screenshot from your scale app or add the numbers by hand. " +
+                            "Charts start after the second measurement.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Palette.Muted,
+                    )
+                }
+            }
             if (sorted.isNotEmpty()) item {
                 val first = sorted.first()
                 val last = sorted.last()

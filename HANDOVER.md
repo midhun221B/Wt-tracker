@@ -33,6 +33,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#16](https://github.com/midhun221B/Wt-tracker/pull/16) | Today polish: one-line Next weigh-in card (tap to change day), pace and "+ Add another" on one row, dash for missed days in the week dots, "Run logged" banner under the top bar for every new run (form or screenshot) |
 | [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
 | [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
+| [#19](https://github.com/midhun221B/Wt-tracker/pull/19) | One trend-based "kg lost" and "over plan" (`goalProgress`, `gapKg`; the live weigh-in line is labelled "Scale"); fresh-install empty states (blank days before start, "Trend in N more weigh-ins", no empty km chart, Body hint card, re-baseline waits for a trend); ruler notch for marks; banner word order; screenshots `9a`–`9e` |
 
 ### Not merged
 - Nothing pending. Start the next change from the latest `main`.
@@ -80,6 +81,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 ## Product decisions
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
+- **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
+- **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
