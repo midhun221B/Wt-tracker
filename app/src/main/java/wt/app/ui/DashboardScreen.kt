@@ -113,8 +113,9 @@ private fun ProgressCard(d: Dashboard) {
                     )
                 } else {
                     // The trend needs 3 weigh-ins; weekly that's a couple of weeks.
+                    val toGo = (3 - d.weights.size).coerceAtLeast(1)
                     Text(
-                        "Trend after 3 weigh-ins · ${(3 - d.weights.size).coerceAtLeast(1)} to go",
+                        "Trend in $toGo more ${if (toGo == 1) "weigh-in" else "weigh-ins"}",
                         style = MaterialTheme.typography.labelMedium,
                         color = Palette.Muted,
                     )

@@ -39,7 +39,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - One "kg lost" number: the "Weigh-in saved" ring uses the trend like the Trend tab (shared `goalProgress` in `core/summary`), labelled "· trend"; the scale shows as "kg on the scale" and the change since the last weigh-in.
   - "Run logged" banner reads "3 runs · 10.5 km this week", the same order as the card.
   - Ruler: plan and last-week marks get a notch above the ticks, so last week shows even when the ruler starts on it.
-  - Fresh install (screenshots `9a`–`9e`, one weigh-in, no runs): week dots before the first entry stay blank instead of "missed"; Trend says "Trend after 3 weigh-ins · N to go" and hides the Realistic / 80 % legend until there is a trend; Runs hides the empty km chart; Plan explains that re-baseline opens once the trend shows.
+  - Fresh install (screenshots `9a`–`9e`, one weigh-in, no runs): week dots before the first entry stay blank instead of "missed"; Trend says "Trend in N more weigh-ins" and hides the Realistic / 80 % legend until there is a trend; Runs hides the empty km chart; Plan explains that re-baseline opens once the trend shows.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
