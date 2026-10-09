@@ -36,7 +36,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#19](https://github.com/midhun221B/Wt-tracker/pull/19) | One trend-based "kg lost" and "over plan" (`goalProgress`, `gapKg`; the live weigh-in line is labelled "Scale"); fresh-install empty states (blank days before start, "Trend in N more weigh-ins", no empty km chart, Body hint card, re-baseline waits for a trend); ruler notch for marks; banner word order; screenshots `9a`–`9e` |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Version 0.2.0 (`versionCode` 2) and tagged releases: on `main`, CI's `publish` job creates a `v<versionName>`
+  release with `wt-tracker-v<versionName>.apk` when that version has no release yet. Merging this creates `v0.2.0`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -106,6 +107,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
     `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/<name>`.
   - Screenshot names: `1-dashboard.png`, `2-today.png`, `2b-weigh-in.png` (ruler), `2g-weigh-in-saved.png`, `3-runs.png`, `4-plan.png`, `5-body.png`, `wt-tracker-debug.apk`.
   - GitHub artifact and log downloads are blocked from the cloud sandbox; release downloads work.
-  - Publishing runs in a separate `publish` job, one at a time; the release notes name the branch and commit it came from.
+  - Publishing runs in a separate `publish` job, one at a time; the release notes name the version, branch and commit.
+  - Versioned releases: bump `versionCode` and `versionName`; once merged to `main`, CI tags `v<versionName>` and publishes
+    `https://github.com/midhun221B/Wt-tracker/releases/download/v<versionName>/wt-tracker-v<versionName>.apk`.
 - Workflow the owner uses: small steps, show results (screenshots, APK) after each one, then PR → merge with a merge commit.
   After a merge, start the next change from the latest `main`.
