@@ -116,6 +116,7 @@ fun AppScaffold(vm: AppViewModel) {
         }
     }
     val runLogged by vm.runLogged.collectAsStateWithLifecycle()
+    val weighInSaved by vm.weighInSaved.collectAsStateWithLifecycle()
     LaunchedEffect(runLogged) {
         if (runLogged) {
             delay(3_000)
@@ -182,7 +183,7 @@ fun AppScaffold(vm: AppViewModel) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = !settingsOpen && tab == t,
-                            onClick = { tab = t; settingsOpen = false },
+                            onClick = { tab = t; settingsOpen = false; vm.weighInSaved.value = null },
                             icon = { Icon(painterResource(t.icon), null) },
                             label = { Text(t.label) },
                             colors = NavigationBarItemDefaults.colors(
@@ -230,7 +231,8 @@ fun AppScaffold(vm: AppViewModel) {
             return@Scaffold
         }
         when (tab) {
-            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier, onScreenshot = pickScreenshot, onWeighInDay = vm::setWeighInDay, onSaveBody = vm::saveBody, onDeleteBody = vm::deleteBody)
+            Tab.LOG -> LogScreen(s, vm::saveWeight, vm::deleteWeight, vm::setRestDay, vm::saveRun, modifier, onScreenshot = pickScreenshot, onWeighInDay = vm::setWeighInDay, onSaveBody = vm::saveBody, onDeleteBody = vm::deleteBody,
+                savedWeighIn = weighInSaved, onSavedSeen = { vm.weighInSaved.value = null }, runJustLogged = runLogged)
             Tab.DASHBOARD -> DashboardScreen(s.dashboard, modifier)
             Tab.RUNS -> RunsScreen(
                 s.runs, s.today, vm::saveRun, vm::deleteRun,

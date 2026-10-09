@@ -1,6 +1,15 @@
 package wt.app.ui
 
 import androidx.compose.foundation.background
+import kotlinx.coroutines.delay
+import androidx.compose.animation.core.FastOutSlowInEasing
+import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
@@ -39,6 +48,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,9 +68,12 @@ import wt.app.data.BodyCompEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.core.summary.weekStart
+import wt.core.summary.WeighInProgress
+import wt.core.summary.weighInProgress
 import wt.core.summary.weighInStatus
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.Locale
 import kotlin.math.round
 
 /**
@@ -79,8 +92,13 @@ fun LogScreen(
     onWeighInDay: (Int) -> Unit = {},
     onSaveBody: (BodyCompEntity) -> Unit = {},
     onDeleteBody: (LocalDate) -> Unit = {},
+    savedWeighIn: LocalDate? = null,
+    onSavedSeen: () -> Unit = {},
+    runJustLogged: Boolean = false,
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
+    // The "Weigh-in saved" card belongs to the day it was saved on; moving to another day closes it.
+    LaunchedEffect(date) { if (savedWeighIn != null && savedWeighIn != date) onSavedSeen() }
     var showRunDialog by remember { mutableStateOf(false) }
     var editingBody by remember { mutableStateOf<BodyCompEntity?>(null) }
     val existing = state.weights.firstOrNull { it.date == date }
@@ -133,34 +151,37 @@ fun LogScreen(
                             else -> "Weekly weigh-in"
                         },
                         style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it - 0.1) * 10) / 10) } }, label = "Decrease by 0.1 kg", size = 56) {
-                            Text("−", fontSize = 26.sp)
-                        }
+                    // The number can still be typed; the ruler below sets it in 0.1 kg steps.
+                    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         BasicTextField(
                             value = weight,
                             onValueChange = { weight = it },
                             singleLine = true,
-                            textStyle = numberStyle(80.sp, if (weightValid) Palette.Text else Palette.Error).copy(textAlign = TextAlign.Center),
+                            textStyle = numberStyle(88.sp, if (weightValid) Palette.Text else Palette.Error).copy(textAlign = TextAlign.Center),
                             cursorBrush = SolidColor(Palette.Accent),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.width(150.dp).semantics { contentDescription = "Weight in kg" },
+                            modifier = Modifier.width(170.dp).semantics { contentDescription = "Weight in kg" },
                         )
-                        SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it + 0.1) * 10) / 10) } }, label = "Increase by 0.1 kg", size = 56) {
-                            Text("+", fontSize = 26.sp)
-                        }
+                        Text("kg", style = MaterialTheme.typography.titleMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 14.dp))
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Pill("Plan %.1f kg".format(planned))
-                        if (kgValue != null) {
-                            val diff = kgValue - planned
-                            if (diff <= 0.05) {
-                                Pill(if (diff < -0.05) "%.1f kg under plan".format(-diff) else "On plan", filled = true)
-                            } else {
-                                Pill("%.1f kg over plan".format(diff), textColor = Palette.Warn)
-                            }
-                        }
+                    if (kgValue != null) {
+                        val diff = kgValue - planned
+                        Text(
+                            when {
+                                diff < -0.05 -> "%.1f kg under plan".format(-diff)
+                                diff <= 0.05 -> "On plan"
+                                else -> "%.1f kg over plan".format(diff)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
+                        )
                     }
+                    WeightRuler(
+                        kg = kgValue?.takeIf { weightValid } ?: lastKg,
+                        onKg = { weight = String.format(Locale.ROOT, "%.1f", it) },
+                        planKg = planned,
+                        lastKg = state.weights.lastOrNull { it.date < date }?.kg,
+                    )
                     if (onScreenshot != null) {
                         ScreenshotButton("Import scale screenshot", onScreenshot)
                     }
@@ -187,6 +208,10 @@ fun LogScreen(
             }
             if (existing != null) {
                 TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
+            }
+        } else if (savedWeighIn == date && existing != null) {
+            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg)?.let { p ->
+                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, plannedKg = planned, onEdit = { onSavedSeen(); weighInFor = date })
             }
         } else {
             NextWeighInCard(
@@ -225,6 +250,7 @@ fun LogScreen(
             restDays = state.restDays,
             onAddRun = { showRunDialog = true },
             onRest = { onSetRest(date, it) },
+            justLogged = runJustLogged && date == state.today,
         )
 
         Disclaimer()
@@ -250,6 +276,59 @@ fun LogScreen(
             },
             onDelete = { onDeleteBody(e.date); editingBody = null },
         )
+    }
+}
+
+/**
+ * Shown right after the weekly weigh-in is saved: the goal ring fills from the previous weigh-in's progress to the
+ * new one, with the change since then and the gap to the plan. "Edit" reopens the weigh-in card.
+ */
+@Composable
+private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Double, onEdit: () -> Unit) {
+    val reduceMotion = rememberReduceMotion()
+    val ring = remember(p.kg) { Animatable(if (reduceMotion) p.fraction.toFloat() else p.previousFraction.toFloat()) }
+    LaunchedEffect(ring) {
+        delay(250)
+        ring.animateTo(p.fraction.toFloat(), tween(1200, easing = FastOutSlowInEasing))
+    }
+    val shape = RoundedCornerShape(24.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth().border(1.dp, Palette.Accent.copy(alpha = 0.35f), shape),
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(top = 20.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Weigh-in saved", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
+            ProgressRing(ring.value, Modifier.size(180.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("%.1f".format(p.kg), style = numberStyle(48.sp))
+                    Text("kg", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                }
+            }
+            p.changeKg?.let { c ->
+                Text(
+                    (if (c > 0.05) "+%.1f" else "%.1f").format(c) + " kg since the last weigh-in",
+                    style = numberStyle(22.sp),
+                    color = if (c > 0.05) Palette.Warn else Palette.Accent,
+                )
+            }
+            Text("%.1f of %.1f kg toward %.0f kg".format(p.lostKg, p.totalKg, goalKg), style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
+            val diff = p.kg - plannedKg
+            Text(
+                when {
+                    diff < -0.05 -> "%.1f kg under plan".format(-diff)
+                    diff <= 0.05 -> "On plan"
+                    else -> "%.1f kg over plan".format(diff)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
+            )
+            TextButton(onClick = onEdit) { Text("Edit", color = Palette.Muted) }
+        }
     }
 }
 
@@ -307,6 +386,7 @@ private fun RunningCard(
     restDays: Set<LocalDate>,
     onAddRun: () -> Unit,
     onRest: (Boolean) -> Unit,
+    justLogged: Boolean = false,
 ) {
     val done = runs.isNotEmpty() || rest
     val shape = RoundedCornerShape(20.dp)
@@ -327,7 +407,7 @@ private fun RunningCard(
                     val sec = runs.sumOf { it.durationSec }
                     // Pace and time sit right under the distance; "+ Add another" on the right of the same block.
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        DoneMark(filled = true)
+                        DoneMark(filled = true, pulse = justLogged)
                         Column(Modifier.weight(1f)) {
                             Text(if (runs.size > 1) "${runs.size} runs done" else "Run done", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
                             Text("%.2f km".format(km), style = numberStyle(28.sp))
@@ -364,7 +444,7 @@ private fun RunningCard(
             HorizontalDivider(color = Palette.CardHigh)
             val monday = weekStart(date)
             Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays)
+            WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays, pop = date.takeIf { justLogged })
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("${weekRuns.size} ${if (weekRuns.size == 1) "run" else "runs"}", style = numberStyle(22.sp))
                 Text("%.1f km this week".format(weekRuns.sumOf { it.km }), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
@@ -373,14 +453,51 @@ private fun RunningCard(
     }
 }
 
-/** Orange disc with a check (run done), or an orange ring with a check (rest day). */
+/**
+ * Orange disc with a check (run done), or an orange ring with a check (rest day). With [pulse] (a run was just
+ * logged) the check pops once and an orange ring grows and fades behind it.
+ */
 @Composable
-private fun DoneMark(filled: Boolean) {
-    Box(
-        Modifier.size(32.dp)
-            .then(if (filled) Modifier.background(Palette.Accent, CircleShape) else Modifier.border(2.dp, Palette.Accent, CircleShape)),
-        contentAlignment = Alignment.Center,
-    ) { Icon(Icons.Default.Check, null, tint = if (filled) Palette.OnAccent else Palette.Accent, modifier = Modifier.size(18.dp)) }
+private fun DoneMark(filled: Boolean, pulse: Boolean = false) {
+    val (scale, ring) = rememberPulse(pulse)
+    Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.matchParentSize()
+                .graphicsLayer {
+                    val r = ring.value
+                    scaleX = 1f + 1.4f * r
+                    scaleY = 1f + 1.4f * r
+                    alpha = if (r >= 1f) 0f else 0.7f * (1f - r)
+                }
+                .border(2.dp, Palette.Accent, CircleShape),
+        )
+        Box(
+            Modifier.matchParentSize()
+                .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+                .then(if (filled) Modifier.background(Palette.Accent, CircleShape) else Modifier.border(2.dp, Palette.Accent, CircleShape)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Default.Check, null, tint = if (filled) Palette.OnAccent else Palette.Accent, modifier = Modifier.size(18.dp)) }
+    }
+}
+
+/**
+ * One-off "just logged" motion: a scale that goes 0.4 → 1.15 → 1 (about 0.4 s) and a ring progress 0 → 1
+ * (about 0.9 s; 1 = finished and hidden). Idle values are 1 and 1, and nothing moves when animations are off.
+ */
+@Composable
+private fun rememberPulse(active: Boolean): Pair<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>> {
+    val reduceMotion = rememberReduceMotion()
+    val scale = remember { Animatable(1f) }
+    val ring = remember { Animatable(1f) }
+    LaunchedEffect(active) {
+        if (active && !reduceMotion) {
+            scale.snapTo(0.4f)
+            ring.snapTo(0f)
+            launch { scale.animateTo(1f, keyframes { durationMillis = 400; 1.15f at 220 }) }
+            ring.animateTo(1f, tween(900, delayMillis = 150, easing = LinearOutSlowInEasing))
+        }
+    }
+    return scale to ring
 }
 
 /**
@@ -388,16 +505,26 @@ private fun DoneMark(filled: Boolean) {
  * the shown day before anything is logged, a dash for past days that were missed, raised grey for days to come.
  */
 @Composable
-private fun WeekDots(monday: LocalDate, shown: LocalDate, today: LocalDate, runDays: Set<LocalDate>, restDays: Set<LocalDate>) {
+private fun WeekDots(
+    monday: LocalDate,
+    shown: LocalDate,
+    today: LocalDate,
+    runDays: Set<LocalDate>,
+    restDays: Set<LocalDate>,
+    pop: LocalDate? = null,
+) {
     Row(Modifier.fillMaxWidth()) {
         (0L..6L).map { monday.plusDays(it) }.forEach { d ->
+            val (scale, _) = rememberPulse(d == pop)
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val ran = d in runDays
                 val rested = d in restDays
                 val dot = Modifier.size(30.dp)
                 // The shown day gets an orange outer ring once it has a run or a rest day.
                 Box(
-                    Modifier.size(38.dp).then(if (d == shown && (ran || rested)) Modifier.border(2.dp, Palette.Accent, CircleShape) else Modifier),
+                    Modifier.size(38.dp)
+                        .graphicsLayer { scaleX = scale.value; scaleY = scale.value } // pops once after a new run
+                        .then(if (d == shown && (ran || rested)) Modifier.border(2.dp, Palette.Accent, CircleShape) else Modifier),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(

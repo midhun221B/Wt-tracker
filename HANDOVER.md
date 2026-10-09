@@ -37,10 +37,13 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - Branch `claude/fervent-ptolemy-ho7r2a`:
   - Today: when the week was done by a scale measurement without a weight, "Edit" opens that measurement (edit or delete) instead of an empty weight entry.
   - Today: in the "Run done" card, pace and time sit right under the distance, with "+ Add another" on the right.
+  - Today, weigh-in: a drag ruler (0.1 kg ticks, haptic per tick, plan as a blue dashed mark, last week as a grey mark) replaces the − / + buttons; the number can still be typed. After saving, a "Weigh-in saved" card: the goal ring fills from the previous weigh-in's progress to the new one (`weighInProgress` in `core/summary`), change since the last weigh-in, gap to plan, "Edit". It closes when the day or tab changes.
+  - Today, run: the check pops with one ring pulse (and today's week dot pops) when a new run is logged.
+  - Both animations are skipped when the phone's animations are off.
   - CI: publishing to `debug-latest` moved to its own `publish` job with a concurrency group, so two pushes of the same commit no longer clash (that turned `main` red once after #17).
 
 ### Features in the app today
-- **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (±0.1 steppers or scale screenshot), weight only; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
+- **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
 - **Dashboard ("Trend", program week in the top bar's small line):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band).
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
@@ -77,11 +80,12 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - reminder notifications
    - the file pickers (export, restore, Strava CSV) and the date picker
    - only Strava's English date format has been tested
-3. Nice-to-have ideas mentioned in design work (not requested yet): milestones/badges, a celebration screen after logging, a drag ruler for weight entry.
+3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
+- **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
 
@@ -102,7 +106,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - To see the result:
   - Screenshots and the APK are attached to the `debug-latest` release on every push. Fetch them with curl from
     `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/<name>`.
-  - Screenshot names: `1-dashboard.png`, `2-today.png`, `3-runs.png`, `4-plan.png`, `5-body.png`, `wt-tracker-debug.apk`.
+  - Screenshot names: `1-dashboard.png`, `2-today.png`, `2b-weigh-in.png` (ruler), `2g-weigh-in-saved.png`, `3-runs.png`, `4-plan.png`, `5-body.png`, `wt-tracker-debug.apk`.
   - GitHub artifact and log downloads are blocked from the cloud sandbox; release downloads work.
   - Publishing runs in a separate `publish` job, one at a time; the release notes name the branch and commit it came from.
 - Workflow the owner uses: small steps, show results (screenshots, APK) after each one, then PR → merge with a merge commit.

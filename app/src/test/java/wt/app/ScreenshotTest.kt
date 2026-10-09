@@ -114,6 +114,12 @@ class ScreenshotTest {
         LogScreen(s.copy(weights = s.weights + WeightEntity(today, 87.2)), {}, {}, { _, _ -> }, {}, onScreenshot = {})
     }
 
+    // Right after saving this week's weigh-in (86.9 kg today): the goal ring has filled to the new weight.
+    @Test fun weighInSaved() = shoot("2g-weigh-in-saved") {
+        val s = sampleState()
+        LogScreen(s.copy(weights = s.weights + WeightEntity(today, 86.9)), {}, {}, { _, _ -> }, {}, onScreenshot = {}, savedWeighIn = today)
+    }
+
     // Today before the run is logged, and a rest day instead of a run.
     @Test fun noRunYet() = shoot("2d-no-run-yet") {
         val s = sampleState()

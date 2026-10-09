@@ -10,7 +10,7 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
-- **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner), the rest-day switch until a run is logged, and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (±0.1 steppers, or from a scale screenshot); other days show when the next weigh-in is, with a shortcut to change the day.
+- **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner and a check pulse), the rest-day switch until a run is logged, and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (a drag ruler in 0.1 kg steps with the plan and last week marked, typing, or a scale screenshot), then a "Weigh-in saved" card whose goal ring fills to the new weight; other days show when the next weigh-in is, with a shortcut to change the day.
 - **Dashboard:**
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.

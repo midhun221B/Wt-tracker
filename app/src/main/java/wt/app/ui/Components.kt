@@ -1,5 +1,6 @@
 package wt.app.ui
 
+import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.foundation.shape.CircleShape
@@ -58,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -209,6 +211,13 @@ fun DarkField(
             }
         },
     )
+}
+
+/** True when the phone's animations are off (accessibility "Remove animations" or animator scale 0). */
+@Composable
+fun rememberReduceMotion(): Boolean {
+    val context = LocalContext.current
+    return remember { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
 }
 
 /** Ring showing progress (0–1) toward the goal, with [center] content inside. */

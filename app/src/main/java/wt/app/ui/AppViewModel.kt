@@ -143,7 +143,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun saveWeight(entry: WeightEntity) = launchWithMessage("Saved ${entry.kg} kg for ${entry.date}") { db.weights().upsert(entry) }
+    /** The day whose weigh-in was just saved on Today; it shows the "Weigh-in saved" card instead of a snackbar. */
+    val weighInSaved = MutableStateFlow<LocalDate?>(null)
+
+    fun saveWeight(entry: WeightEntity) = launchWithMessage(null) {
+        db.weights().upsert(entry)
+        weighInSaved.value = entry.date
+    }
 
     fun deleteWeight(date: LocalDate) = launchWithMessage("Deleted weight for $date") { db.weights().delete(date) }
 
