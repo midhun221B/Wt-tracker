@@ -26,14 +26,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#9](https://github.com/midhun221B/Wt-tracker/pull/9) | Weekly weigh-in (weigh-in day setting, Room v3, forecast falls back to 42 days with 4+ weigh-ins over 3+ weeks, alert after 8 days); Mon–Sun weeks (runs before week 1 count as week 0, −1, …); collapsed older run weeks; `FormDialog` and dark fields for every pop-up; top-bar import removed (Strava CSV moved into Add run); Plan tab in "B orange" |
 | [#10](https://github.com/midhun221B/Wt-tracker/pull/10) | Energy tiles show daily intake ("Eating now", "To get back on plan", rounded to 50 kcal) with deficits as sub-lines and the plan's assumed intake below |
 | [#11](https://github.com/midhun221B/Wt-tracker/pull/11) | Today: "Change day" on the Next weigh-in card, one running card (run, rest day, week numbers), hunger no longer asked; Settings in the new style; `8-settings` screenshot |
+| [#12](https://github.com/midhun221B/Wt-tracker/pull/12) | Body: weekly measurement card (scale screenshot first) and muscle chart; weigh-in is weight only; Trend Weeks/Body sections collapsible; Runs opens only this week |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - **Body:** a "Weekly measurement" card on top shows the next date (the weigh-in day), with "Import scale screenshot"
-    as the main action and "Add by hand" below. There's a new muscle chart, and the floating add button is gone.
-  - **Today:** the weigh-in is just the weight. Sleep, snacks and note are no longer asked; stored values are kept on update.
-  - **Trend:** the Weeks and Body sections are collapsible (`CollapsibleSection`), folded by default with a one-line summary.
-  - **Runs:** only this week starts open; last week is collapsed too.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
