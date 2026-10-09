@@ -1,7 +1,7 @@
 # Handover
 
 Where the project stands, what was decided and what is open. Update this file at the end of every piece of work
-(see CLAUDE.md). Last updated: 2026-10-08.
+(see CLAUDE.md). Last updated: 2026-10-09.
 
 ## Goal
 Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compares the planned trajectory
@@ -22,11 +22,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#4](https://github.com/midhun221B/Wt-tracker/pull/4) | "B orange" redesign (dark theme, Strava orange, Barlow fonts) of Dashboard, Today and navigation; CLAUDE.md |
 | [#5](https://github.com/midhun221B/Wt-tracker/pull/5) | Runs and Body screens in "B orange" (28-day summary, weekly km bars, runs grouped by program week, "Fastest yet"; Body change tiles, trend charts, measurement cards); this HANDOVER.md |
 | [#6](https://github.com/midhun221B/Wt-tracker/pull/6) | Screenshot import: Strava run and body-scale screenshots read on the phone (ML Kit, offline), confirm dialog before saving |
+| [#8](https://github.com/midhun221B/Wt-tracker/pull/8) | "Import from a … screenshot" button inside the Add run (Runs, Today) and Add measurement dialogs |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: the "Add run" dialog (Runs and Today) and the "Add measurement" dialog now have an
-  "Import from a … screenshot" button at the top. It closes the dialog, opens the photo picker and then shows the usual
-  pre-filled confirm dialog. The top-bar import button stays.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** weigh-in with ±0.1 steppers, hunger (None–Very), sleep, snacks, note, rest-day switch, add run.
