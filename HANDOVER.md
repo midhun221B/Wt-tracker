@@ -31,12 +31,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#14](https://github.com/midhun221B/Wt-tracker/pull/14) | Today: small card once the day/week is logged (big card only when due or on Edit); scale measurements count as the weekly weigh-in; Body counts a typed weight; sample runs removed (startup cleanup); reminder time picker |
 | [#15](https://github.com/midhun221B/Wt-tracker/pull/15) | Today: "Run done" / rest-day done state, Mon–Sun week dots with "N runs · X km this week", 3 s "Run logged" banner after saving a run |
 | [#16](https://github.com/midhun221B/Wt-tracker/pull/16) | Today polish: one-line Next weigh-in card (tap to change day), pace and "+ Add another" on one row, dash for missed days in the week dots, "Run logged" banner under the top bar for every new run (form or screenshot) |
+| [#17](https://github.com/midhun221B/Wt-tracker/pull/17) | Today: "Edit" on the weigh-in card once the week is logged (opens the logged day); Runs: no "plan: 4–5 runs a week"; Trend: top bar title "Trend" with "Week N of M" in the small line |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`:
-  - Today: the one-line weigh-in card says "Edit" once the week is logged, even on another day; it jumps to the logged day and opens its entry.
-  - Runs: the "Last 28 days" card no longer shows "plan: 4–5 runs a week".
-  - Trend: the top bar title reads "Trend", with "Week N of M · <date>" in the small line above it.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (±0.1 steppers or scale screenshot), weight only; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
