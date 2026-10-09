@@ -1,5 +1,19 @@
 package wt.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
-import wt.core.summary.WeekSummary
 import wt.core.summary.weekStart
 import wt.core.summary.weighInStatus
 import java.time.DayOfWeek
@@ -71,6 +84,14 @@ fun LogScreen(
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
     var showRunDialog by remember { mutableStateOf(false) }
+    // Shown for a few seconds after a run is saved from this screen.
+    var runLogged by remember { mutableStateOf(false) }
+    LaunchedEffect(runLogged) {
+        if (runLogged) {
+            delay(3_000)
+            runLogged = false
+        }
+    }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
     // A scale measurement counts as the week's weigh-in too (it may have been saved without a weight).
@@ -88,11 +109,16 @@ fun LogScreen(
     val weightValid = kgValue != null && kgValue in 30.0..250.0
     val planned = state.dashboard.plan.at(date)
     val ranToday = state.runs.filter { it.date == date }
+    val monday = weekStart(date)
+    val weekRuns = state.runs.filter { it.date != null && it.date in monday..monday.plusDays(6) }
 
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        AnimatedVisibility(visible = runLogged, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            RunLoggedBanner(weekRuns.size, weekRuns.sumOf { it.km })
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             SquareButton(onClick = { date = date.minusDays(1) }, label = "Previous day") {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null)
@@ -190,11 +216,12 @@ fun LogScreen(
         }
 
         RunningCard(
-            today = date == state.today,
+            date = date,
+            today = state.today,
             runs = ranToday,
             rest = date in state.restDays,
-            week = state.dashboard.weekly.firstOrNull { it.start == weekStart(date) },
-            streak = if (date == state.today) state.dashboard.runStreak else null,
+            weekRuns = weekRuns,
+            restDays = state.restDays,
             onAddRun = { showRunDialog = true },
             onRest = { onSetRest(date, it) },
         )
@@ -207,7 +234,7 @@ fun LogScreen(
             initial = null,
             defaultDate = date,
             onDismiss = { showRunDialog = false },
-            onSave = { onSaveRun(it); showRunDialog = false },
+            onSave = { onSaveRun(it); showRunDialog = false; runLogged = true },
             onFromScreenshot = onScreenshot?.let { pick -> { showRunDialog = false; pick() } },
         )
     }
@@ -245,59 +272,154 @@ private fun NextWeighInCard(
 }
 
 /**
- * Today's running and the week in one card: the day's run with an add button, the rest-day switch,
- * then the week's runs, km, rest days and (for today) the streak.
+ * Today's running and the week in one card. With a run, the top turns into a done state (orange check, the run's
+ * numbers, a quiet "Add another run") and the rest-day switch goes away. Without one: "No run yet", an orange
+ * "Add run" and the switch; switching rest on completes the day too. Below, the Mon–Sun dots and the week's total.
  */
 @Composable
 private fun RunningCard(
-    today: Boolean,
+    date: LocalDate,
+    today: LocalDate,
     runs: List<RunEntity>,
     rest: Boolean,
-    week: WeekSummary?,
-    streak: Int?,
+    weekRuns: List<RunEntity>,
+    restDays: Set<LocalDate>,
     onAddRun: () -> Unit,
     onRest: (Boolean) -> Unit,
 ) {
-    DarkCard {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(if (today) "Run today" else "Run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    if (runs.isEmpty()) {
-                        Text("No run yet", style = numberStyle(28.sp), color = Palette.Muted)
-                    } else {
-                        val km = runs.sumOf { it.km }
-                        Row(verticalAlignment = Alignment.Bottom) {
+    val done = runs.isNotEmpty() || rest
+    val shape = RoundedCornerShape(20.dp)
+    Card(
+        modifier = if (done) Modifier.border(1.dp, Palette.Accent.copy(alpha = 0.35f), shape) else Modifier,
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+    ) {
+        Column(
+            Modifier
+                .then(if (done) Modifier.background(Brush.verticalGradient(listOf(Palette.Accent.copy(alpha = 0.14f), Color.Transparent))) else Modifier)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            when {
+                runs.isNotEmpty() -> {
+                    val km = runs.sumOf { it.km }
+                    val sec = runs.sumOf { it.durationSec }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        DoneMark(filled = true)
+                        Column {
+                            Text(if (runs.size > 1) "${runs.size} runs done" else "Run done", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
                             Text("%.2f km".format(km), style = numberStyle(28.sp))
-                            Text("  " + pace(runs.sumOf { it.durationSec } / km), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 4.dp))
                         }
                     }
+                    Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Add another run", color = Palette.Muted) }
                 }
-                SecondaryButton("Add run", onAddRun)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Rest day", Modifier.weight(1f))
-                Switch(checked = rest, onCheckedChange = onRest)
-            }
-            if (week != null) {
-                HorizontalDivider(color = Palette.CardHigh)
-                Text("Week of ${weekRange(week.start)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                Row(Modifier.fillMaxWidth()) {
-                    WeekFigure("${week.runs}", if (week.runs == 1) "run" else "runs", Modifier.weight(1f))
-                    WeekFigure("%.1f".format(week.km), "km", Modifier.weight(1f))
-                    WeekFigure("${week.restDays}", if (week.restDays == 1) "rest day" else "rest days", Modifier.weight(1f))
-                    if (streak != null) WeekFigure("$streak", "day streak", Modifier.weight(1f))
+                rest -> {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        DoneMark(filled = false)
+                        Column(Modifier.weight(1f)) {
+                            Text("Rest day", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
+                            Text("Recovery counts", style = numberStyle(28.sp))
+                        }
+                        Switch(checked = true, onCheckedChange = onRest)
+                    }
+                    TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Log a run anyway", color = Palette.Muted) }
                 }
+                else -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(if (date == today) "Run today" else "Run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                            Text("No run yet", style = numberStyle(28.sp), color = Palette.Muted)
+                        }
+                        PrimaryButton("Add run", onAddRun)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Rest day", Modifier.weight(1f))
+                        Switch(checked = false, onCheckedChange = onRest)
+                    }
+                }
+            }
+            HorizontalDivider(color = Palette.CardHigh)
+            val monday = weekStart(date)
+            Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            WeekDots(monday, date, weekRuns.mapNotNull { it.date }.toSet(), restDays)
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("${weekRuns.size} ${if (weekRuns.size == 1) "run" else "runs"}", style = numberStyle(22.sp))
+                Text("%.1f km this week".format(weekRuns.sumOf { it.km }), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
             }
         }
     }
 }
 
+/** Orange disc with a check (run done), or an orange ring with a check (rest day). */
 @Composable
-private fun WeekFigure(value: String, label: String, modifier: Modifier) {
-    Column(modifier) {
-        Text(value, style = numberStyle(26.sp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
+private fun DoneMark(filled: Boolean) {
+    Box(
+        Modifier.size(32.dp)
+            .then(if (filled) Modifier.background(Palette.Accent, CircleShape) else Modifier.border(2.dp, Palette.Accent, CircleShape)),
+        contentAlignment = Alignment.Center,
+    ) { Icon(Icons.Default.Check, null, tint = if (filled) Palette.OnAccent else Palette.Accent, modifier = Modifier.size(18.dp)) }
+}
+
+/**
+ * Mon–Sun dots for the week: orange with a check on run days, a grey ring on rest days, an empty orange ring for
+ * the shown day before anything is logged, raised grey for other days.
+ */
+@Composable
+private fun WeekDots(monday: LocalDate, shown: LocalDate, runDays: Set<LocalDate>, restDays: Set<LocalDate>) {
+    Row(Modifier.fillMaxWidth()) {
+        (0L..6L).map { monday.plusDays(it) }.forEach { d ->
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                val ran = d in runDays
+                val rested = d in restDays
+                val dot = Modifier.size(30.dp)
+                // The shown day gets an orange outer ring once it has a run or a rest day.
+                Box(
+                    Modifier.size(38.dp).then(if (d == shown && (ran || rested)) Modifier.border(2.dp, Palette.Accent, CircleShape) else Modifier),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        when {
+                            ran -> dot.background(Palette.Accent, CircleShape)
+                            rested -> dot.border(2.dp, Palette.Muted, CircleShape)
+                            d == shown -> dot.border(2.dp, Palette.Accent, CircleShape)
+                            else -> dot.background(Palette.CardHigh, CircleShape)
+                        },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (ran) Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Text(
+                    d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (d == shown) Palette.Text else Palette.Muted,
+                    fontWeight = if (d == shown) FontWeight.SemiBold else FontWeight.Normal,
+                )
+            }
+        }
+    }
+}
+
+/** Orange banner after saving a run: what the week adds up to now. */
+@Composable
+private fun RunLoggedBanner(runs: Int, km: Double) {
+    Row(
+        Modifier.fillMaxWidth().background(Palette.Accent, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.size(28.dp).background(Palette.OnAccent, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.Check, null, tint = Palette.Accent, modifier = Modifier.size(16.dp))
+        }
+        Column {
+            Text("Run logged", color = Palette.OnAccent, fontWeight = FontWeight.SemiBold)
+            Text(
+                "%.1f km this week · %d %s".format(km, runs, if (runs == 1) "run" else "runs"),
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.OnAccent,
+            )
+        }
     }
 }
 

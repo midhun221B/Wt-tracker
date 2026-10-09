@@ -31,7 +31,17 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#14](https://github.com/midhun221B/Wt-tracker/pull/14) | Today: small card once the day/week is logged (big card only when due or on Edit); scale measurements count as the weekly weigh-in; Body counts a typed weight; sample runs removed (startup cleanup); reminder time picker |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: **Today shows the day as done** (owner picked ideas 1 + 3 + 4 from
+  https://claude.ai/artifact/ENUHiT5sTRw9kYwsu1VaVE, with two changes: no "3 of 4–5 runs", and no rest-day switch once
+  a run is logged).
+  - With a run, the running card turns into a done state: an orange check, "Run done", km, pace · time, a quiet
+    "+ Add another run", an orange tint and outline. The rest-day switch is hidden.
+  - On a rest day: an outlined check, "Rest day · Recovery counts", the switch to undo, and "+ Log a run anyway".
+  - Mon–Sun week dots (run days orange with a check, rest days a grey ring, the shown day ringed) and "N runs · X km
+    this week" replace the four-number week row.
+  - After saving a run on Today, an orange "Run logged · X km this week · N runs" banner shows for 3 seconds.
+    It isn't shown for runs saved from a screenshot import, and it isn't in the screenshot tests.
+  - New screenshots: `2d-no-run-yet`, `2e-rest-day`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
