@@ -39,6 +39,9 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - One "kg lost" number: the "Weigh-in saved" ring uses the trend like the Trend tab (shared `goalProgress` in `core/summary`), labelled "· trend"; the scale shows as "kg on the scale" and the change since the last weigh-in.
   - "Run logged" banner reads "3 runs · 10.5 km this week", the same order as the card.
   - Ruler: plan and last-week marks get a notch above the ticks, so last week shows even when the ruler starts on it.
+  - "Over plan" is the trend minus the plan everywhere (Trend, "Weigh-in saved" card with "· trend"); only the live line on the weigh-in card uses the scale, labelled "Scale: … today's plan".
+  - Body: a "What the scale numbers add" card until there are two measurements.
+  - Runs: the empty state points to Add run only (no separate Import link).
   - Fresh install (screenshots `9a`–`9e`, one weigh-in, no runs): week dots before the first entry stay blank instead of "missed"; Trend says "Trend in N more weigh-ins" and hides the Realistic / 80 % legend until there is a trend; Runs hides the empty km chart; Plan explains that re-baseline opens once the trend shows.
 
 ### Features in the app today
@@ -85,6 +88,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
+- **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.

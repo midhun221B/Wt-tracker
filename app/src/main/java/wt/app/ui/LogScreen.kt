@@ -165,12 +165,13 @@ fun LogScreen(
                         Text("kg", style = MaterialTheme.typography.titleMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 14.dp))
                     }
                     if (kgValue != null) {
+                        // Live while typing or dragging, so it is the scale reading; "over plan" elsewhere is the trend.
                         val diff = kgValue - planned
                         Text(
                             when {
-                                diff < -0.05 -> "%.1f kg under plan".format(-diff)
-                                diff <= 0.05 -> "On plan"
-                                else -> "%.1f kg over plan".format(diff)
+                                diff < -0.05 -> "Scale: %.1f kg under today's plan".format(-diff)
+                                diff <= 0.05 -> "Scale: on today's plan"
+                                else -> "Scale: %.1f kg over today's plan".format(diff)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
@@ -210,8 +211,8 @@ fun LogScreen(
                 TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
         } else if (savedWeighIn == date && existing != null) {
-            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg)?.let { p ->
-                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, plannedKg = planned, onEdit = { onSavedSeen(); weighInFor = date })
+            weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg, planned)?.let { p ->
+                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, onEdit = { onSavedSeen(); weighInFor = date })
             }
         } else {
             NextWeighInCard(
@@ -286,7 +287,7 @@ fun LogScreen(
  * new one, with the change since then and the gap to the plan. "Edit" reopens the weigh-in card.
  */
 @Composable
-private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Double, onEdit: () -> Unit) {
+private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> Unit) {
     val reduceMotion = rememberReduceMotion()
     val ring = remember(p.kg) { Animatable(if (reduceMotion) p.goal.fraction.toFloat() else p.previousFraction.toFloat()) }
     LaunchedEffect(ring) {
@@ -325,12 +326,14 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, plannedKg: Doub
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.Muted,
             )
-            val diff = p.kg - plannedKg
+            // Trend minus plan, the same gap as the Trend tab.
+            val diff = p.gapKg
+            val basis = if (g.fromTrend) " · trend" else ""
             Text(
                 when {
-                    diff < -0.05 -> "%.1f kg under plan".format(-diff)
-                    diff <= 0.05 -> "On plan"
-                    else -> "%.1f kg over plan".format(diff)
+                    diff < -0.05 -> "%.1f kg under plan".format(-diff) + basis
+                    diff <= 0.05 -> "On plan$basis"
+                    else -> "%.1f kg over plan".format(diff) + basis
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (diff <= 0.05) Palette.Accent else Palette.Warn,

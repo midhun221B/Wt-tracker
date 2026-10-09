@@ -88,7 +88,7 @@ class WeighInTest {
     @Test
     fun weighInMovesTheRingFromTheTrendWithoutItToTheTrendWithIt() {
         val weights = listOf(w(1, 88.3), w(8, 87.9), w(15, 87.4), w(22, 87.2), w(29, 86.5))
-        val p = weighInProgress(weights, d(29), goal, planStart)!!
+        val p = weighInProgress(weights, d(29), goal, planStart, plannedKg = 86.8)!!
         assertEquals(86.5, p.kg)
         assertEquals(-0.7, p.changeKg!!, 1e-9) // the scale change, not the trend's
         assertEquals(goalProgress(weights, d(29), goal, planStart), p.goal)
@@ -98,14 +98,14 @@ class WeighInTest {
     @Test
     fun aGainMovesTheRingBack() {
         val weights = listOf(w(1, 88.3), w(8, 87.9), w(15, 87.4), w(22, 87.2), w(29, 88.4))
-        val p = weighInProgress(weights, d(29), goal, planStart)!!
+        val p = weighInProgress(weights, d(29), goal, planStart, plannedKg = 86.8)!!
         assertEquals(1.2, p.changeKg!!, 1e-9)
         assertTrue(p.goal.fraction < p.previousFraction)
     }
 
     @Test
     fun firstWeighInHasNoChangeAndNoProgress() {
-        val p = weighInProgress(listOf(w(1, 88.3)), d(1), goal, planStart)!!
+        val p = weighInProgress(listOf(w(1, 88.3)), d(1), goal, planStart, plannedKg = 86.8)!!
         assertNull(p.changeKg)
         assertEquals(0.0, p.goal.fraction)
         assertEquals(p.goal.fraction, p.previousFraction)
@@ -113,12 +113,27 @@ class WeighInTest {
 
     @Test
     fun progressIsClampedPastTheGoal() {
-        val p = weighInProgress(listOf(w(1, 88.3), w(8, 84.0), w(15, 81.0), w(22, 78.0)), d(22), goal, planStart)!!
+        val p = weighInProgress(listOf(w(1, 88.3), w(8, 84.0), w(15, 81.0), w(22, 78.0)), d(22), goal, planStart, plannedKg = 86.8)!!
         assertEquals(1.0, p.goal.fraction)
     }
 
     @Test
     fun noProgressWithoutAWeightThatDay() {
-        assertNull(weighInProgress(listOf(w(1, 88.3)), d(2), goal, planStart))
+        assertNull(weighInProgress(listOf(w(1, 88.3)), d(2), goal, planStart, plannedKg = 88.2))
+    }
+
+    @Test
+    fun gapIsTheDashboardsTrendGap() {
+        val weights = Synthetic.series(30)
+        val asOf = weights.last().date
+        val dash = buildDashboard(weights, emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, asOf)
+        val p = weighInProgress(weights, asOf, dash.plan.goal.kg, dash.plan.start.kg, dash.plan.at(asOf))!!
+        assertEquals(dash.forecast!!.gapKgToday, p.gapKg, 1e-9)
+    }
+
+    @Test
+    fun gapUsesTheLatestWeightBeforeThereIsATrend() {
+        val p = weighInProgress(listOf(w(1, 88.3), w(8, 87.9)), d(8), goal, planStart, plannedKg = 87.8)!!
+        assertEquals(0.1, p.gapKg, 1e-9)
     }
 }

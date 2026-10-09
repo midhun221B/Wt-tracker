@@ -114,10 +114,8 @@ fun RunsScreen(
             }
             if (runs.isEmpty()) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("No runs yet. Tap Add run, or import a Strava file.", color = Palette.Muted)
-                        TextButton(onClick = onImportStrava) { Text("Import from Strava") }
-                    }
+                    // One way in: Add run also imports Strava screenshots and files.
+                    Text("No runs yet. Tap Add run to log one, or to import a Strava screenshot or file.", color = Palette.Muted)
                 }
             }
         }

@@ -31,17 +31,25 @@ fun goalProgress(weights: List<WeightEntry>, asOf: LocalDate, goalKg: Double, pl
 /**
  * The "Weigh-in saved" card's numbers for the weigh-in on a day. [changeKg] is the scale change since the previous
  * weigh-in (negative = lost), null for the first. [goal] is [goalProgress] with this weigh-in, and
- * [previousFraction] the same without it, so the ring can move from one to the other.
+ * [previousFraction] the same without it, so the ring can move from one to the other. [gapKg] is the trend minus
+ * the plan for that day (positive = behind), the same gap the Trend tab shows.
  */
 data class WeighInProgress(
     val kg: Double,
     val changeKg: Double?,
     val goal: GoalProgress,
     val previousFraction: Double,
+    val gapKg: Double,
 )
 
-/** Null when [date] has no weight. */
-fun weighInProgress(weights: List<WeightEntry>, date: LocalDate, goalKg: Double, planStartKg: Double): WeighInProgress? {
+/** Null when [date] has no weight. [plannedKg] is the planned weight on [date]. */
+fun weighInProgress(
+    weights: List<WeightEntry>,
+    date: LocalDate,
+    goalKg: Double,
+    planStartKg: Double,
+    plannedKg: Double,
+): WeighInProgress? {
     val upToDate = weights.filter { it.date <= date }.sortedBy { it.date }
     val entry = upToDate.lastOrNull { it.date == date } ?: return null
     val before = upToDate.filter { it.date < date }
@@ -51,5 +59,6 @@ fun weighInProgress(weights: List<WeightEntry>, date: LocalDate, goalKg: Double,
         changeKg = before.lastOrNull()?.let { entry.kg - it.kg },
         goal = goal,
         previousFraction = if (before.isEmpty()) goal.fraction else goalProgress(before, date, goalKg, planStartKg).fraction,
+        gapKg = goal.currentKg - plannedKg,
     )
 }
