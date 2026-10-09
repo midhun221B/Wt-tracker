@@ -30,7 +30,12 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#13](https://github.com/midhun221B/Wt-tracker/pull/13) | Weigh-in status by Mon–Sun week (`weighInStatus`: no prompt once the week has a weight, due until logged) for Today, Body and the reminder; one-line Body card unless due; collapsible Plan sections; screenshots at 411 dp (Nothing Phone (3a)) |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`:
+  - **Body:** a weight typed on Today counts for the week. The card then says
+    "Weight logged this week (…) · no scale numbers" and keeps Add; it only asks for a measurement when the week has neither.
+  - **Sample runs removed:** fresh installs no longer seed `Defaults.sampleRuns`. On start, `removeSampleRuns()` deletes the
+    leftover ones that are still undated, manual, and have the exact sample km and time; dated or edited runs stay.
+  - **Settings:** the reminder time is a button that opens a Material3 `TimePicker` (24 h) instead of a typed field.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
@@ -75,6 +80,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 ## Product decisions
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
+- **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
 
 ## Design decisions

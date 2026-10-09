@@ -25,7 +25,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
   - Edit checkpoints.
   - **Re-baseline** from today's trend weight to the same goal date. The weekly loss it would need is flagged as unrealistic above 0.7 kg/week and blocked above 1 kg/week.
   - Energy settings (BMR, activity factor, food deficit).
-- **Settings:** weigh-in day and its reminder (Asia/Tokyo time), CSV export, JSON backup/restore.
+- **Settings:** weigh-in day and its reminder (time picker, Asia/Tokyo time), CSV export, JSON backup/restore.
 
 ## How the forecast works (`core/`)
 - **Smoothing:** 7-day trailing moving average.

@@ -34,12 +34,17 @@ abstract class AppDatabase : RoomDatabase() {
         profile().upsert(ProfileEntity.from(Defaults.profile))
         weights().upsert(Defaults.startWeight.let { WeightEntity(it.date, it.kg) })
         Defaults.startBody.let { bodyComp().upsert(BodyCompEntity(it.date, it.fatPct, it.visceral, it.muscleKg, it.skeletalPct, it.leanKg, it.bmrKcal)) }
-        Defaults.sampleRuns.forEach { runs().upsert(RunEntity(date = it.date, km = it.km, durationSec = it.durationSec)) }
         plans().activateNewPlan(
             PlanEntity(createdAt = todayInTokyo(), active = true, label = "Original plan"),
             Defaults.planCheckpoints.map { CheckpointEntity(0, it.date, it.kg) },
         )
     }
+
+    /**
+     * Removes the five undated sample runs older installs were seeded with. Runs that were dated or edited
+     * no longer match and stay. Safe to call on every start.
+     */
+    suspend fun removeSampleRuns() = Defaults.sampleRuns.forEach { runs().deleteUndatedManual(it.km, it.durationSec) }
 
     companion object {
         @Volatile private var instance: AppDatabase? = null

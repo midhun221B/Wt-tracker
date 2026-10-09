@@ -69,6 +69,10 @@ interface RunDao {
 
     @Query("DELETE FROM run")
     suspend fun deleteAll()
+
+    /** Deletes undated manual runs with exactly this distance and time (the old sample runs). */
+    @Query("DELETE FROM run WHERE date IS NULL AND source = 'manual' AND km = :km AND durationSec = :durationSec")
+    suspend fun deleteUndatedManual(km: Double, durationSec: Int)
 }
 
 @Dao

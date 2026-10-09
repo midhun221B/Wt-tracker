@@ -47,6 +47,7 @@ fun BodyScreen(
     modifier: Modifier = Modifier,
     onScreenshot: (() -> Unit)? = null,
     weighInDay: Int = 1,
+    weightDates: List<LocalDate> = emptyList(),
 ) {
     var editing by remember { mutableStateOf<BodyCompEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -54,7 +55,12 @@ fun BodyScreen(
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { NextMeasurementCard(weighInStatus(sorted.map { it.date }, today, weighInDay), today, onScreenshot, onAdd = { adding = true }) }
+            item {
+                // A weight typed on Today also counts for the week; the card then says the scale numbers are missing.
+                val measured = weighInStatus(sorted.map { it.date }, today, weighInDay)
+                val status = weighInStatus(sorted.map { it.date } + weightDates, today, weighInDay)
+                NextMeasurementCard(status, weightOnly = measured.doneOn == null && status.doneOn != null, today, onScreenshot, onAdd = { adding = true })
+            }
             if (sorted.isNotEmpty()) item {
                 val first = sorted.first()
                 val last = sorted.last()
@@ -123,7 +129,7 @@ fun BodyScreen(
  * scale-screenshot import as the main action. Otherwise one line with the next date and a small "Add".
  */
 @Composable
-private fun NextMeasurementCard(status: WeighInStatus, today: LocalDate, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
+private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, today: LocalDate, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(if (status.due) 24.dp else 16.dp),
@@ -145,7 +151,13 @@ private fun NextMeasurementCard(status: WeighInStatus, today: LocalDate, onScree
             Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        status.doneOn?.let { "Measured this week (${dayMonth(it)})" } ?: "Next measurement",
+                        status.doneOn.let { done ->
+                            when {
+                                done == null -> "Next measurement"
+                                weightOnly -> "Weight logged this week (${dayMonth(done)}) · no scale numbers"
+                                else -> "Measured this week (${dayMonth(done)})"
+                            }
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         color = if (status.doneOn != null) Palette.Accent else Palette.Muted,
                     )

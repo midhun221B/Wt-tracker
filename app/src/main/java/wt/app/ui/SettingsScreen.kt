@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import wt.app.data.ProfileEntity
 
@@ -32,11 +34,8 @@ fun SettingsScreen(
     onRestore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var time by remember(profile) { mutableStateOf("%02d:%02d".format(profile.reminderHour, profile.reminderMinute)) }
+    var pickingTime by remember { mutableStateOf(false) }
     var confirmRestore by remember { mutableStateOf(false) }
-    val parsedTime = Regex("""^(\d{1,2}):(\d{2})$""").find(time.trim())?.destructured?.let { (h, m) ->
-        (h.toInt() to m.toInt()).takeIf { it.first in 0..23 && it.second in 0..59 }
-    }
 
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -49,12 +48,12 @@ fun SettingsScreen(
                 Text("Remind me that morning if I haven't logged by", Modifier.weight(1f))
                 Switch(
                     checked = profile.reminderEnabled,
-                    onCheckedChange = { on -> parsedTime?.let { onReminder(on, it.first, it.second) } },
+                    onCheckedChange = { on -> onReminder(on, profile.reminderHour, profile.reminderMinute) },
                 )
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberField("Time (JST)", time, { time = it }, Modifier.width(140.dp), keyboardType = KeyboardType.Text, isError = parsedTime == null)
-                PrimaryButton("Set", { parsedTime?.let { onReminder(true, it.first, it.second) } }, enabled = parsedTime != null)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Reminder time (JST)", Modifier.weight(1f))
+                SecondaryButton("%02d:%02d".format(profile.reminderHour, profile.reminderMinute), { pickingTime = true })
             }
             if (profile.reminderEnabled && !notificationsAllowed) {
                 Text(
@@ -84,6 +83,11 @@ fun SettingsScreen(
         }
     }
 
+    if (pickingTime) ReminderTimeDialog(profile.reminderHour, profile.reminderMinute, { pickingTime = false }) { h, m ->
+        pickingTime = false
+        onReminder(true, h, m)
+    }
+
     if (confirmRestore) {
         FormDialog(
             title = "Restore backup?",
@@ -97,4 +101,25 @@ fun SettingsScreen(
 @Composable
 private fun ExportButton(label: String, onClick: () -> Unit) {
     SecondaryButton(label, onClick, Modifier.fillMaxWidth())
+}
+
+/** Clock-face picker for the reminder time (24-hour). Setting a time also turns the reminder on. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimeDialog(hour: Int, minute: Int, onDismiss: () -> Unit, onSet: (Int, Int) -> Unit) {
+    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
+    FormDialog(title = "Reminder time", onDismiss = onDismiss, confirmLabel = "Set", onConfirm = { onSet(state.hour, state.minute) }) {
+        TimePicker(
+            state,
+            Modifier.align(Alignment.CenterHorizontally),
+            colors = TimePickerDefaults.colors(
+                clockDialColor = Palette.CardHigh,
+                selectorColor = Palette.Accent,
+                timeSelectorSelectedContainerColor = Palette.Accent,
+                timeSelectorSelectedContentColor = Palette.OnAccent,
+                timeSelectorUnselectedContainerColor = Palette.CardHigh,
+                timeSelectorUnselectedContentColor = Palette.Text,
+            ),
+        )
+    }
 }
