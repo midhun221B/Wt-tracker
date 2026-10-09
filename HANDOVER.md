@@ -29,7 +29,18 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#12](https://github.com/midhun221B/Wt-tracker/pull/12) | Body: weekly measurement card (scale screenshot first) and muscle chart; weigh-in is weight only; Trend Weeks/Body sections collapsible; Runs opens only this week |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+- Branch `claude/fervent-ptolemy-ho7r2a`:
+  - **Bug fix (owner, 9 Oct):** Today asked for a weigh-in on the weigh-in day even though that week already had one (8 Oct).
+    The new rule is `weighInStatus()` in core/summary/WeighIn.kt, tested. It works by Monday–Sunday week:
+    - It's done once the week has a weight.
+    - It's due from the weigh-in day until one is logged.
+    - Next is next week's day once this week is done.
+    Today, the Body card and the reminder all use it.
+  - **Today:** the scale screenshot is an "Import scale screenshot" button (outlined, since Save is the main action),
+    and the card says "This week done: … kg on …".
+  - **Body:** the measurement card is one line (next date, Add) unless due; it's the full card with the orange import when due.
+  - **Plan:** checkpoints and energy settings are collapsible, with summaries; re-baseline and history stay open.
+  - **Screenshot tests:** 411 dp wide, the owner's phone (Nothing Phone (3a)).
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); on the weigh-in day the weigh-in card (±0.1 steppers or scale screenshot), weight only; other days a "Next weigh-in" card with "Change day".
@@ -63,7 +74,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
        It's shown as an optional field with a note. When saved, it updates that day's weigh-in and keeps the sleep, hunger and notes.
    - Not tested yet: Strava in Japanese (labels 距離/ペース/時間 are handled, but the
      units are guessed), and other scale apps. The confirm dialogs filled from a screenshot aren't in the Robolectric screenshots; the add forms are.
-2. **Not yet verified on a real device:**
+2. **Not yet verified on a real device** (owner's phone: Nothing Phone (3a)):
    - status-bar icon colour and the dark launch window
    - Room v1→v2→v3 migrations on a real install
    - reminder notifications

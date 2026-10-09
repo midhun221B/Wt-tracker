@@ -49,9 +49,9 @@ import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.core.summary.WeekSummary
 import wt.core.summary.weekStart
+import wt.core.summary.weighInStatus
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
 import kotlin.math.round
 
 /**
@@ -73,8 +73,10 @@ fun LogScreen(
     var showRunDialog by remember { mutableStateOf(false) }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
+    val status = weighInStatus(state.weights.map { it.date }, date, weighInDay.value)
     var weighInOpen by remember(date) { mutableStateOf(false) }
-    val showWeighIn = date.dayOfWeek == weighInDay || existing != null || weighInOpen
+    // Weekly: show the card when this week's weigh-in is due, the day already has a weight, or on request.
+    val showWeighIn = status.due || existing != null || weighInOpen
     val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg ?: 80.0
 
     // Field state resets when the date (or its stored entry) changes.
@@ -105,7 +107,15 @@ fun LogScreen(
         if (showWeighIn) {
             DarkCard(radius = 24) {
                 Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(if (date.dayOfWeek == weighInDay) "Weekly weigh-in" else "Extra weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                    Text(
+                        when {
+                            // A weight earlier this week already counts as the weekly one.
+                            state.weights.any { it.date >= weekStart(date) && it.date < date } -> "Extra weigh-in"
+                            existing == null && status.due && date.dayOfWeek != weighInDay ->
+                                "Weekly weigh-in · due since " + weighInDay.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+                            else -> "Weekly weigh-in"
+                        },
+                        style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SquareButton(onClick = { kgValue?.let { weight = fieldText(round((it - 0.1) * 10) / 10) } }, label = "Decrease by 0.1 kg", size = 56) {
                             Text("−", fontSize = 26.sp)
@@ -135,7 +145,7 @@ fun LogScreen(
                         }
                     }
                     if (onScreenshot != null) {
-                        TextButton(onClick = onScreenshot) { Text("Fill from a scale screenshot", color = Palette.Accent) }
+                        ScreenshotButton("Import scale screenshot", onScreenshot)
                     }
                 }
             }
@@ -162,7 +172,8 @@ fun LogScreen(
             }
         } else {
             NextWeighInCard(
-                next = date.with(TemporalAdjusters.next(weighInDay)),
+                next = status.next,
+                doneThisWeek = status.doneOn?.let { d -> state.weights.firstOrNull { it.date == d } },
                 last = state.weights.lastOrNull { it.date <= date },
                 weighInDay = weighInDay.value,
                 onWeighInNow = { weighInOpen = true },
@@ -194,16 +205,28 @@ fun LogScreen(
     }
 }
 
-/** Off-day card: when the next weigh-in is and the last weight, with ways to weigh in anyway or change the day. */
+/** Card when no weigh-in is due: the next weigh-in, this week's if already done, and ways to weigh in anyway or change the day. */
 @Composable
-private fun NextWeighInCard(next: LocalDate, last: WeightEntity?, weighInDay: Int, onWeighInNow: () -> Unit, onWeighInDay: (Int) -> Unit) {
+private fun NextWeighInCard(
+    next: LocalDate,
+    doneThisWeek: WeightEntity?,
+    last: WeightEntity?,
+    weighInDay: Int,
+    onWeighInNow: () -> Unit,
+    onWeighInDay: (Int) -> Unit,
+) {
     var picking by remember { mutableStateOf(false) }
     DarkCard(radius = 24) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Next weigh-in", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             Text(longDay(next), style = numberStyle(30.sp))
-            if (last != null) {
-                Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            when {
+                doneThisWeek != null -> Text(
+                    "This week done: %.1f kg on %s".format(doneThisWeek.kg, dayMonth(doneThisWeek.date)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Palette.Accent,
+                )
+                last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 TextButton(onClick = onWeighInNow, contentPadding = PaddingValues(0.dp)) { Text("Weigh in now", color = Palette.Accent) }
