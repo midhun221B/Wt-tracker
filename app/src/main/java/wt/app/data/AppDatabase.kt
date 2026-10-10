@@ -9,7 +9,7 @@ import androidx.room.migration.Migration
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import wt.core.model.Defaults
-import wt.core.model.todayInTokyo
+import wt.core.model.Checkpoint
 
 @Database(
     entities = [
@@ -28,15 +28,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun plans(): PlanDao
     abstract fun profile(): ProfileDao
 
-    /** Fills a fresh database with the starting data. Does nothing once a profile exists. */
-    suspend fun seedIfEmpty() = withTransaction {
-        if (profile().get() != null) return@withTransaction
-        profile().upsert(ProfileEntity.from(Defaults.profile))
-        weights().upsert(Defaults.startWeight.let { WeightEntity(it.date, it.kg) })
-        Defaults.startBody.let { bodyComp().upsert(BodyCompEntity(it.date, it.fatPct, it.visceral, it.muscleKg, it.skeletalPct, it.leanKg, it.bmrKcal)) }
+    /**
+     * Saves first-run setup in one go: the profile, today's weight and the first plan. A fresh install has no
+     * profile, and the app shows setup until this runs (or a backup is restored).
+     */
+    suspend fun startPlan(profile: ProfileEntity, today: WeightEntity, checkpoints: List<Checkpoint>) = withTransaction {
+        profile().upsert(profile)
+        weights().upsert(today)
         plans().activateNewPlan(
-            PlanEntity(createdAt = todayInTokyo(), active = true, label = "Original plan"),
-            Defaults.planCheckpoints.map { CheckpointEntity(0, it.date, it.kg) },
+            PlanEntity(createdAt = today.date, active = true, label = "Original plan"),
+            checkpoints.map { CheckpointEntity(0, it.date, it.kg) },
         )
     }
 

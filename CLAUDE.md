@@ -12,8 +12,8 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
   - `io/`: CSV export, JSON backup/restore, Strava `activities.csv` parser and import matching.
   - `Safety.kt`: hard limits.
 - `app/`: Jetpack Compose + Room (schema v3) + WorkManager.
-  - `data/`: entities, DAOs, migrations, seed data, backup and Strava import.
-  - `ui/`: screens and `AppViewModel`.
+  - `data/`: entities, DAOs, migrations, first-run setup (`startPlan`), backup and Strava import.
+  - `ui/`: screens (including first-run setup, `Onboarding.kt`) and `AppViewModel`.
   - `chart/`: Canvas charts.
   - `notify/`: weigh-in-day reminder.
 - Tests:

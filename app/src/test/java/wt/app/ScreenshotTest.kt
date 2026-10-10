@@ -33,7 +33,10 @@ import wt.app.ui.DashboardScreen
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
 import wt.app.ui.RunLoggedBanner
+import wt.app.ui.OnboardingScreen
 import wt.app.ui.RunsScreen
+import wt.app.ui.SetupDraft
+import wt.app.ui.SetupStep
 import wt.app.ui.SettingsScreen
 import wt.app.ui.UiState
 import wt.app.ui.WtTheme
@@ -219,4 +222,20 @@ class ScreenshotTest {
             BodyDialog(null, today, sampleState().body.last(), {}, { _, _ -> }, onFromScreenshot = {})
         }
     }
+
+    // First-run setup on Saturday 10 October: 88.3 kg today, 82 kg by 7 January. Phone-height frames.
+    private val setupDay = LocalDate.of(2026, 10, 10)
+    private val setupDraft = SetupDraft(kg = "88.3", goalKg = "82", goalDate = LocalDate.of(2027, 1, 7))
+
+    private fun setup(name: String, step: SetupStep, draft: SetupDraft = setupDraft) = shoot(name) {
+        OnboardingScreen(setupDay, { _, _, _ -> }, {}, {}, initialStep = step, initialDraft = draft)
+    }
+
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupWelcome() = setup("10a-setup-welcome", SetupStep.Welcome)
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupWeight() = setup("10b-setup-weight", SetupStep.Weight)
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupGoal() = setup("10c-setup-goal", SetupStep.Goal)
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupTooFast() =
+        setup("10d-setup-too-fast", SetupStep.Goal, setupDraft.copy(goalDate = LocalDate.of(2026, 11, 7)))
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupWeighIn() = setup("10e-setup-weigh-in", SetupStep.WeighIn)
+    @Config(qualifiers = "w411dp-h900dp-xhdpi") @Test fun setupPlan() = setup("10f-setup-plan", SetupStep.Plan)
 }

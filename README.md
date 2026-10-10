@@ -10,6 +10,7 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
+- **First-run setup:** on a fresh install, five short steps: welcome (or restore a backup), today's weight, goal weight and date with a live kg/week check (above 1 kg/week isn't allowed; it offers a steady 0.5 kg/week date instead), weigh-in day and reminder, then the plan with monthly checkpoints.
 - **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner and a check pulse), the rest-day switch until a run is logged, and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (a drag ruler in 0.1 kg steps with the plan and last week marked, typing, or a scale screenshot), then a "Weigh-in saved" card whose goal ring fills to the new weight; other days show when the next weigh-in is, with a shortcut to change the day.
 - **Trend:**
   - Planned vs realistic chart with an 80 % band.

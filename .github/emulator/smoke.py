@@ -3,7 +3,8 @@
 1. Installs the previous release, turns on today's "Rest day" as a marker, then installs the new APK over it
    and checks the marker is still there (an update keeps the data).
 2. Opens every tab and Settings and saves a screenshot of each to the output folder.
-3. Fails if the app crashed at any point.
+3. Reinstalls fresh and goes through first-run setup with its defaults.
+4. Fails if the app crashed at any point.
 
 Usage: python3 smoke.py NEW_APK OLD_APK OUT_DIR
 """
@@ -34,6 +35,13 @@ def nodes():
                 x1, y1, x2, y2 = map(int, re.findall(r"\d+", n.get("bounds")))
                 found.append((n.get("text"), n.get("content-desc"), n.get("checkable") == "true",
                               n.get("checked") == "true", (x1 + x2) // 2, (y1 + y2) // 2))
+            # A slow CI emulator can show "<some app> isn't responding" over everything: wait it out.
+            if any((t or "").endswith("isn't responding") for t, *_ in found):
+                wait = [(x, y) for t, _, _, _, x, y in found if t == "Wait"]
+                if wait:
+                    adb("shell", "input", "tap", str(wait[0][0]), str(wait[0][1]))
+                time.sleep(2)
+                continue
             return found
         time.sleep(1)
     sys.exit("Could not read the screen with uiautomator")
@@ -78,6 +86,8 @@ def check_no_crash():
 
 
 adb("logcat", "-c", check=False)
+adb("shell", "settings", "put", "global", "hide_error_dialogs", "1", check=False)
+adb("shell", "am", "broadcast", "-a", "android.intent.action.CLOSE_SYSTEM_DIALOGS", check=False)
 
 # 1. Previous release, then the new APK over it.
 adb("install", old_apk)
@@ -111,6 +121,27 @@ time.sleep(1.5)
 tap("Today", lowest=True)
 shot("07-back-to-today")
 
-# 3. No crash anywhere.
+# 3. Fresh install: first-run setup with its defaults (80.0 kg today, a 75 kg goal at 0.5 kg/week).
+adb("uninstall", PKG)
+adb("install", new_apk)
+adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
+adb("shell", "am", "start", "-W", "-n", f"{PKG}/wt.app.MainActivity")
+wait_for("Set up my plan")
+shot("10-setup-welcome")
+for button, next_heading, name in [
+    ("Set up my plan", "What do you weigh today?", "11-setup-weight"),
+    ("Next", "Where do you want to be, and by when?", "12-setup-goal"),
+    ("Next", "Which day will you weigh in?", "13-setup-weigh-in"),
+    ("Next", "Your plan", "14-setup-plan"),
+]:
+    tap(button, lowest=True)
+    wait_for(next_heading)
+    shot(name)
+tap("Start", lowest=True)  # the button, not the timeline's "Start" label
+wait_for("Trend")
+shot("15-after-setup")
+print("Setup on a fresh install works")
+
+# 4. No crash anywhere.
 check_no_crash()
 print("Smoke test passed")

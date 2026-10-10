@@ -43,6 +43,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 ### Not merged
 - Branch `claude/fervent-ptolemy-ho7r2a`: CI `emulator` job (Android 14 emulator, Pixel 6 profile): installs v0.3.0, turns on today's rest day, updates to the new APK and checks the rest day is still there, screenshots every tab and Settings, fails on a crash; screenshots on the `emulator-latest` pre-release.
+- Branch `claude/fervent-ptolemy-ho7r2a`: **first-run setup (onboarding design A)** instead of seeding the owner's data on a fresh install. Welcome (set up or restore a backup) → today's weight (ruler) → goal weight and date with the live kg/week check (`firstPlan`, `steadyGoalDate` in `core/plan/FirstPlan.kt`; "Not allowed" above 1 kg/week, with "Use <date> (0.5 kg/week)") → weigh-in day and reminder → "Your plan" (goal sentence, monthly checkpoints, energy estimate) → Start saves profile, today's weight and the plan (`AppDatabase.startPlan`). Existing installs never see it (they have a profile). Screenshots `10a`–`10f`; the emulator job also runs setup on a fresh install.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -85,6 +86,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
+- **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.

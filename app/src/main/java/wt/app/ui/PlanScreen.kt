@@ -44,6 +44,7 @@ import wt.core.Safety
 import wt.core.model.Checkpoint
 import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
+import wt.core.plan.steadyGoalDate
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -112,7 +113,7 @@ fun PlanScreen(
 
 /** "82 kg by 7 January." with "9 weeks to go." in grey underneath. */
 @Composable
-private fun GoalSentence(goal: Checkpoint, today: LocalDate) {
+internal fun GoalSentence(goal: Checkpoint, today: LocalDate) {
     val days = ChronoUnit.DAYS.between(today, goal.date)
     Text(
         buildAnnotatedString {
@@ -233,7 +234,7 @@ private fun Timeline(state: UiState, onEdit: () -> Unit) {
 
 /** One stop on the timeline line: the segment from the row above ([above]), the dot, the segment to the row below. */
 @Composable
-private fun Rail(dot: Color, above: Color?, below: Color?) {
+internal fun Rail(dot: Color, above: Color?, below: Color?) {
     Canvas(Modifier.width(24.dp).fillMaxHeight()) {
         val x = size.width / 2
         val mid = size.height / 2
@@ -246,7 +247,7 @@ private fun Rail(dot: Color, above: Color?, below: Color?) {
 
 /** A quiet list row: title, grey value and a chevron, with a hairline below. */
 @Composable
-private fun ListRow(title: String, value: String, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun ListRow(title: String, value: String, enabled: Boolean = true, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().height(52.dp).clickable(enabled = enabled, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
@@ -261,13 +262,13 @@ private fun ListRow(title: String, value: String, enabled: Boolean = true, onCli
 
 /** "Realistic", "Ambitious" (above 0.7 kg/week) or "Not allowed" (above the 1 kg/week cap). */
 @Composable
-private fun RateStatus(r: RebaselineResult) = when {
+internal fun RateStatus(r: RebaselineResult) = when {
     r.exceedsSafeMax -> Pill("Not allowed", textColor = Palette.Error)
     r.unrealistic -> Pill("Ambitious", textColor = Palette.Warn)
     else -> Pill("Realistic", filled = true)
 }
 
-private fun rateAdvice(r: RebaselineResult): String = when {
+internal fun rateAdvice(r: RebaselineResult): String = when {
     r.exceedsSafeMax -> "Above the ${Safety.MAX_LOSS_KG_PER_WEEK} kg/week safety limit. Choose a later goal date."
     r.unrealistic -> "Above ${Safety.UNREALISTIC_KG_PER_WEEK} kg/week is hard to keep up. Consider a later goal date."
     else -> "A pace you can keep up."
@@ -295,7 +296,7 @@ internal fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Uni
     val d = state.dashboard
     val preview = d.rebaselinePreview() ?: return
     // A gentler alternative: same goal weight at 0.5 kg/week.
-    val alternativeDate = d.asOf.plusDays(ceil((preview.startKg - d.plan.goal.kg) / 0.5 * 7).toLong().coerceAtLeast(7))
+    val alternativeDate = steadyGoalDate(d.asOf, preview.startKg, d.plan.goal.kg)
     val alternative = rebaseline(d.weights, d.asOf, alternativeDate, d.plan.goal.kg)
     val keepAllowed = preview.requiredKgPerWeek != null && !preview.exceedsSafeMax
     val offerAlternative = alternativeDate != d.plan.goal.date
