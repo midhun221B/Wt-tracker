@@ -45,6 +45,9 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - Branch `claude/fervent-ptolemy-ho7r2a`: CI `emulator` job (Android 14 emulator, Pixel 6 profile): installs v0.3.0, turns on today's rest day, updates to the new APK and checks the rest day is still there, screenshots every tab and Settings, fails on a crash; screenshots on the `emulator-latest` pre-release.
 - Branch `claude/fervent-ptolemy-ho7r2a`: **first-run setup (onboarding design A)** instead of seeding the owner's data on a fresh install. Welcome (set up or restore a backup) → today's weight (ruler) → goal weight and date with the live kg/week check (`firstPlan`, `steadyGoalDate` in `core/plan/FirstPlan.kt`; "Not allowed" above 1 kg/week, with "Use <date> (0.5 kg/week)") → weigh-in day and reminder → "Your plan" (goal sentence, monthly checkpoints, energy estimate) → Start saves profile, today's weight and the plan (`AppDatabase.startPlan`). Existing installs never see it (they have a profile). Screenshots `10a`–`10f`; the emulator job also runs setup on a fresh install.
 
+- Branch `claude/fervent-ptolemy-ho7r2a`: **rest day mark (design B, moon)**: rest days are a blue-grey disc with a dark crescent (`RestMark`, `Palette.Rest` = the planned line's `#7FA6C9`) in the week dots and on the Today card (blue tint, blue label and switch); the week line counts rest days ("2 runs · 2 rest days · 7.0 km this week").
+- Branch `claude/fervent-ptolemy-ho7r2a`: **daily distance on Trend (designs B and C)**: a "Distance" card (2 or 4 weeks: last week vs this week, a bar per day with its km, longest day, km per run, run days) and an "Every day" calendar (newest week on top; run = orange disc with km, rest = moon, missed = dash, week km on the right). Core: `dailyDistance`, `distanceSpan` (`core/summary/DailyDistance.kt`, tested); `Dashboard.distance`.
+
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
 - **Dashboard ("Trend", program week in the top bar's small line):**
@@ -98,6 +101,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.
 
 ## Design decisions
+- **Rest days are blue-grey with a moon** (2026-10-10): orange stays for runs; the rest colour reuses the planned line's blue-grey, and the moon shape keeps it apart without relying on colour.
 - **Chosen direction: "B orange".**
   - Background `#0E1113`, cards `#171C20`, raised `#262D33`, text `#F2F4F5`, muted `#9AA4AC`.
   - Accent `#FC5200`; amber `#FFC857` for "behind plan"; planned line `#7FA6C9` dashed.

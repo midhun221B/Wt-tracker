@@ -45,6 +45,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -401,15 +402,17 @@ private fun RunningCard(
     firstDay: LocalDate? = null,
 ) {
     val done = runs.isNotEmpty() || rest
+    // A run day glows orange; a rest day (no run) blue-grey, so the two never look alike.
+    val tint = if (runs.isEmpty() && rest) Palette.Rest else Palette.Accent
     val shape = RoundedCornerShape(20.dp)
     Card(
-        modifier = if (done) Modifier.border(1.dp, Palette.Accent.copy(alpha = 0.35f), shape) else Modifier,
+        modifier = if (done) Modifier.border(1.dp, tint.copy(alpha = 0.35f), shape) else Modifier,
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
     ) {
         Column(
             Modifier
-                .then(if (done) Modifier.background(Brush.verticalGradient(listOf(Palette.Accent.copy(alpha = 0.14f), Color.Transparent))) else Modifier)
+                .then(if (done) Modifier.background(Brush.verticalGradient(listOf(tint.copy(alpha = 0.14f), Color.Transparent))) else Modifier)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -419,7 +422,7 @@ private fun RunningCard(
                     val sec = runs.sumOf { it.durationSec }
                     // Pace and time sit right under the distance; "+ Add another" on the right of the same block.
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        DoneMark(filled = true, pulse = justLogged)
+                        DoneMark(pulse = justLogged)
                         Column(Modifier.weight(1f)) {
                             Text(if (runs.size > 1) "${runs.size} runs done" else "Run done", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
                             Text("%.2f km".format(km), style = numberStyle(28.sp))
@@ -430,12 +433,16 @@ private fun RunningCard(
                 }
                 rest -> {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        DoneMark(filled = false)
+                        RestMark(32.dp)
                         Column(Modifier.weight(1f)) {
-                            Text("Rest day", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
+                            Text("Rest day", style = MaterialTheme.typography.labelMedium, color = Palette.Rest)
                             Text("Recovery counts", style = numberStyle(28.sp))
                         }
-                        Switch(checked = true, onCheckedChange = onRest)
+                        Switch(
+                            checked = true,
+                            onCheckedChange = onRest,
+                            colors = SwitchDefaults.colors(checkedTrackColor = Palette.Rest, checkedBorderColor = Palette.Rest),
+                        )
                     }
                     TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Log a run anyway", color = Palette.Muted) }
                 }
@@ -457,20 +464,25 @@ private fun RunningCard(
             val monday = weekStart(date)
             Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays, pop = date.takeIf { justLogged }, firstDay = firstDay)
+            val weekRest = (0L..6L).count { monday.plusDays(it) in restDays }
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("${weekRuns.size} ${if (weekRuns.size == 1) "run" else "runs"}", style = numberStyle(22.sp))
-                Text("%.1f km this week".format(weekRuns.sumOf { it.km }), style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp))
+                Text(
+                    (if (weekRest > 0) "$weekRest ${if (weekRest == 1) "rest day" else "rest days"} · " else "") +
+                        "%.1f km this week".format(weekRuns.sumOf { it.km }),
+                    style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(bottom = 3.dp),
+                )
             }
         }
     }
 }
 
 /**
- * Orange disc with a check (run done), or an orange ring with a check (rest day). With [pulse] (a run was just
- * logged) the check pops once and an orange ring grows and fades behind it.
+ * Orange disc with a check: the run is done. With [pulse] (a run was just logged) the check pops once and an orange
+ * ring grows and fades behind it.
  */
 @Composable
-private fun DoneMark(filled: Boolean, pulse: Boolean = false) {
+private fun DoneMark(pulse: Boolean = false) {
     val (scale, ring) = rememberPulse(pulse)
     Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
         Box(
@@ -486,9 +498,9 @@ private fun DoneMark(filled: Boolean, pulse: Boolean = false) {
         Box(
             Modifier.matchParentSize()
                 .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-                .then(if (filled) Modifier.background(Palette.Accent, CircleShape) else Modifier.border(2.dp, Palette.Accent, CircleShape)),
+                .background(Palette.Accent, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { Icon(Icons.Default.Check, null, tint = if (filled) Palette.OnAccent else Palette.Accent, modifier = Modifier.size(18.dp)) }
+        ) { Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(18.dp)) }
     }
 }
 
@@ -513,7 +525,7 @@ private fun rememberPulse(active: Boolean): Pair<Animatable<Float, AnimationVect
 }
 
 /**
- * Mon–Sun dots for the week: orange with a check on run days, a grey ring on rest days, an empty orange ring for
+ * Mon–Sun dots for the week: orange with a check on run days, the blue-grey moon on rest days, an empty orange ring for
  * the shown day before anything is logged, a dash for past days that were missed, raised grey for days to come.
  * Past days before [firstDay] (the first weigh-in or run) stay blank: they are not missed, the app wasn't in use yet.
  */
@@ -535,17 +547,17 @@ private fun WeekDots(
                 val rested = d in restDays
                 val beforeStart = firstDay == null || d < firstDay
                 val dot = Modifier.size(30.dp)
-                // The shown day gets an orange outer ring once it has a run or a rest day.
+                // The shown day gets an outer ring once it has a run (orange) or a rest day (blue-grey).
                 Box(
                     Modifier.size(38.dp)
                         .graphicsLayer { scaleX = scale.value; scaleY = scale.value } // pops once after a new run
-                        .then(if (d == shown && (ran || rested)) Modifier.border(2.dp, Palette.Accent, CircleShape) else Modifier),
+                        .then(if (d == shown && (ran || rested)) Modifier.border(2.dp, if (ran) Palette.Accent else Palette.Rest, CircleShape) else Modifier),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(
                         when {
                             ran -> dot.background(Palette.Accent, CircleShape)
-                            rested -> dot.border(2.dp, Palette.Muted, CircleShape)
+                            rested -> dot
                             d == shown -> dot.border(2.dp, Palette.Accent, CircleShape)
                             d < today -> dot // missed (a dash) or before the first entry (blank)
                             else -> dot.background(Palette.CardHigh, CircleShape)
@@ -554,6 +566,7 @@ private fun WeekDots(
                     ) {
                         when {
                             ran -> Icon(Icons.Default.Check, null, tint = Palette.OnAccent, modifier = Modifier.size(16.dp))
+                            rested -> RestMark(30.dp)
                             !rested && d != shown && d < today && !beforeStart -> Box(Modifier.size(width = 12.dp, height = 2.dp).background(Palette.Muted))
                         }
                     }

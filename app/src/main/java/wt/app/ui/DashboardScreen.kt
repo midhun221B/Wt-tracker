@@ -49,6 +49,8 @@ fun DashboardScreen(d: Dashboard, modifier: Modifier = Modifier) {
         ProgressCard(d)
         ChartCard(d)
         ForecastTiles(d)
+        DistanceCard(d.distance, d.asOf)
+        EveryDayCard(d.distance)
         WeeksCard(d.weekly)
         BodyTiles(d)
         Disclaimer()

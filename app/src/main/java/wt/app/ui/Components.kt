@@ -26,6 +26,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -503,5 +507,18 @@ fun RunLoggedBanner(runs: Int, km: Double, modifier: Modifier = Modifier) {
                 color = Palette.OnAccent,
             )
         }
+    }
+}
+
+/** The rest-day mark: a blue-grey disc with a dark crescent moon (runs are orange with a check). */
+@Composable
+fun RestMark(size: Dp, modifier: Modifier = Modifier) {
+    Canvas(modifier.size(size)) {
+        drawCircle(Palette.Rest)
+        // The crescent is a circle with an offset circle cut out of its top right.
+        val r = this.size.minDimension * 0.27f
+        val disc = Path().apply { addOval(Rect(center, r)) }
+        val bite = Path().apply { addOval(Rect(Offset(center.x + r * 0.55f, center.y - r * 0.45f), r * 0.85f)) }
+        drawPath(Path().apply { op(disc, bite, PathOperation.Difference) }, Palette.Background)
     }
 }

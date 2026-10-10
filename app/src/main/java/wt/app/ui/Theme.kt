@@ -29,6 +29,8 @@ object Palette {
     val OnAccent = Color(0xFF0E1113)
     val Warn = Color(0xFFFFC857)
     val Planned = Color(0xFF7FA6C9)
+    /** Rest days: the planned line's blue-grey, so orange stays for runs. */
+    val Rest = Planned
     val Error = Color(0xFFFF8A80)
 }
 
