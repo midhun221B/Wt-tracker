@@ -5,7 +5,7 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 
 ## Layout
 - `core/`: pure Kotlin (JVM, no Android). All the math and parsing lives here and is unit-tested.
-  - `trend/`: 7-day moving average, Theil–Sen fit over the last 21 days (or 42 days for weekly weigh-ins), forecast with an 80 % band and an ETA.
+  - `trend/`: 7-day moving average, Theil–Sen fit over the last 21 days (or 42 days for weekly weigh-ins; none until the weigh-ins span 14 days), forecast with an 80 % band and an ETA.
   - `plan/`: planned line and re-baseline.
   - `energy/`, `alerts/`, `summary/`: energy balance, alert rules, weekly table (Monday–Sunday weeks; week 1 is the week of the first weigh-in).
   - `dashboard/`: `buildDashboard()`, the single entry point the UI calls.

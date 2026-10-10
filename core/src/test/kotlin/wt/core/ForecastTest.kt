@@ -77,7 +77,7 @@ class ForecastTest {
     @Test
     fun alreadyAtGoal() {
         val asOf = LocalDate.of(2026, 12, 20)
-        val data = (0 until 10).map { WeightEntry(asOf.minusDays(it.toLong()), 81.5) }
+        val data = (0 until 15).map { WeightEntry(asOf.minusDays(it.toLong()), 81.5) }
         val f = forecast(fitTrend(data, asOf)!!, plan)
         assertEquals(asOf, f.eta)
         assertTrue(f.gapDays!! < 0)

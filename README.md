@@ -31,7 +31,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
 
 ## How the forecast works (`core/`)
 - **Smoothing:** 7-day trailing moving average.
-- **Trend:** a Theil–Sen robust line, which ignores water-weight spikes. It uses the last 21 days when they hold 7+ weigh-ins, otherwise the last 42 days when they hold 4+ weigh-ins over at least 3 weeks (weekly weigh-ins). With less it uses all the data and is marked low-confidence.
+- **Trend:** a Theil–Sen robust line, which ignores water-weight spikes. It uses the last 21 days when they hold 7+ weigh-ins, otherwise the last 42 days when they hold 4+ weigh-ins over at least 3 weeks (weekly weigh-ins). With less it uses all the data and is marked low-confidence. There is no trend (or forecast) until the weigh-ins cover two weeks.
 - **Band:** an 80 % band from the line's standard error, using a MAD-based noise estimate. It widens with the forecast horizon.
 - **Energy:**
   - Actual deficit = −slope × 7700 kcal/kg.

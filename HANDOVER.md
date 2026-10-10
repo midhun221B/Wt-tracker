@@ -48,6 +48,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - Branch `claude/fervent-ptolemy-ho7r2a`: **rest day mark (design B, moon)**: rest days are a blue-grey disc with a dark crescent (`RestMark`, `Palette.Rest` = the planned line's `#7FA6C9`) in the week dots and on the Today card (blue tint, blue label and switch); the week line counts rest days ("2 runs · 2 rest days · 7.0 km this week").
 - Branch `claude/fervent-ptolemy-ho7r2a`: **daily distance on Trend (designs B and C)**: a "Distance" card (2 or 4 weeks: last week vs this week, a bar per day with its km, longest day, km per run, run days) and an "Every day" calendar (newest week on top; run = orange disc with km, rest = moon, missed = dash, week km on the right). Core: `dailyDistance`, `distanceSpan` (`core/summary/DailyDistance.kt`, tested); `Dashboard.distance`.
 - Branch `claude/fervent-ptolemy-ho7r2a`: **chart axis fix**: kg labels use a 1/2/5/10 kg step (at most 8 gaps) instead of every 2 kg, and a far-off projection can widen the axis by at most 3 kg past the plan (the line is clipped beyond). Before, three daily weigh-ins losing 1 kg projected to 42 kg and drew 26 overlapping labels. Screenshot `1b-dashboard-steep`.
+- Branch `claude/fervent-ptolemy-ho7r2a`: **no trend before two weeks of weigh-ins**: `fitTrend` returns nothing until the weigh-ins it uses span 14 days (`MIN_TREND_SPAN_DAYS`), so the rate, the realistic line, the forecast tiles and the energy estimate wait; Trend says "Trend from 22 October" (`trendWait`), re-baseline "after 2 weeks of weigh-ins".
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -90,6 +91,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
+- **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.
 - **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.

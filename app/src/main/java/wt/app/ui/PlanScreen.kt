@@ -86,7 +86,7 @@ fun PlanScreen(
             ListRow(
                 "Re-baseline",
                 when {
-                    d.fit == null -> "after 3 weigh-ins"
+                    d.fit == null -> "after 2 weeks of weigh-ins"
                     rate == null -> "goal date passed"
                     else -> "%.2f kg/week needed".format(rate)
                 },
