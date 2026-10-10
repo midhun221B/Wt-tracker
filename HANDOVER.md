@@ -35,10 +35,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#18](https://github.com/midhun221B/Wt-tracker/pull/18) | Weigh-in drag ruler (plan and last-week marks, haptics) instead of − / +; "Weigh-in saved" card with the goal ring filling (`weighInProgress`); check pulse after a new run; scale-only "Edit" opens the measurement; tighter run card; CI `publish` job serialized |
 | [#19](https://github.com/midhun221B/Wt-tracker/pull/19) | One trend-based "kg lost" and "over plan" (`goalProgress`, `gapKg`; the live weigh-in line is labelled "Scale"); fresh-install empty states (blank days before start, "Trend in N more weigh-ins", no empty km chart, Body hint card, re-baseline waits for a trend); ruler notch for marks; banner word order; screenshots `9a`–`9e` |
 | [#20](https://github.com/midhun221B/Wt-tracker/pull/20) | Version 0.2.0 (`versionCode` 2); CI creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` when a new version reaches `main` |
+| [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
+| [#23](https://github.com/midhun221B/Wt-tracker/pull/23) | Plan tab redesign (design B2): goal sentence, checkpoint timeline with today (dot per date, orange line up to today), re-baseline / energy / history as list rows with pop-ups; `Dashboard.todayVsPlan()`; version 0.3.0 (`v0.3.0` release) |
 
 ### Not merged
-- Settings › About shows the app version (`BuildConfig.VERSION_NAME`; `buildConfig` enabled in `app/build.gradle.kts`).
-  Version 0.2.1 (`versionCode` 3); merging creates the `v0.2.1` release.
+- Nothing pending. Start the next change from the latest `main`.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -51,7 +52,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
 - **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
-- **Plan:** edit checkpoints, re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy settings.
+- **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
 - **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
 
 ## Open items / next steps
@@ -85,6 +86,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
 - **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
+- **No weekly review card** (2026-10-09): built for v0.3 (trend, runs, plan gap and one suggestion on the weigh-in day), but the owner didn't like it; removed before merging.
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
 - **Weekly weigh-ins** on a chosen day, weight only. Hunger, sleep, snacks and notes are no longer asked (2026-10-09); old values stay in the database and backups.

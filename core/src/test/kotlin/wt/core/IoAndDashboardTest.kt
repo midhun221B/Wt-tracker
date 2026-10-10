@@ -112,4 +112,25 @@ class IoAndDashboardTest {
         val d = buildDashboard(weights, emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, Defaults.START)
         assertEquals(1, d.weights.size)
     }
+
+    @Test
+    fun todayVsPlanUsesTheTrendGap() {
+        val weights = Synthetic.series(30)
+        val asOf = weights.last().date
+        val d = buildDashboard(weights, emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, asOf)
+        val p = assertNotNull(d.todayVsPlan())
+        assertTrue(p.fromTrend)
+        assertEquals(d.forecast!!.trendToday, p.kg, 1e-9)
+        assertEquals(d.forecast!!.gapKgToday, p.gapKg, 1e-9)
+    }
+
+    @Test
+    fun todayVsPlanBeforeATrendAndBeforeAnyWeighIn() {
+        val one = buildDashboard(listOf(WeightEntry(Defaults.START, 88.0)), emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, Defaults.START)
+        val p = assertNotNull(one.todayVsPlan())
+        assertEquals(88.0, p.kg)
+        assertEquals(88.0 - Defaults.START_KG, p.gapKg, 1e-9)
+        val none = buildDashboard(emptyList(), emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, Defaults.START)
+        assertNull(none.todayVsPlan())
+    }
 }

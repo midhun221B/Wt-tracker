@@ -15,6 +15,7 @@ import wt.core.plan.PlannedLine
 import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
 import wt.core.summary.WeekSummary
+import wt.core.summary.goalProgress
 import wt.core.summary.programWeekIndex
 import wt.core.summary.weekStart
 import wt.core.summary.weeklySummary
@@ -25,6 +26,9 @@ import wt.core.trend.fitTrend
 import wt.core.trend.forecast
 import wt.core.trend.movingAverage
 import java.time.LocalDate
+
+/** Today's weight on the goal's terms ([fromTrend] = the trend, else the latest weigh-in) and [gapKg] to the plan. */
+data class PlanPosition(val kg: Double, val gapKg: Double, val fromTrend: Boolean)
 
 /** Everything the dashboard shows, computed from stored data in one place. */
 data class Dashboard(
@@ -47,6 +51,16 @@ data class Dashboard(
     fun programWeek(): Pair<Int, Int> =
         programWeekIndex(week1, asOf).coerceAtLeast(1) to programWeekIndex(week1, plan.goal.date).coerceAtLeast(1)
 
+
+    /**
+     * Where today stands against the plan, counted like every other screen: today's trend (or the latest weigh-in
+     * before there is one) and its gap to the planned weight (+ = behind). Null before the first weigh-in.
+     */
+    fun todayVsPlan(): PlanPosition? {
+        if (weights.isEmpty()) return null
+        val g = goalProgress(weights, asOf, plan.goal.kg, plan.start.kg)
+        return PlanPosition(g.currentKg, g.currentKg - plan.at(asOf), g.fromTrend)
+    }
 
     /** Preview of re-baselining from today to the current goal; null without any weigh-in. */
     fun rebaselinePreview(): RebaselineResult? =
