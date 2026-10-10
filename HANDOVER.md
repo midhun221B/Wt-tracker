@@ -39,6 +39,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#23](https://github.com/midhun221B/Wt-tracker/pull/23) | Plan tab redesign (design B2): goal sentence, checkpoint timeline with today (dot per date, orange line up to today), re-baseline / energy / history as list rows with pop-ups; `Dashboard.todayVsPlan()`; version 0.3.0 (`v0.3.0` release) |
 | [#24](https://github.com/midhun221B/Wt-tracker/pull/24) | Plan pop-up screenshots (`4b`–`4e`); checkpoint editor shows one decimal (84.0); re-baseline shows "Keep goal date" first with the 0.5 kg/week option below (`FormDialog` `below` slot); version 0.3.1 (`v0.3.1` release) |
 | [#25](https://github.com/midhun221B/Wt-tracker/pull/25) | One plan-gap wording ("over plan" / "under plan" / "on plan") on Trend, the Plan timeline and the weigh-in card; no "×" on the activity factor field; grey empty fastest pace; version 0.3.2 (`v0.3.2` release) |
+| [#26](https://github.com/midhun221B/Wt-tracker/pull/26) | README screenshots refreshed from v0.3.2; README calls the first tab "Trend" |
 
 ### Not merged
 Nothing pending.

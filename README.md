@@ -3,15 +3,15 @@
 A personal Android app for weight loss. It compares the **planned** trajectory with a **realistic**, data-driven forecast
 that updates every time you log a weight. Everything stays on the phone: no accounts, no cloud.
 
-| Dashboard | Today | Runs | Body | Plan |
+| Trend | Today | Runs | Body | Plan |
 |---|---|---|---|---|
-| ![Dashboard](docs/screenshots/1-dashboard.jpg) | ![Today](docs/screenshots/2-today.jpg) | ![Runs](docs/screenshots/3-runs.jpg) | ![Body](docs/screenshots/5-body.jpg) | ![Plan](docs/screenshots/4-plan.jpg) |
+| ![Trend](docs/screenshots/1-dashboard.jpg) | ![Today](docs/screenshots/2-today.jpg) | ![Runs](docs/screenshots/3-runs.jpg) | ![Body](docs/screenshots/5-body.jpg) | ![Plan](docs/screenshots/4-plan.jpg) |
 
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
 - **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner and a check pulse), the rest-day switch until a run is logged, and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (a drag ruler in 0.1 kg steps with the plan and last week marked, typing, or a scale screenshot), then a "Weigh-in saved" card whose goal ring fills to the new weight; other days show when the next weigh-in is, with a shortcut to change the day.
-- **Dashboard:**
+- **Trend:**
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.
   - Energy: estimated daily intake now and the intake that gets you back on plan (rounded to 50 kcal, never below 1800), with the deficits in small print. Worked out from the weight trend, so no food logging is needed.
