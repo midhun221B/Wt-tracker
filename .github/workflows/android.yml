@@ -55,7 +55,7 @@ jobs:
             app/build/reports/tests/
 
   # Smoke test on an Android 14 emulator (Pixel 6 profile, 411 dp wide like the owner's phone): update from the
-  # previous release keeps the data, every tab and Settings open, no crash (.github/emulator/smoke.py).
+  # latest release keeps the data, every tab and Settings open, no crash (.github/emulator/smoke.py).
   # Its screenshots go to an "emulator-latest" pre-release, which a cloud session can download.
   emulator:
     needs: build
@@ -72,11 +72,11 @@ jobs:
           name: wt-tracker-debug-apk
           path: apk
 
-      - name: Previous release to update from
+      - name: Latest release to update from
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release download v0.3.0 --pattern 'wt-tracker-v0.3.0.apk' --output old.apk
+        run: gh release download --pattern 'wt-tracker-v*.apk' --output old.apk # no tag: the latest non-pre-release
 
       - name: Enable KVM
         run: |

@@ -1,6 +1,6 @@
 """Smoke test on a real Android emulator, driven with adb (CI only; see the `emulator` job).
 
-1. Installs the previous release, turns on today's "Rest day" as a marker, then installs the new APK over it
+1. Installs the latest release (going through setup if it has one), turns on today's "Rest day" as a marker, then installs the new APK over it
    and checks the marker is still there (an update keeps the data).
 2. Opens every tab and Settings and saves a screenshot of each to the output folder.
 3. Reinstalls fresh and goes through first-run setup with its defaults.
@@ -47,14 +47,17 @@ def nodes():
     sys.exit("Could not read the screen with uiautomator")
 
 
-def wait_for(label, timeout=40):
+def wait_for(*labels, timeout=40):
+    """Waits until one of [labels] is on screen and returns it."""
     end = time.time() + timeout
     while time.time() < end:
-        if any(label in (t, d) for t, d, *_ in nodes()):
-            return
+        on_screen = {v for t, d, *_ in nodes() for v in (t, d)}
+        for label in labels:
+            if label in on_screen:
+                return label
         time.sleep(1)
     shot("failed-waiting")
-    sys.exit(f'"{label}" never appeared')
+    sys.exit(f"{' or '.join(labels)} never appeared")
 
 
 def tap(label, lowest=False):
@@ -74,7 +77,27 @@ def shot(name):
 
 
 def launch():
+    """Opens the app; on a fresh install of a version with first-run setup, goes through it with its defaults."""
     adb("shell", "am", "start", "-W", "-n", f"{PKG}/wt.app.MainActivity")
+    if wait_for("Trend", "Set up my plan") == "Set up my plan":
+        setup()
+
+
+def setup(prefix=None):
+    """Taps through first-run setup with its defaults; with [prefix], saves a screenshot of each step."""
+    if prefix:
+        shot(f"{prefix}0-setup-welcome")
+    for i, (button, next_heading, name) in enumerate([
+        ("Set up my plan", "What do you weigh today?", "setup-weight"),
+        ("Next", "Where do you want to be, and by when?", "setup-goal"),
+        ("Next", "Which day will you weigh in?", "setup-weigh-in"),
+        ("Next", "Your plan", "setup-plan"),
+    ], start=1):
+        tap(button, lowest=True)
+        wait_for(next_heading)
+        if prefix:
+            shot(f"{prefix}{i}-{name}")
+    tap("Start", lowest=True)  # the button, not the timeline's "Start" label
     wait_for("Trend")
 
 
@@ -91,6 +114,7 @@ adb("shell", "am", "broadcast", "-a", "android.intent.action.CLOSE_SYSTEM_DIALOG
 
 # 1. Previous release, then the new APK over it.
 adb("install", old_apk)
+adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
 launch()
 wait_for("Rest day")
 switch = [(x, y) for _, _, checkable, checked, x, y in nodes() if checkable and not checked]
@@ -127,18 +151,7 @@ adb("install", new_apk)
 adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
 adb("shell", "am", "start", "-W", "-n", f"{PKG}/wt.app.MainActivity")
 wait_for("Set up my plan")
-shot("10-setup-welcome")
-for button, next_heading, name in [
-    ("Set up my plan", "What do you weigh today?", "11-setup-weight"),
-    ("Next", "Where do you want to be, and by when?", "12-setup-goal"),
-    ("Next", "Which day will you weigh in?", "13-setup-weigh-in"),
-    ("Next", "Your plan", "14-setup-plan"),
-]:
-    tap(button, lowest=True)
-    wait_for(next_heading)
-    shot(name)
-tap("Start", lowest=True)  # the button, not the timeline's "Start" label
-wait_for("Trend")
+setup(prefix="1")
 shot("15-after-setup")
 print("Setup on a fresh install works")
 
