@@ -38,9 +38,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
 | [#23](https://github.com/midhun221B/Wt-tracker/pull/23) | Plan tab redesign (design B2): goal sentence, checkpoint timeline with today (dot per date, orange line up to today), re-baseline / energy / history as list rows with pop-ups; `Dashboard.todayVsPlan()`; version 0.3.0 (`v0.3.0` release) |
 | [#24](https://github.com/midhun221B/Wt-tracker/pull/24) | Plan pop-up screenshots (`4b`–`4e`); checkpoint editor shows one decimal (84.0); re-baseline shows "Keep goal date" first with the 0.5 kg/week option below (`FormDialog` `below` slot); version 0.3.1 (`v0.3.1` release) |
+| [#25](https://github.com/midhun221B/Wt-tracker/pull/25) | One plan-gap wording ("over plan" / "under plan" / "on plan") on Trend, the Plan timeline and the weigh-in card; no "×" on the activity factor field; grey empty fastest pace; version 0.3.2 (`v0.3.2` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: one wording for the plan gap, "over plan" / "under plan" / "on plan", on Trend (the ring shows the size, the word gives the direction), the Plan timeline and the weigh-in card (the ruler keeps "Scale: … today's plan"); no "×" suffix on the activity factor field; the empty fastest pace dash is grey.
+Nothing pending.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -87,6 +88,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   from the weight trend plus BMR × activity, shown rounded to 50 kcal and labelled as an estimate.
 - **Kg lost toward the goal always uses the trend** (2026-10-09): the Trend ring and the "Weigh-in saved" ring share `goalProgress` (first weigh-in → today's trend, or the latest weight before a trend exists). The raw scale weight shows only as the change since the last weigh-in.
 - **Over/under plan uses the trend** (2026-10-09), like kg lost; the live weigh-in line is the only scale-based gap and is labelled "Scale".
+- **One wording for the plan gap** (2026-10-10): "over plan" / "under plan" / "on plan" everywhere (Trend, Plan timeline, weigh-in card), never "behind", "ahead" or "above plan".
 - **No weekly review card** (2026-10-09): built for v0.3 (trend, runs, plan gap and one suggestion on the weigh-in day), but the owner didn't like it; removed before merging.
 - **No milestones or badges** (2026-10-09): the owner skipped them after seeing the mockups.
 - **No sample runs** (2026-10-09): the owner's real runs come from Strava screenshots/CSV.
