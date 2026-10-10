@@ -251,6 +251,13 @@ private fun AllTimeColumns(a: AllTimeDistance) {
     val top = maxOf(a.bestWeekKm, a.averageWeekKm ?: 0.0, 1.0)
     val barMax = 140.dp
     Box(Modifier.fillMaxWidth().height(170.dp).semantics { contentDescription = "Kilometres per week to the goal week" }) {
+        // Drawn first so the bars and their labels sit on top of the average line.
+        a.averageWeekKm?.let { avg ->
+            Canvas(Modifier.matchParentSize()) {
+                val y = size.height - barMax.toPx() * (avg / top).toFloat()
+                drawLine(Palette.Muted, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+            }
+        }
         Row(Modifier.matchParentSize(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
             a.weeks.forEach { w ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -266,12 +273,6 @@ private fun AllTimeColumns(a: AllTimeDistance) {
                         )
                     }
                 }
-            }
-        }
-        a.averageWeekKm?.let { avg ->
-            Canvas(Modifier.matchParentSize()) {
-                val y = size.height - barMax.toPx() * (avg / top).toFloat()
-                drawLine(Palette.Muted, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
             }
         }
     }
