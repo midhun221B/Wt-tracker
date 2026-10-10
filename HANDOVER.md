@@ -38,7 +38,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: Plan tab redesign (design B2 from https://claude.ai/artifact/6v64u5SpszCTUg8P4tM1Wi): goal sentence, checkpoint timeline with today and dots on every date (orange line up to today), re-baseline / energy / history as quiet list rows opening pop-ups. Core: `Dashboard.todayVsPlan()` (today's trend or latest weigh-in and its gap to the plan), with tests.
+- Branch `claude/fervent-ptolemy-ho7r2a`, version 0.3.0 (`versionCode` 4; merging creates the `v0.3.0` release): Plan tab redesign (design B2 from https://claude.ai/artifact/6v64u5SpszCTUg8P4tM1Wi): goal sentence, checkpoint timeline with today and dots on every date (orange line up to today), re-baseline / energy / history as quiet list rows opening pop-ups. Core: `Dashboard.todayVsPlan()` (today's trend or latest weigh-in and its gap to the plan), with tests.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
