@@ -40,6 +40,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 ### Not merged
 - Branch `claude/fervent-ptolemy-ho7r2a`: screenshots of the Plan pop-ups (`4b-plan-checkpoints`, `4c-plan-rebaseline`, `4d-plan-energy`, `4e-plan-history`); the dialogs are `internal` so the tests can draw them.
+- Branch `claude/fervent-ptolemy-ho7r2a`: the checkpoint editor shows weights with one decimal (84.0, 82.0) like the timeline; the re-baseline pop-up puts the orange "Keep goal date" first, with the steady 0.5 kg/week alternative below it (new `below` slot on `FormDialog`).
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).

@@ -46,9 +46,13 @@ import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import kotlin.math.ceil
 
 private data class EditablePoint(val date: LocalDate?, val kg: String)
+
+/** Checkpoint weights always show one decimal ("84.0"), like the timeline. */
+private fun kgField(v: Double) = String.format(Locale.ROOT, "%.1f", v)
 
 /** The pop-ups the Plan tab opens. */
 private enum class PlanSheet { Checkpoints, Rebaseline, Energy, History }
@@ -301,6 +305,21 @@ internal fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Uni
         confirmLabel = if (keepAllowed) "Keep goal date (${dayMonth(d.plan.goal.date)})" else "Use ${dayMonth(alternativeDate)}",
         onConfirm = { onApply(if (keepAllowed) preview.checkpoints else alternative.checkpoints) },
         confirmEnabled = keepAllowed || offerAlternative,
+        // The gentler option comes after the main choice.
+        below = if (offerAlternative && alternative.requiredKgPerWeek != null) {
+            {
+                Text(
+                    "A steady 0.5 kg/week instead reaches ${kg(d.plan.goal.kg)} on ${dayMonthYear(alternativeDate)}.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Palette.Muted,
+                )
+                if (keepAllowed) {
+                    SecondaryButton("Use ${dayMonth(alternativeDate)} instead", { onApply(alternative.checkpoints) }, Modifier.fillMaxWidth())
+                }
+            }
+        } else {
+            null
+        },
     ) {
         Text(
             "Start: ${kg(preview.startKg)} (" + (if (preview.fromTrend) "trend weight" else "latest weigh-in; not enough data for a trend") + ")",
@@ -318,23 +337,13 @@ internal fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Uni
             style = MaterialTheme.typography.bodySmall,
             color = Palette.Muted,
         )
-        if (offerAlternative && alternative.requiredKgPerWeek != null) {
-            Text(
-                "A steady 0.5 kg/week instead reaches ${kg(d.plan.goal.kg)} on ${dayMonthYear(alternativeDate)}.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Palette.Muted,
-            )
-            if (keepAllowed) {
-                SecondaryButton("Use ${dayMonth(alternativeDate)} instead", { onApply(alternative.checkpoints) }, Modifier.fillMaxWidth())
-            }
-        }
     }
 }
 
 /** Edit all checkpoints at once; the last one is the goal. */
 @Composable
 internal fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Checkpoint>) -> Unit, onDismiss: () -> Unit) {
-    var points by remember(checkpoints) { mutableStateOf(checkpoints.sortedBy { it.date }.map { EditablePoint(it.date, fieldText(it.kg)) }) }
+    var points by remember(checkpoints) { mutableStateOf(checkpoints.sortedBy { it.date }.map { EditablePoint(it.date, kgField(it.kg)) }) }
     val parsed = points.map { p -> p.date?.let { d -> parseDecimal(p.kg)?.takeIf { it in 30.0..250.0 }?.let { Checkpoint(d, it) } } }
     val complete = parsed.filterNotNull()
     val valid = complete.size == points.size && complete.size >= 2 && complete.map { it.date }.toSet().size == complete.size
@@ -378,7 +387,7 @@ internal fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Check
         }
         SecondaryButton("Add checkpoint", {
             val last = sorted.lastOrNull()
-            points = points + EditablePoint(last?.date?.plusDays(14), fieldText(last?.kg))
+            points = points + EditablePoint(last?.date?.plusDays(14), last?.kg?.let(::kgField).orEmpty())
         })
     }
 }

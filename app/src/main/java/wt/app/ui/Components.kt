@@ -347,7 +347,8 @@ val LocalInlineDialogs = staticCompositionLocalOf { false }
 
 /**
  * The app's pop-up form: a dark card with a title, the [content], a full-width orange [confirmLabel] button,
- * then "Delete" (when [onDelete] is set) on the left and [dismissLabel] on the right.
+ * optional [below] content (a secondary choice), then "Delete" (when [onDelete] is set) on the left and
+ * [dismissLabel] on the right.
  */
 @Composable
 fun FormDialog(
@@ -358,6 +359,7 @@ fun FormDialog(
     confirmEnabled: Boolean = true,
     dismissLabel: String? = "Cancel",
     onDelete: (() -> Unit)? = null,
+    below: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val sheet: @Composable () -> Unit = {
@@ -379,6 +381,7 @@ fun FormDialog(
                         disabledContainerColor = Palette.CardHigh, disabledContentColor = Palette.Muted,
                     ),
                 ) { Text(confirmLabel, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+                below?.invoke(this)
                 if (onDelete != null || dismissLabel != null) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         if (onDelete != null) TextButton(onClick = onDelete) { Text("Delete", color = Palette.Error) }
