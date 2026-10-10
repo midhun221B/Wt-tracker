@@ -37,10 +37,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#20](https://github.com/midhun221B/Wt-tracker/pull/20) | Version 0.2.0 (`versionCode` 2); CI creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` when a new version reaches `main` |
 | [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
 | [#23](https://github.com/midhun221B/Wt-tracker/pull/23) | Plan tab redesign (design B2): goal sentence, checkpoint timeline with today (dot per date, orange line up to today), re-baseline / energy / history as list rows with pop-ups; `Dashboard.todayVsPlan()`; version 0.3.0 (`v0.3.0` release) |
+| [#24](https://github.com/midhun221B/Wt-tracker/pull/24) | Plan pop-up screenshots (`4b`–`4e`); checkpoint editor shows one decimal (84.0); re-baseline shows "Keep goal date" first with the 0.5 kg/week option below (`FormDialog` `below` slot); version 0.3.1 (`v0.3.1` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: screenshots of the Plan pop-ups (`4b-plan-checkpoints`, `4c-plan-rebaseline`, `4d-plan-energy`, `4e-plan-history`); the dialogs are `internal` so the tests can draw them.
-- Branch `claude/fervent-ptolemy-ho7r2a`: the checkpoint editor shows weights with one decimal (84.0, 82.0) like the timeline; the re-baseline pop-up puts the orange "Keep goal date" first, with the steady 0.5 kg/week alternative below it (new `below` slot on `FormDialog`).
+Nothing pending.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
