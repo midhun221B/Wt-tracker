@@ -31,20 +31,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import wt.app.data.RunEntity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import wt.core.io.RunReading
 import wt.core.model.formatMinSec
 import wt.core.summary.AllTimeDistance
-import wt.core.summary.WeekSummary
 import wt.core.summary.programWeekIndex
 import wt.core.summary.weekStart
 import java.time.LocalDate
@@ -57,7 +52,6 @@ fun RunsScreen(
     onDelete: (RunEntity) -> Unit,
     onImportStrava: () -> Unit,
     modifier: Modifier = Modifier,
-    weeks: List<WeekSummary> = emptyList(),
     week1: LocalDate? = null,
     onScreenshot: (() -> Unit)? = null,
     allTime: AllTimeDistance? = null,
@@ -87,7 +81,6 @@ fun RunsScreen(
                         SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
                         SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), if (fastest != null) Palette.Accent else Palette.Muted)
                     }
-                    if (weeks.isNotEmpty() && dated.isNotEmpty()) KmBars(weeks) // no empty chart before the first run
                 }
             }
             if (allTime != null && dated.isNotEmpty()) item { WeekRingCard(allTime) }
@@ -197,38 +190,6 @@ private fun SummaryFigure(label: String, value: String, modifier: Modifier = Mod
     }
 }
 
-/** Last five program weeks as km bars; the current week in orange. */
-@Composable
-private fun KmBars(weeks: List<WeekSummary>) {
-    val shown = weeks.take(5).reversed() // weekly is newest first
-    val maxKm = shown.maxOf { it.km }.coerceAtLeast(1.0)
-    val newest = shown.last()
-    Row(Modifier.fillMaxWidth().height(100.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
-        shown.forEach { w ->
-            val current = w == newest
-            Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                Text("%.1f".format(w.km), style = MaterialTheme.typography.labelSmall, color = if (current) Palette.Accent else Palette.Muted)
-                Box(
-                    Modifier.padding(top = 6.dp).fillMaxWidth()
-                        .height((70 * (w.km / maxKm)).dp.coerceAtLeast(4.dp))
-                        .background(if (current) Palette.Accent else Palette.CardHigh, RoundedCornerShape(6.dp)),
-                )
-            }
-        }
-    }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        shown.forEach { w ->
-            Text(
-                if (w == newest) "This week" else weekLabel(w),
-                style = MaterialTheme.typography.labelSmall,
-                color = if (w == newest) Palette.Text else Palette.Muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
 @Composable
 private fun RunCard(run: RunEntity, fastest: Boolean, onClick: () -> Unit) {
     Card(
@@ -249,7 +210,7 @@ private fun RunCard(run: RunEntity, fastest: Boolean, onClick: () -> Unit) {
                 else if (run.source != "manual") Pill(run.source.replaceFirstChar { it.uppercase() })
             }
             Row(Modifier.fillMaxWidth()) {
-                RunFigure("%.2f".format(run.km), "km", "distance", Modifier.weight(1f))
+                RunFigure("%.1f".format(run.km), "km", "distance", Modifier.weight(1f))
                 RunFigure(duration(run.durationSec), null, "time", Modifier.weight(1f))
                 RunFigure(formatMinSec(run.durationSec / run.km), null, "per km", Modifier.weight(1f), if (fastest) Palette.Accent else Palette.Text)
             }

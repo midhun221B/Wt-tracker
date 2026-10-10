@@ -1,13 +1,10 @@
 package wt.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -234,29 +231,14 @@ private fun ForecastTiles(d: Dashboard) {
 /** A deficit rounded to 10 kcal ("360"). */
 private fun roughDeficit(v: Double) = "%,d".format((Math.round(v / 10.0) * 10).toInt())
 
-/** Last five weeks: km run as bars, average weight underneath. */
+/** Last five weeks' average weight and change; the km run per week lives in the Distance card. */
 @Composable
 private fun WeeksCard(weeks: List<WeekSummary>) {
-    if (weeks.isEmpty()) return
+    if (weeks.none { it.avgKg != null }) return
     val shown = weeks.take(5).reversed() // weekly is newest first
-    val maxKm = shown.maxOf { it.km }.coerceAtLeast(1.0)
     val newest = shown.last()
-    val summary = "This week %.1f km".format(newest.km) + (newest.avgKg?.let { " · %.1f kg".format(it) } ?: "")
-    CollapsibleSection("Weeks", summary) {
-        Text("km run and weight, last five weeks", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-        Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
-            shown.forEach { w ->
-                val current = w == newest
-                Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                    Text("%.1f".format(w.km), style = MaterialTheme.typography.labelSmall, color = if (current) Palette.Accent else Palette.Muted)
-                    Box(
-                        Modifier.padding(top = 6.dp).fillMaxWidth()
-                            .height((90 * (w.km / maxKm)).dp.coerceAtLeast(4.dp))
-                            .background(if (current) Palette.Accent else Palette.CardHigh, RoundedCornerShape(6.dp)),
-                    )
-                }
-            }
-        }
+    CollapsibleSection("Weeks", newest.avgKg?.let { "This week %.1f kg".format(it) } ?: "No weigh-in this week") {
+        Text("Average weight, last five weeks", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             shown.forEach { w ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {

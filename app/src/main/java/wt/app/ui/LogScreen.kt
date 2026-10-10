@@ -132,8 +132,9 @@ fun LogScreen(
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null)
             }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(if (date == state.today) "Today" else "Past day", style = MaterialTheme.typography.titleMedium)
-                Text(longDay(date), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                // The top bar already says "Today", so the switcher shows only the date (and "Past day" off today).
+                Text(longDay(date), style = MaterialTheme.typography.titleMedium)
+                if (date != state.today) Text("Past day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             }
             SquareButton(onClick = { date = date.plusDays(1) }, label = "Next day", enabled = date < state.today) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
@@ -369,7 +370,8 @@ private fun NextWeighInCard(
                 ) {
                     Text("Next weigh-in · ${shortDay(next)}", style = MaterialTheme.typography.titleSmall)
                     when {
-                        done != null -> Text(done, style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
+                        // Muted: it is a status, and orange is kept for actions and runs.
+                        done != null -> Text(done, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                         last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                     }
                 }
@@ -425,7 +427,7 @@ private fun RunningCard(
                         DoneMark(pulse = justLogged)
                         Column(Modifier.weight(1f)) {
                             Text(if (runs.size > 1) "${runs.size} runs done" else "Run done", style = MaterialTheme.typography.labelMedium, color = Palette.Accent)
-                            Text("%.2f km".format(km), style = numberStyle(28.sp))
+                            Text("%.1f km".format(km), style = numberStyle(28.sp))
                             Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                         }
                         TextButton(onClick = onAddRun) { Text("+ Add another", color = Palette.Muted) }

@@ -45,6 +45,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 ### Not merged
 - Branch `claude/fervent-ptolemy-ho7r2a`: Trend's Distance card stays hidden until the first run; the setup ruler fades into the setup background (`WeightRuler(fadeColor)`), not the card colour; the Runs ring fills its card (wider track, square canvas up to 320 dp); the 2-week "Run days" tile shows just the count (no "8 of 11").
+  App-wide polish on the same branch: Today's top bar drops the date (the day switcher shows it; "Past day" off today); the "This week done" line is muted grey (orange stays for actions and runs); km on run cards and Today's run card use one decimal ("3.5 km"); Runs drops the weekly km bars (Distance and the ring cover them); Trend's "Weeks" card shows only average weight and change; the 2-week bars take taps and slides anywhere along the chart, so the touch area is the full width, not the 21 dp bars.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -53,11 +54,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
-  - Distance: one card with 2 weeks (bars, tap a day), Month (calendar circles) and All time (weekly columns to the goal week).
-  - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
+  - Distance: one card with 2 weeks (bars, tap or slide to pick a day), Month (calendar circles) and All time (weekly columns to the goal week).
+  - Weeks (average weight per week, folded), body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
-- **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
+- **Runs:** "Last 28 days" summary (runs, distance, fastest pace), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
 - **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.

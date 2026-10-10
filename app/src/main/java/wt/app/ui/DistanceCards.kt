@@ -3,7 +3,8 @@ package wt.app.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -114,47 +117,58 @@ private fun TwoWeeks(weeks: List<DistanceWeek>, today: LocalDate) {
             style = MaterialTheme.typography.labelMedium, color = Palette.Muted,
         )
     }
-    Row(
-        Modifier.fillMaxWidth().height(132.dp).semantics { contentDescription = "Kilometres per day, last two weeks" },
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.Bottom,
+    // The bars are about 21 dp wide, so the whole chart is the touch area: tap or slide along it to pick a day.
+    fun pick(x: Float, width: Int) {
+        selected = s.days[(x / width * s.days.size).toInt().coerceIn(s.days.indices)].date
+    }
+    Column(
+        Modifier.fillMaxWidth()
+            .pointerInput(s.days) { detectTapGestures { pick(it.x, size.width) } }
+            .pointerInput(s.days) { detectHorizontalDragGestures { change, _ -> pick(change.position.x, size.width) } },
+        verticalArrangement = Arrangement.spacedBy(10.dp), // the card's own spacing
     ) {
-        s.days.forEach { day ->
-            Column(
-                Modifier.weight(1f).height(132.dp).clickable(onClickLabel = "Show ${shortDay(day.date)}") { selected = day.date },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
-            ) {
-                val on = day.date == selected
-                when (day.kind) {
-                    DayKind.Run -> {
-                        Text("%.1f".format(day.km), style = MaterialTheme.typography.labelSmall, color = if (on) Palette.Text else Palette.Muted)
-                        Box(
-                            Modifier.fillMaxWidth().height((96 * day.km / top).dp)
-                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                // Last week dimmer, this week bright.
-                                .background(if (day.date >= thisWeek) Palette.Accent else Palette.Accent.copy(alpha = 0.45f)),
-                        )
+        Row(
+            Modifier.fillMaxWidth().height(132.dp).semantics { contentDescription = "Kilometres per day, last two weeks" },
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            s.days.forEach { day ->
+                Column(
+                    Modifier.weight(1f).height(132.dp).semantics { onClick("Show ${shortDay(day.date)}") { selected = day.date; true } },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom),
+                ) {
+                    val on = day.date == selected
+                    when (day.kind) {
+                        DayKind.Run -> {
+                            Text("%.1f".format(day.km), style = MaterialTheme.typography.labelSmall, color = if (on) Palette.Text else Palette.Muted)
+                            Box(
+                                Modifier.fillMaxWidth().height((96 * day.km / top).dp)
+                                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                    // Last week dimmer, this week bright.
+                                    .background(if (day.date >= thisWeek) Palette.Accent else Palette.Accent.copy(alpha = 0.45f)),
+                            )
+                        }
+                        DayKind.Rest -> RestMark(18.dp, Modifier.padding(bottom = 4.dp))
+                        DayKind.Missed -> Box(Modifier.padding(bottom = 6.dp).size(width = 8.dp, height = 2.dp).background(Palette.Muted))
+                        DayKind.Open, DayKind.Future -> Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Palette.CardHigh))
+                        DayKind.BeforeStart -> {}
                     }
-                    DayKind.Rest -> RestMark(18.dp, Modifier.padding(bottom = 4.dp))
-                    DayKind.Missed -> Box(Modifier.padding(bottom = 6.dp).size(width = 8.dp, height = 2.dp).background(Palette.Muted))
-                    DayKind.Open, DayKind.Future -> Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Palette.CardHigh))
-                    DayKind.BeforeStart -> {}
                 }
             }
         }
-    }
-    HorizontalDivider(color = Palette.CardHigh)
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        s.days.forEach { day ->
-            val on = day.date == selected
-            Text(
-                day.date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.ENGLISH),
-                Modifier.weight(1f), textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (on) Palette.Text else Palette.Muted,
-                fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-            )
+        HorizontalDivider(color = Palette.CardHigh)
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            s.days.forEach { day ->
+                val on = day.date == selected
+                Text(
+                    day.date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.ENGLISH),
+                    Modifier.weight(1f), textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (on) Palette.Text else Palette.Muted,
+                    fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                )
+            }
         }
     }
     s.days.firstOrNull { it.date == selected }?.let { DayDetail(it) }
