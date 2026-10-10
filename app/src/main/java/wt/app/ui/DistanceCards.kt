@@ -265,7 +265,10 @@ private fun AllTimeColumns(a: AllTimeDistance) {
                     if (km == null) {
                         Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Palette.CardHigh))
                     } else {
-                        Text("%.0f".format(km), style = MaterialTheme.typography.labelSmall, color = if (w.current) Palette.Text else Palette.Muted, maxLines = 1)
+                        Text(
+                            "%.0f".format(km), Modifier.background(Palette.Card).padding(horizontal = 1.dp),
+                            style = MaterialTheme.typography.labelSmall, color = if (w.current) Palette.Text else Palette.Muted, maxLines = 1,
+                        )
                         Box(
                             Modifier.fillMaxWidth().height(barMax * (km / top).toFloat())
                                 .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
