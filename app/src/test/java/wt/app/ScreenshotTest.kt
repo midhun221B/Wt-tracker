@@ -22,6 +22,10 @@ import wt.app.data.ProfileEntity
 import wt.app.data.RunEntity
 import wt.app.data.WeightEntity
 import wt.app.ui.BodyDialog
+import wt.app.ui.CheckpointDialog
+import wt.app.ui.EnergyDialog
+import wt.app.ui.HistoryDialog
+import wt.app.ui.RebaselineDialog
 import wt.app.ui.BodyScreen
 import wt.app.ui.LocalInlineDialogs
 import wt.app.ui.RunDialog
@@ -191,6 +195,23 @@ class ScreenshotTest {
         CompositionLocalProvider(LocalInlineDialogs provides true) {
             RunDialog(null, today, onDismiss = {}, onSave = {}, onFromScreenshot = {}, onImportCsv = {})
         }
+    }
+
+    // The Plan tab's pop-ups, drawn in place.
+    @Test fun planCheckpoints() = shoot("4b-plan-checkpoints") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { CheckpointDialog(Defaults.planCheckpoints, {}, {}) }
+    }
+
+    @Test fun planRebaseline() = shoot("4c-plan-rebaseline") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { RebaselineDialog(sampleState(), {}, {}) }
+    }
+
+    @Test fun planEnergy() = shoot("4d-plan-energy") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { EnergyDialog(sampleState().profile, {}, {}) }
+    }
+
+    @Test fun planHistory() = shoot("4e-plan-history") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { HistoryDialog(sampleState().plans, {}) }
     }
 
     @Test fun addMeasurement() = shoot("7-add-measurement") {
