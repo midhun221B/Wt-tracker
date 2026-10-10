@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import wt.app.data.PlanEntity
 import wt.app.data.ProfileEntity
 import wt.core.Safety
 import wt.core.model.Checkpoint
@@ -45,12 +46,16 @@ import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import kotlin.math.ceil
 
 private data class EditablePoint(val date: LocalDate?, val kg: String)
 
-/** The pop-ups the Plan tab opens; tests pass one to [PlanScreen] to capture it. */
-enum class PlanSheet { Checkpoints, Rebaseline, Energy, History }
+/** Checkpoint weights always show one decimal ("84.0"), like the timeline. */
+private fun kgField(v: Double) = String.format(Locale.ROOT, "%.1f", v)
+
+/** The pop-ups the Plan tab opens. */
+private enum class PlanSheet { Checkpoints, Rebaseline, Energy, History }
 
 /**
  * The plan as one quiet page: a sentence with the goal and the weeks left, the checkpoints as a timeline with
@@ -64,9 +69,8 @@ fun PlanScreen(
     onApplyRebaseline: (List<Checkpoint>) -> Unit,
     onSaveProfile: (ProfileEntity) -> Unit,
     modifier: Modifier = Modifier,
-    openSheet: PlanSheet? = null,
 ) {
-    var sheet by remember { mutableStateOf(openSheet) }
+    var sheet by remember { mutableStateOf<PlanSheet?>(null) }
     val d = state.dashboard
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 20.dp),
@@ -101,17 +105,7 @@ fun PlanScreen(
         PlanSheet.Checkpoints -> CheckpointDialog(state.checkpoints, onSave = { onSaveCheckpoints(it); close() }, onDismiss = close)
         PlanSheet.Rebaseline -> RebaselineDialog(state, onApply = { onApplyRebaseline(it); close() }, onDismiss = close)
         PlanSheet.Energy -> EnergyDialog(state.profile, onSave = { onSaveProfile(it); close() }, onDismiss = close)
-        PlanSheet.History -> FormDialog("Plan history", onDismiss = close, confirmLabel = "Close", onConfirm = close, dismissLabel = null) {
-            state.plans.forEach { p ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(p.label, style = MaterialTheme.typography.titleSmall)
-                        Text("Created ${dayMonthYear(p.createdAt)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-                    }
-                    if (p.active) Pill("Active", filled = true)
-                }
-            }
-        }
+        PlanSheet.History -> HistoryDialog(state.plans, onDismiss = close)
         null -> {}
     }
 }
@@ -279,9 +273,25 @@ private fun rateAdvice(r: RebaselineResult): String = when {
     else -> "A pace you can keep up."
 }
 
+/** Every plan so far, the active one marked. */
+@Composable
+internal fun HistoryDialog(plans: List<PlanEntity>, onDismiss: () -> Unit) {
+    FormDialog("Plan history", onDismiss = onDismiss, confirmLabel = "Close", onConfirm = onDismiss, dismissLabel = null) {
+        plans.forEach { p ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(p.label, style = MaterialTheme.typography.titleSmall)
+                    Text("Created ${dayMonthYear(p.createdAt)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                }
+                if (p.active) Pill("Active", filled = true)
+            }
+        }
+    }
+}
+
 /** Re-baseline from today to the same goal, or to a later date at a steady 0.5 kg/week. */
 @Composable
-private fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Unit, onDismiss: () -> Unit) {
+internal fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Unit, onDismiss: () -> Unit) {
     val d = state.dashboard
     val preview = d.rebaselinePreview() ?: return
     // A gentler alternative: same goal weight at 0.5 kg/week.
@@ -295,6 +305,21 @@ private fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Unit
         confirmLabel = if (keepAllowed) "Keep goal date (${dayMonth(d.plan.goal.date)})" else "Use ${dayMonth(alternativeDate)}",
         onConfirm = { onApply(if (keepAllowed) preview.checkpoints else alternative.checkpoints) },
         confirmEnabled = keepAllowed || offerAlternative,
+        // The gentler option comes after the main choice.
+        below = if (offerAlternative && alternative.requiredKgPerWeek != null) {
+            {
+                Text(
+                    "A steady 0.5 kg/week instead reaches ${kg(d.plan.goal.kg)} on ${dayMonthYear(alternativeDate)}.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Palette.Muted,
+                )
+                if (keepAllowed) {
+                    SecondaryButton("Use ${dayMonth(alternativeDate)} instead", { onApply(alternative.checkpoints) }, Modifier.fillMaxWidth())
+                }
+            }
+        } else {
+            null
+        },
     ) {
         Text(
             "Start: ${kg(preview.startKg)} (" + (if (preview.fromTrend) "trend weight" else "latest weigh-in; not enough data for a trend") + ")",
@@ -312,23 +337,13 @@ private fun RebaselineDialog(state: UiState, onApply: (List<Checkpoint>) -> Unit
             style = MaterialTheme.typography.bodySmall,
             color = Palette.Muted,
         )
-        if (offerAlternative && alternative.requiredKgPerWeek != null) {
-            Text(
-                "A steady 0.5 kg/week instead reaches ${kg(d.plan.goal.kg)} on ${dayMonthYear(alternativeDate)}.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Palette.Muted,
-            )
-            if (keepAllowed) {
-                SecondaryButton("Use ${dayMonth(alternativeDate)} instead", { onApply(alternative.checkpoints) }, Modifier.fillMaxWidth())
-            }
-        }
     }
 }
 
 /** Edit all checkpoints at once; the last one is the goal. */
 @Composable
-private fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Checkpoint>) -> Unit, onDismiss: () -> Unit) {
-    var points by remember(checkpoints) { mutableStateOf(checkpoints.sortedBy { it.date }.map { EditablePoint(it.date, fieldText(it.kg)) }) }
+internal fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Checkpoint>) -> Unit, onDismiss: () -> Unit) {
+    var points by remember(checkpoints) { mutableStateOf(checkpoints.sortedBy { it.date }.map { EditablePoint(it.date, kgField(it.kg)) }) }
     val parsed = points.map { p -> p.date?.let { d -> parseDecimal(p.kg)?.takeIf { it in 30.0..250.0 }?.let { Checkpoint(d, it) } } }
     val complete = parsed.filterNotNull()
     val valid = complete.size == points.size && complete.size >= 2 && complete.map { it.date }.toSet().size == complete.size
@@ -372,14 +387,14 @@ private fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Checkp
         }
         SecondaryButton("Add checkpoint", {
             val last = sorted.lastOrNull()
-            points = points + EditablePoint(last?.date?.plusDays(14), fieldText(last?.kg))
+            points = points + EditablePoint(last?.date?.plusDays(14), last?.kg?.let(::kgField).orEmpty())
         })
     }
 }
 
 /** BMR, activity factor and planned food deficit behind the energy estimate. */
 @Composable
-private fun EnergyDialog(profile: ProfileEntity, onSave: (ProfileEntity) -> Unit, onDismiss: () -> Unit) {
+internal fun EnergyDialog(profile: ProfileEntity, onSave: (ProfileEntity) -> Unit, onDismiss: () -> Unit) {
     var bmr by remember(profile) { mutableStateOf(fieldText(profile.bmrKcal)) }
     var factor by remember(profile) { mutableStateOf(fieldText(profile.activityFactor)) }
     var deficit by remember(profile) { mutableStateOf(fieldText(profile.plannedFoodDeficitKcal)) }

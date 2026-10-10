@@ -37,9 +37,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#20](https://github.com/midhun221B/Wt-tracker/pull/20) | Version 0.2.0 (`versionCode` 2); CI creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` when a new version reaches `main` |
 | [#22](https://github.com/midhun221B/Wt-tracker/pull/22) | Settings › About shows the app version (`BuildConfig.VERSION_NAME`); version 0.2.1 (`versionCode` 3), released as `v0.2.1` |
 | [#23](https://github.com/midhun221B/Wt-tracker/pull/23) | Plan tab redesign (design B2): goal sentence, checkpoint timeline with today (dot per date, orange line up to today), re-baseline / energy / history as list rows with pop-ups; `Dashboard.todayVsPlan()`; version 0.3.0 (`v0.3.0` release) |
+| [#24](https://github.com/midhun221B/Wt-tracker/pull/24) | Plan pop-up screenshots (`4b`–`4e`); checkpoint editor shows one decimal (84.0); re-baseline shows "Keep goal date" first with the 0.5 kg/week option below (`FormDialog` `below` slot); version 0.3.1 (`v0.3.1` release) |
 
 ### Not merged
-- Nothing pending. Start the next change from the latest `main`.
+Nothing pending.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
@@ -108,7 +109,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - To see the result:
   - Screenshots and the APK are attached to the `debug-latest` release on every push. Fetch them with curl from
     `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/<name>`.
-  - Screenshot names: `1-dashboard.png`, `2-today.png`, `2b-weigh-in.png` (ruler), `2g-weigh-in-saved.png`, `3-runs.png`, `4-plan.png`, `5-body.png`, `wt-tracker-debug.apk`.
+  - Screenshot names: `1-dashboard.png`, `2-today.png`, `2b-weigh-in.png` (ruler), `2g-weigh-in-saved.png`, `3-runs.png`, `4-plan.png` (pop-ups `4b`–`4e`), `5-body.png`, `wt-tracker-debug.apk`.
   - GitHub artifact and log downloads are blocked from the cloud sandbox; release downloads work.
   - Publishing runs in a separate `publish` job, one at a time; the release notes name the version, branch and commit.
   - Versioned releases: bump `versionCode` and `versionName`; once merged to `main`, CI tags `v<versionName>` and publishes
