@@ -42,9 +42,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#26](https://github.com/midhun221B/Wt-tracker/pull/26) | README screenshots refreshed from v0.3.2; README calls the first tab "Trend" |
 | [#27](https://github.com/midhun221B/Wt-tracker/pull/27) | First-run setup (onboarding A: welcome or restore, weight, goal with kg/week check, weigh-in day and reminder, plan; `startPlan`, `firstPlan`) instead of seed data; rest-day moon (`RestMark`); Trend "Distance" strip and "Every day" calendar (`dailyDistance`, `distanceSpan`); chart kg-axis step and projection clamp; no trend before two weeks of weigh-ins (`trendWait`); CI emulator smoke test (`emulator-latest`); version 0.4.0 (`v0.4.0` release) |
 | [#28](https://github.com/midhun221B/Wt-tracker/pull/28) | One Distance card on Trend (2 weeks bars with tap-for-details, Month calendar circles, All time weekly columns; `distanceMonth`, `allTimeDistance`); "Every week" ring on Runs; version 0.4.1 (`v0.4.1` release) |
+| [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
 
 ### Not merged
-Nothing pending.
+- Nothing.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -53,11 +54,11 @@ Nothing pending.
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
-  - Distance: one card with 2 weeks (bars, tap a day), Month (calendar circles) and All time (weekly columns to the goal week).
-  - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
+  - Distance: one card with 2 weeks (bars, tap or slide to pick a day), Month (calendar circles) and All time (weekly columns to the goal week).
+  - Weeks (average weight per week, folded), body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
-- **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
+- **Runs:** "Last 28 days" summary (runs, distance, fastest pace), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
 - **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.

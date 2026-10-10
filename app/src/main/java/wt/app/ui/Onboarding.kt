@@ -255,7 +255,10 @@ private fun WeightStep(text: String, kg: Double?, onChange: (String) -> Unit) {
         Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, color = Palette.Muted, textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(24.dp))
-    WeightRuler(kg = kg ?: 80.0, onKg = { onChange(String.format(Locale.ROOT, "%.1f", it)) }, planKg = null, lastKg = null)
+    WeightRuler(
+        kg = kg ?: 80.0, onKg = { onChange(String.format(Locale.ROOT, "%.1f", it)) }, planKg = null, lastKg = null,
+        fadeColor = Palette.Background, // setup has no card behind the ruler
+    )
 }
 
 @Composable

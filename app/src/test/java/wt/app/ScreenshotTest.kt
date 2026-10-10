@@ -187,7 +187,7 @@ class ScreenshotTest {
 
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()
-        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
+        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
     }
 
     // Fresh install: what each tab looks like with one weigh-in and nothing else.
@@ -197,7 +197,7 @@ class ScreenshotTest {
 
     @Test fun freshRuns() = shoot("9c-fresh-runs") {
         val s = freshState()
-        RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
+        RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
     }
 
     @Test fun freshBody() = shoot("9d-fresh-body") {

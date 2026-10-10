@@ -159,6 +159,8 @@ fun AppScaffold(vm: AppViewModel) {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
                 tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "Week $w of $n · ${longDay(s.today)}" to tab.label }
+                // Today's day switcher already shows the date.
+                tab == Tab.LOG -> "" to tab.label
                 else -> longDay(s.today) to tab.label
             }
             TopAppBar(
@@ -252,7 +254,6 @@ fun AppScaffold(vm: AppViewModel) {
                 s.runs, s.today, vm::saveRun, vm::deleteRun,
                 onImportStrava = pickStravaCsv,
                 modifier = modifier,
-                weeks = s.dashboard.weekly,
                 week1 = s.dashboard.week1,
                 onScreenshot = pickScreenshot,
                 allTime = s.dashboard.allTime(),
