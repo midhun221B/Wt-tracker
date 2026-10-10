@@ -117,6 +117,13 @@ class ScreenshotTest {
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
 
+    // Three daily weigh-ins losing 0.5 kg a day project far below the plan: the axis must stay readable.
+    @Test fun dashboardSteep() = shoot("1b-dashboard-steep") {
+        val day = Defaults.START.plusDays(2)
+        val weights = listOf(88.3, 87.8, 87.3).mapIndexed { i, kg -> wt.core.model.WeightEntry(Defaults.START.plusDays(i.toLong()), kg) }
+        DashboardScreen(buildDashboard(weights, emptyList(), emptySet(), emptyList(), Defaults.planCheckpoints, Defaults.profile, day))
+    }
+
     // 5 Nov is a Thursday; the Monday 2 Nov weigh-in is done, so the card shows next week's.
     @Test fun log() = shoot("2-today") { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
 
