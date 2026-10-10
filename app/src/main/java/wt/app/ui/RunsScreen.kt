@@ -83,7 +83,7 @@ fun RunsScreen(
                     Row(Modifier.fillMaxWidth()) {
                         SummaryFigure("Runs", "${last28.size}", Modifier.weight(1f))
                         SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
-                        SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), Palette.Accent)
+                        SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), if (fastest != null) Palette.Accent else Palette.Muted)
                     }
                     if (weeks.isNotEmpty() && dated.isNotEmpty()) KmBars(weeks) // no empty chart before the first run
                 }

@@ -40,7 +40,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#24](https://github.com/midhun221B/Wt-tracker/pull/24) | Plan pop-up screenshots (`4b`–`4e`); checkpoint editor shows one decimal (84.0); re-baseline shows "Keep goal date" first with the 0.5 kg/week option below (`FormDialog` `below` slot); version 0.3.1 (`v0.3.1` release) |
 
 ### Not merged
-Nothing pending.
+- Branch `claude/fervent-ptolemy-ho7r2a`: one wording for the plan gap, "over plan" / "under plan" / "on plan", on Trend (the ring shows the size, the word gives the direction), the Plan timeline and the weigh-in card (the ruler keeps "Scale: … today's plan"); no "×" suffix on the activity factor field; the empty fastest pace dash is grey.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).

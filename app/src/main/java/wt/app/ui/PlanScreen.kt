@@ -152,8 +152,8 @@ private fun Timeline(state: UiState, onEdit: () -> Unit) {
         "Today",
         position?.let { p ->
             when {
-                p.gapKg > 0.05 -> "%.1f kg behind".format(p.gapKg)
-                p.gapKg < -0.05 -> "%.1f kg ahead".format(-p.gapKg)
+                p.gapKg > 0.05 -> "%.1f kg over plan".format(p.gapKg)
+                p.gapKg < -0.05 -> "%.1f kg under plan".format(-p.gapKg)
                 else -> "On plan"
             }
         } ?: "No weigh-in yet",
@@ -417,7 +417,7 @@ internal fun EnergyDialog(profile: ProfileEntity, onSave: (ProfileEntity) -> Uni
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumberField("BMR", bmr, { bmr = it }, Modifier.weight(1f), suffix = "kcal", isError = bmrV == null)
-            NumberField("Activity factor", factor, { factor = it }, Modifier.weight(1f), suffix = "×", isError = factorV == null)
+            NumberField("Activity factor", factor, { factor = it }, Modifier.weight(1f), isError = factorV == null)
         }
         NumberField("Planned food deficit", deficit, { deficit = it }, Modifier.fillMaxWidth(), suffix = "kcal/day", isError = deficitV == null)
     }
