@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import wt.core.io.RunReading
 import wt.core.model.formatMinSec
+import wt.core.summary.AllTimeDistance
 import wt.core.summary.WeekSummary
 import wt.core.summary.programWeekIndex
 import wt.core.summary.weekStart
@@ -59,6 +60,7 @@ fun RunsScreen(
     weeks: List<WeekSummary> = emptyList(),
     week1: LocalDate? = null,
     onScreenshot: (() -> Unit)? = null,
+    allTime: AllTimeDistance? = null,
 ) {
     var editing by remember { mutableStateOf<RunEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
@@ -88,6 +90,7 @@ fun RunsScreen(
                     if (weeks.isNotEmpty() && dated.isNotEmpty()) KmBars(weeks) // no empty chart before the first run
                 }
             }
+            if (allTime != null && dated.isNotEmpty()) item { WeekRingCard(allTime) }
             val undated = runs.filter { it.date == null }
             if (undated.isNotEmpty()) {
                 item { GroupHeader("Date not set · tap a run to set it") }

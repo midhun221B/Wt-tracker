@@ -14,7 +14,9 @@ import wt.core.model.WeightEntry
 import wt.core.plan.PlannedLine
 import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
+import wt.core.summary.AllTimeDistance
 import wt.core.summary.DistanceWeek
+import wt.core.summary.allTimeDistance
 import wt.core.summary.WeekSummary
 import wt.core.summary.dailyDistance
 import wt.core.summary.goalProgress
@@ -65,6 +67,9 @@ data class Dashboard(
         val g = goalProgress(weights, asOf, plan.goal.kg, plan.start.kg)
         return PlanPosition(g.currentKg, g.currentKg - plan.at(asOf), g.fromTrend)
     }
+
+    /** Every week from the first entry to the goal week, for the all-time distance views. */
+    fun allTime(): AllTimeDistance = allTimeDistance(distance, asOf, plan.goal.date)
 
     /** Preview of re-baselining from today to the current goal; null without any weigh-in. */
     fun rebaselinePreview(): RebaselineResult? =

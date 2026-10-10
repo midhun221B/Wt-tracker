@@ -43,7 +43,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#27](https://github.com/midhun221B/Wt-tracker/pull/27) | First-run setup (onboarding A: welcome or restore, weight, goal with kg/week check, weigh-in day and reminder, plan; `startPlan`, `firstPlan`) instead of seed data; rest-day moon (`RestMark`); Trend "Distance" strip and "Every day" calendar (`dailyDistance`, `distanceSpan`); chart kg-axis step and projection clamp; no trend before two weeks of weigh-ins (`trendWait`); CI emulator smoke test (`emulator-latest`); version 0.4.0 (`v0.4.0` release) |
 
 ### Not merged
-Nothing pending.
+- Branch `claude/fervent-ptolemy-ho7r2a`: **one Distance card on Trend** with "2 weeks" (a bar per day; tap a day for km, time and pace), "Month" (calendar circles, ‹ › to page months) and "All time" (one column per week to the goal week, dashed average, best/average week, weeks to go). It replaces the separate "Distance" and "Every day" cards. **Runs** gets "Every week", a ring of weekly spokes with the plan-progress arc and a goal tick. Core: `distanceMonth`, `distanceMonths`, `allTimeDistance`, `Dashboard.allTime()`, `DayDistance.durationSec` (tested). Screenshots `1c-distance-month`, `1d-distance-all-time`.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -52,7 +52,7 @@ Nothing pending.
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
-  - Distance: a bar per day for 2 or 4 weeks with last week vs this week, longest day, km per run and run days; an "Every day" calendar (km per day, rest, missed, week totals).
+  - Distance: one card with 2 weeks (bars, tap a day), Month (calendar circles) and All time (weekly columns to the goal week).
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
@@ -88,6 +88,7 @@ Nothing pending.
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
+- **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.
 - **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred
