@@ -43,7 +43,14 @@ private const val MAX_TENTHS = 2500
  * and last week's weight as a grey line, each labelled on its own row above the ticks.
  */
 @Composable
-fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Double?, modifier: Modifier = Modifier) {
+fun WeightRuler(
+    kg: Double,
+    onKg: (Double) -> Unit,
+    planKg: Double?,
+    lastKg: Double?,
+    modifier: Modifier = Modifier,
+    fadeColor: Color = Palette.Card,
+) {
     val tenths = (kg * 10).roundToInt().coerceIn(MIN_TENTHS, MAX_TENTHS)
     val current by rememberUpdatedState(tenths)
     val setKg by rememberUpdatedState(onKg)
@@ -101,10 +108,10 @@ fun WeightRuler(kg: Double, onKg: (Double) -> Unit, planKg: Double?, lastKg: Dou
             }
         }
 
-        // Fade the ticks into the card at both edges; the marks below are drawn over it so they stay readable.
+        // Fade the ticks into what's behind ([fadeColor]) at both edges; the marks below are drawn over it.
         val fade = size.width * 0.2f
-        drawRect(Brush.horizontalGradient(listOf(Palette.Card, Color.Transparent), 0f, fade))
-        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Palette.Card), size.width - fade, size.width))
+        drawRect(Brush.horizontalGradient(listOf(fadeColor, Color.Transparent), 0f, fade))
+        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, fadeColor), size.width - fade, size.width))
 
         // Last week (grey, top label row) and the plan (blue dashed, second row). Out of view, the label sits at
         // that edge with an arrow so the mark is never lost.

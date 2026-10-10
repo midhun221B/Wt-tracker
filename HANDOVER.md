@@ -44,7 +44,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#28](https://github.com/midhun221B/Wt-tracker/pull/28) | One Distance card on Trend (2 weeks bars with tap-for-details, Month calendar circles, All time weekly columns; `distanceMonth`, `allTimeDistance`); "Every week" ring on Runs; version 0.4.1 (`v0.4.1` release) |
 
 ### Not merged
-Nothing pending.
+- Branch `claude/fervent-ptolemy-ho7r2a`: Trend's Distance card stays hidden until the first run; the setup ruler fades into the setup background (`WeightRuler(fadeColor)`), not the card colour; the Runs ring fills its card (wider track, square canvas up to 320 dp); the 2-week "Run days" tile shows just the count (no "8 of 11").
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.

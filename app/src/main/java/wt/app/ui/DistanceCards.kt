@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -69,7 +71,8 @@ enum class DistanceRange(val label: String) { TwoWeeks("2 weeks"), Month("Month"
  */
 @Composable
 fun DistanceCard(d: Dashboard, initialRange: DistanceRange = DistanceRange.TwoWeeks) {
-    if (d.distance.isEmpty()) return
+    // Nothing to show before the first run (like the km chart on Runs).
+    if (d.distance.none { w -> w.days.any { it.kind == DayKind.Run } }) return
     var range by rememberSaveable { mutableStateOf(initialRange) }
     SectionCard(null) {
         Text("Distance", style = MaterialTheme.typography.titleMedium)
@@ -158,7 +161,7 @@ private fun TwoWeeks(weeks: List<DistanceWeek>, today: LocalDate) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Tile("Longest", "%.1f km".format(s.longestKm), Modifier.weight(1f))
         Tile("Per run", s.averageRunKm?.let { "%.1f km".format(it) } ?: "–", Modifier.weight(1f))
-        Tile("Run days", "${s.runDays} of ${s.daysSoFar}", Modifier.weight(1f))
+        Tile("Run days", "${s.runDays}", Modifier.weight(1f))
     }
 }
 
@@ -305,10 +308,11 @@ private fun AllTimeColumns(a: AllTimeDistance) {
 @Composable
 fun WeekRingCard(a: AllTimeDistance) {
     SectionCard("Every week") {
-        Box(Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(270.dp).semantics { contentDescription = "Kilometres per week around a ring to the goal date" }) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.widthIn(max = 320.dp).fillMaxWidth().aspectRatio(1f).semantics { contentDescription = "Kilometres per week around a ring to the goal date" }) {
                 val c = center
-                val track = size.minDimension * 0.25f
+                // A wide track keeps the ring filling the square even when the spokes to come are short.
+                val track = size.minDimension * 0.32f
                 val inner = track + 12.dp.toPx()
                 val reach = size.minDimension / 2 - inner - 6.dp.toPx()
                 val top = maxOf(a.bestWeekKm, 1.0)
