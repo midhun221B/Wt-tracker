@@ -75,6 +75,20 @@ data class TrendFit(
 }
 
 const val MIN_SIGMA_KG = 0.1
+
+/** The trend waits until weigh-ins cover two weeks (three weekly weigh-ins). */
+const val MIN_TREND_SPAN_DAYS = 14L
+
+/** What the trend still waits for: [weighInsNeeded] more weigh-ins, and [readyOn] (two weeks after the first). */
+data class TrendWait(val weighInsNeeded: Int, val readyOn: LocalDate?)
+
+fun trendWait(entries: List<WeightEntry>, asOf: LocalDate): TrendWait {
+    val upToAsOf = entries.filter { it.date <= asOf }
+    return TrendWait(
+        weighInsNeeded = (3 - upToAsOf.size).coerceAtLeast(0),
+        readyOn = upToAsOf.minOfOrNull { it.date }?.plusDays(MIN_TREND_SPAN_DAYS),
+    )
+}
 const val THEIL_SEN_SE_FACTOR = 1.05 // ≈ 1 / sqrt(0.91 asymptotic efficiency)
 
 /**
@@ -82,8 +96,8 @@ const val THEIL_SEN_SE_FACTOR = 1.05 // ≈ 1 / sqrt(0.91 asymptotic efficiency)
  * If that window has fewer than [minPoints] weigh-ins (e.g. weighing once a week), it tries the last
  * [weeklyWindowDays] days, which need at least [weeklyMinPoints] weigh-ins spread over [weeklyMinSpanDays] days
  * (four weekly weigh-ins). If that fails too, all data up to [asOf]
- * is used and the result is marked low-confidence. Returns null with fewer than 3 points or
- * when all points fall on one day.
+ * is used and the result is marked low-confidence. Returns null with fewer than 3 points, or while the points
+ * span less than [minSpanDays] days: a few daily weigh-ins can swing by a kilo and would project wildly.
  */
 fun fitTrend(
     entries: List<WeightEntry>,
@@ -93,6 +107,7 @@ fun fitTrend(
     weeklyWindowDays: Int = 42,
     weeklyMinPoints: Int = 4,
     weeklyMinSpanDays: Long = 21,
+    minSpanDays: Long = MIN_TREND_SPAN_DAYS,
 ): TrendFit? {
     val upToAsOf = entries.filter { it.date <= asOf }.sortedBy { it.date }
     fun window(days: Int) = upToAsOf.filter { it.date >= asOf.minusDays(days - 1L) }
@@ -107,6 +122,7 @@ fun fitTrend(
         }
     }
     if (used.size < 3) return null
+    if (ChronoUnit.DAYS.between(used.first().date, used.last().date) < minSpanDays) return null
 
     val xs = DoubleArray(used.size) { ChronoUnit.DAYS.between(asOf, used[it].date).toDouble() }
     val ys = DoubleArray(used.size) { used[it].kg }

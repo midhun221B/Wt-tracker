@@ -56,10 +56,14 @@ fun WeightChart(d: Dashboard, modifier: Modifier = Modifier) {
     val xStart = minOf(d.plan.start.date, d.weights.firstOrNull()?.date ?: d.plan.start.date)
     val xEnd = maxOf(d.plan.goal.date, d.asOf).plusDays(3)
 
+    // A projection from a few days of data can run far off; let it widen the axis by at most 3 kg past the plan
+    // (the line is clipped beyond that) so the plan and the weigh-ins stay readable.
+    val planMin = d.plan.checkpoints.minOf { it.kg }
+    val planMax = d.plan.checkpoints.maxOf { it.kg }
     val core = buildList {
         addAll(d.plan.checkpoints.map { it.kg })
         addAll(d.weights.map { it.kg })
-        if (fit != null) add(fit.valueAt(xEnd))
+        if (fit != null) add(fit.valueAt(xEnd).coerceIn(planMin - 3, planMax + 3))
     }
     val dataMin = core.min()
     val dataMax = core.max()
@@ -74,9 +78,9 @@ fun WeightChart(d: Dashboard, modifier: Modifier = Modifier) {
         val top = 6.dp.toPx()
         val axes = Axes(xStart, xEnd, yMin, yMax, left, top, size.width - left - 6.dp.toPx(), size.height - top - bottom)
 
-        // Horizontal grid with kg labels.
-        val step = if (yMax - yMin <= 8) 1 else 2
-        var kg = yMin
+        // Horizontal grid with kg labels: a 1, 2, 5 or 10 kg step so there are never more than 9 labels.
+        val step = kgStep(yMax - yMin)
+        var kg = ceil(yMin / step) * step
         while (kg <= yMax + 1e-9) {
             val y = axes.y(kg)
             drawLine(gridColor, Offset(left, y), Offset(size.width, y), strokeWidth = 1f)
@@ -138,6 +142,9 @@ fun WeightChart(d: Dashboard, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** Grid step in kg for an axis spanning [range] kg: the smallest of 1, 2, 5, 10, 20 giving at most 8 gaps. */
+internal fun kgStep(range: Double): Double = listOf(1.0, 2.0, 5.0, 10.0, 20.0).firstOrNull { range / it <= 8.0 } ?: 50.0
 
 private fun DrawScope.polyline(points: List<Offset>, color: androidx.compose.ui.graphics.Color, width: Float, dashed: Boolean = false) {
     if (points.size < 2) return

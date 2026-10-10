@@ -111,7 +111,7 @@ private fun ExportButton(label: String, onClick: () -> Unit) {
 /** Clock-face picker for the reminder time (24-hour). Setting a time also turns the reminder on. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReminderTimeDialog(hour: Int, minute: Int, onDismiss: () -> Unit, onSet: (Int, Int) -> Unit) {
+internal fun ReminderTimeDialog(hour: Int, minute: Int, onDismiss: () -> Unit, onSet: (Int, Int) -> Unit) {
     val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
     FormDialog(title = "Reminder time", onDismiss = onDismiss, confirmLabel = "Set", onConfirm = { onSet(state.hour, state.minute) }) {
         TimePicker(

@@ -1,10 +1,13 @@
 package wt.core
 
 import wt.core.model.WeightEntry
+import wt.core.trend.TrendWait
 import wt.core.trend.fitTrend
 import wt.core.trend.movingAverage
 import wt.core.trend.t80
 import wt.core.trend.theilSen
+import wt.core.trend.trendWait
+import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -70,10 +73,24 @@ class TrendTest {
 
     @Test
     fun fewPointsAreLowConfidenceOrNull() {
-        val data = Synthetic.series(days = 5, seed = 2)
-        val fit = assertNotNull(fitTrend(data, data.last().date))
+        // Three weekly weigh-ins cover two weeks: a low-confidence trend.
+        val weekly = Synthetic.series(days = 15, seed = 2).filterIndexed { i, _ -> i % 7 == 0 }
+        val fit = assertNotNull(fitTrend(weekly, weekly.last().date))
         assertTrue(fit.lowConfidence)
-        assertNull(fitTrend(data.take(2), data[1].date))
+        assertNull(fitTrend(weekly.take(2), weekly[1].date))
+    }
+
+    @Test
+    fun noTrendBeforeTwoWeeksOfWeighIns() {
+        // Three daily weigh-ins losing 0.5 kg a day used to project −3.5 kg/week.
+        val start = LocalDate.of(2026, 10, 8)
+        val daily = listOf(88.3, 87.8, 87.3).mapIndexed { i, kg -> WeightEntry(start.plusDays(i.toLong()), kg) }
+        assertNull(fitTrend(daily, start.plusDays(2)))
+        assertEquals(TrendWait(0, start.plusDays(14)), trendWait(daily, start.plusDays(2)))
+        assertEquals(TrendWait(2, start.plusDays(14)), trendWait(daily.take(1), start))
+        assertEquals(TrendWait(3, null), trendWait(emptyList(), start))
+        val twoWeeks = daily + WeightEntry(start.plusDays(14), 87.0)
+        assertNotNull(fitTrend(twoWeeks, start.plusDays(14)))
     }
 
     @Test
@@ -129,7 +146,7 @@ class TrendTest {
 
     @Test
     fun sigmaHasAFloorForPerfectData() {
-        val data = Synthetic.series(days = 14, noiseSd = 0.0)
+        val data = Synthetic.series(days = 15, noiseSd = 0.0)
         val fit = fitTrend(data, data.last().date)!!
         assertEquals(0.1, fit.sigma, 1e-12)
         assertTrue(abs(fit.kgPerWeek + 0.5) < 1e-9)

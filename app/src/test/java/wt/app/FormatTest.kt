@@ -1,5 +1,6 @@
 package wt.app
 
+import wt.app.chart.kgStep
 import wt.app.notify.Reminder
 import wt.app.ui.duration
 import wt.app.ui.fieldText
@@ -57,5 +58,12 @@ class FormatTest {
         val afterwards = morning.withHour(8)
         assertEquals(Duration.ofHours(23).plusMinutes(30), Reminder.delayUntil(afterwards, 7, 30))
         assertEquals(Duration.ofDays(1), Reminder.delayUntil(morning.withHour(7).withMinute(30), 7, 30))
+    }
+
+    @Test
+    fun chartStepKeepsKgLabelsApart() {
+        assertEquals(1.0, kgStep(8.0))
+        assertEquals(2.0, kgStep(11.0))
+        assertEquals(10.0, kgStep(50.0))
     }
 }

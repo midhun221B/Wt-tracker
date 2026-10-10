@@ -37,6 +37,7 @@ import wt.core.alerts.Alert
 import wt.core.alerts.Severity
 import wt.core.dashboard.Dashboard
 import wt.core.summary.WeekSummary
+import wt.core.trend.trendWait
 import kotlin.math.abs
 
 @Composable
@@ -49,6 +50,8 @@ fun DashboardScreen(d: Dashboard, modifier: Modifier = Modifier) {
         ProgressCard(d)
         ChartCard(d)
         ForecastTiles(d)
+        DistanceCard(d.distance, d.asOf)
+        EveryDayCard(d.distance)
         WeeksCard(d.weekly)
         BodyTiles(d)
         Disclaimer()
@@ -117,10 +120,16 @@ private fun ProgressCard(d: Dashboard) {
                         if (gap > 0.05) Palette.Warn else Palette.Accent,
                     )
                 } else {
-                    // The trend needs 3 weigh-ins; weekly that's a couple of weeks.
-                    val toGo = (3 - d.weights.size).coerceAtLeast(1)
+                    // The trend (and the forecast and energy) waits for 3 weigh-ins over at least two weeks.
+                    val wait = trendWait(d.weights, d.asOf)
+                    val toGo = wait.weighInsNeeded
+                    val readyOn = wait.readyOn
                     Text(
-                        "Trend in $toGo more ${if (toGo == 1) "weigh-in" else "weigh-ins"}",
+                        when {
+                            readyOn != null && readyOn > d.asOf -> "Trend from ${dayMonthLong(readyOn)}"
+                            toGo > 0 -> "Trend in $toGo more ${if (toGo == 1) "weigh-in" else "weigh-ins"}"
+                            else -> "Trend after the next weigh-in"
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         color = Palette.Muted,
                     )

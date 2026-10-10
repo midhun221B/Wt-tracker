@@ -14,7 +14,9 @@ import wt.core.model.WeightEntry
 import wt.core.plan.PlannedLine
 import wt.core.plan.RebaselineResult
 import wt.core.plan.rebaseline
+import wt.core.summary.DistanceWeek
 import wt.core.summary.WeekSummary
+import wt.core.summary.dailyDistance
 import wt.core.summary.goalProgress
 import wt.core.summary.programWeekIndex
 import wt.core.summary.weekStart
@@ -46,6 +48,8 @@ data class Dashboard(
     val runStreak: Int,
     /** Monday of program week 1: the week of the first weigh-in (or of the plan start before any). */
     val week1: LocalDate,
+    /** Every day's distance (run km, rest, missed), Monday–Sunday weeks from the first entry, oldest first. */
+    val distance: List<DistanceWeek> = emptyList(),
 ) {
     /** Current program week and the week of the goal date, e.g. 1 to 14 for "Week 1 of 14". */
     fun programWeek(): Pair<Int, Int> =
@@ -100,5 +104,11 @@ fun buildDashboard(
         latestWeight = sorted.lastOrNull(),
         runStreak = runStreak(runs, restDays, asOf),
         week1 = week1,
+        // From the first weigh-in or run, like the week dots on Today.
+        distance = dailyDistance(
+            runs, restDays,
+            listOfNotNull(sorted.firstOrNull()?.date, runs.mapNotNull { it.date }.minOrNull()).minOrNull(),
+            asOf,
+        ),
     )
 }

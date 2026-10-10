@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -94,7 +95,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         db.bodyComp().observeAll(), db.plans().observeActiveCheckpoints(),
     ) { w, r, rest, b, c -> Stored(w, r, rest, b, c) }
 
-    /** Null until the database is seeded. */
+    /** Null while loading, and before first-run setup is done. */
     val state: StateFlow<UiState?> = combine(stored, db.profile().observe(), db.plans().observePlans(), today) { s, profile, plans, day ->
         if (profile == null || s.checkpoints.size < 2) return@combine null
         val checkpoints = s.checkpoints.map { it.toModel() }
@@ -120,13 +121,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         )
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** True on a fresh install (no profile yet): the app shows first-run setup. Null while loading. */
+    val needsSetup: StateFlow<Boolean?> = db.profile().observe().map { it == null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     init {
         viewModelScope.launch {
-            db.seedIfEmpty()
             db.removeSampleRuns()
             val p = db.profile().get() ?: return@launch
             Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
         }
+    }
+
+    /** Saves first-run setup: profile, today's weight and the first plan; then sets the reminder. */
+    fun finishSetup(profile: ProfileEntity, todayKg: Double, checkpoints: List<Checkpoint>) = launchWithMessage(null) {
+        db.startPlan(profile, WeightEntity(today.value, todayKg), checkpoints)
+        Reminder.schedule(getApplication(), profile.reminderEnabled, profile.reminderHour, profile.reminderMinute)
     }
 
     /** Call on resume so "today" rolls over after midnight in Tokyo. */

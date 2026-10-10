@@ -137,6 +137,20 @@ fun AppScaffold(vm: AppViewModel) {
         notificationsAllowed = granted
     }
 
+    // A fresh install has no profile: first-run setup instead of the tabs (a restored backup also ends it).
+    val needsSetup by vm.needsSetup.collectAsStateWithLifecycle()
+    if (needsSetup == true) {
+        OnboardingScreen(
+            today = todayInTokyo(),
+            onFinish = vm::finishSetup,
+            onRestore = { restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
+            onReminderOn = {
+                if (Build.VERSION.SDK_INT >= 33 && !notificationsAllowed) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            },
+        )
+        return
+    }
+
     Scaffold(
         containerColor = Palette.Background,
         topBar = { Column {

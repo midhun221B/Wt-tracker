@@ -10,8 +10,10 @@ that updates every time you log a weight. Everything stays on the phone: no acco
 Screenshots are rendered from sample data by the Robolectric screenshot tests; CI uploads fresh ones as the `screenshots` artifact on every run.
 
 ## Features
-- **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner and a check pulse), the rest-day switch until a run is logged, and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (a drag ruler in 0.1 kg steps with the plan and last week marked, typing, or a scale screenshot), then a "Weigh-in saved" card whose goal ring fills to the new weight; other days show when the next weigh-in is, with a shortcut to change the day.
+- **First-run setup:** on a fresh install, five short steps: welcome (or restore a backup), today's weight, goal weight and date with a live kg/week check (above 1 kg/week isn't allowed; it offers a steady 0.5 kg/week date instead), weigh-in day and reminder, then the plan with monthly checkpoints.
+- **Today:** one running card: today's run (it turns into a "Run done" state once logged, with a short "Run logged" banner and a check pulse), the rest-day switch until a run is logged (rest days show a blue-grey moon), and the Mon–Sun week dots with the week's runs and km. On your weekly weigh-in day it shows the weight entry (a drag ruler in 0.1 kg steps with the plan and last week marked, typing, or a scale screenshot), then a "Weigh-in saved" card whose goal ring fills to the new weight; other days show when the next weigh-in is, with a shortcut to change the day.
 - **Trend:**
+  - Distance: a bar per day for the last 2 or 4 weeks (last week vs this week, longest day, km per run, run days) and an "Every day" calendar with each day's km, rest days (moon) and missed days.
   - Planned vs realistic chart with an 80 % band.
   - Trend weight and rate, predicted weight on the goal date, ETA for the goal weight, gap vs plan in kg and days.
   - Energy: estimated daily intake now and the intake that gets you back on plan (rounded to 50 kcal, never below 1800), with the deficits in small print. Worked out from the weight trend, so no food logging is needed.
@@ -29,7 +31,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
 
 ## How the forecast works (`core/`)
 - **Smoothing:** 7-day trailing moving average.
-- **Trend:** a Theil–Sen robust line, which ignores water-weight spikes. It uses the last 21 days when they hold 7+ weigh-ins, otherwise the last 42 days when they hold 4+ weigh-ins over at least 3 weeks (weekly weigh-ins). With less it uses all the data and is marked low-confidence.
+- **Trend:** a Theil–Sen robust line, which ignores water-weight spikes. It uses the last 21 days when they hold 7+ weigh-ins, otherwise the last 42 days when they hold 4+ weigh-ins over at least 3 weeks (weekly weigh-ins). With less it uses all the data and is marked low-confidence. There is no trend (or forecast) until the weigh-ins cover two weeks.
 - **Band:** an 80 % band from the line's standard error, using a MAD-based noise estimate. It widens with the forecast horizon.
 - **Energy:**
   - Actual deficit = −slope × 7700 kcal/kg.
