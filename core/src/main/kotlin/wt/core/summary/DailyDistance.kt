@@ -19,7 +19,8 @@ enum class DayKind {
     Future,
 }
 
-data class DayDistance(val date: LocalDate, val km: Double, val runs: Int, val kind: DayKind)
+/** One day: its km and runs (added up), their total time ([durationSec]) and what it shows. */
+data class DayDistance(val date: LocalDate, val km: Double, val runs: Int, val kind: DayKind, val durationSec: Int = 0)
 
 /** One Monday–Sunday row of days and the week's km. */
 data class DistanceWeek(val monday: LocalDate, val days: List<DayDistance>) {
@@ -47,7 +48,7 @@ fun dailyDistance(runs: List<Run>, restDays: Set<LocalDate>, firstDay: LocalDate
                 d == asOf -> DayKind.Open
                 else -> DayKind.Missed
             }
-            DayDistance(d, dayRuns.sumOf { it.km }, dayRuns.size, kind)
+            DayDistance(d, dayRuns.sumOf { it.km }, dayRuns.size, kind, dayRuns.sumOf { it.durationSec })
         }
         weeks += DistanceWeek(monday, days)
         monday = monday.plusWeeks(1)

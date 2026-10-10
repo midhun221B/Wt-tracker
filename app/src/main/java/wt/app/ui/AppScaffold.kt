@@ -255,6 +255,7 @@ fun AppScaffold(vm: AppViewModel) {
                 weeks = s.dashboard.weekly,
                 week1 = s.dashboard.week1,
                 onScreenshot = pickScreenshot,
+                allTime = s.dashboard.allTime(),
             )
             Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot, weighInDay = s.profile.weighInDay, weightDates = s.weights.map { it.date })
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)

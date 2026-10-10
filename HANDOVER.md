@@ -41,6 +41,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#25](https://github.com/midhun221B/Wt-tracker/pull/25) | One plan-gap wording ("over plan" / "under plan" / "on plan") on Trend, the Plan timeline and the weigh-in card; no "×" on the activity factor field; grey empty fastest pace; version 0.3.2 (`v0.3.2` release) |
 | [#26](https://github.com/midhun221B/Wt-tracker/pull/26) | README screenshots refreshed from v0.3.2; README calls the first tab "Trend" |
 | [#27](https://github.com/midhun221B/Wt-tracker/pull/27) | First-run setup (onboarding A: welcome or restore, weight, goal with kg/week check, weigh-in day and reminder, plan; `startPlan`, `firstPlan`) instead of seed data; rest-day moon (`RestMark`); Trend "Distance" strip and "Every day" calendar (`dailyDistance`, `distanceSpan`); chart kg-axis step and projection clamp; no trend before two weeks of weigh-ins (`trendWait`); CI emulator smoke test (`emulator-latest`); version 0.4.0 (`v0.4.0` release) |
+| [#28](https://github.com/midhun221B/Wt-tracker/pull/28) | One Distance card on Trend (2 weeks bars with tap-for-details, Month calendar circles, All time weekly columns; `distanceMonth`, `allTimeDistance`); "Every week" ring on Runs; version 0.4.1 (`v0.4.1` release) |
 
 ### Not merged
 Nothing pending.
@@ -52,11 +53,11 @@ Nothing pending.
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
   - Energy: "Eating now ≈ 2,350" and "To get back on plan ≈ 2,100" kcal/day (rounded to 50), deficits as sub-lines, the plan's assumed intake below.
-  - Distance: a bar per day for 2 or 4 weeks with last week vs this week, longest day, km per run and run days; an "Every day" calendar (km per day, rest, missed, week totals).
+  - Distance: one card with 2 weeks (bars, tap a day), Month (calendar circles) and All time (weekly columns to the goal week).
   - Weekly bars, body tiles, alerts: slow loss, fast loss, more than 5 run days in a row, no weigh-in for 8+ days.
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
-- **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
+- **Runs:** "Last 28 days" summary (runs, distance, fastest pace, weekly km bars), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
 - **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
@@ -88,6 +89,7 @@ Nothing pending.
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
+- **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.
 - **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.
 - **No food logging (2026-10-09).** The owner doesn't track calories, and rough logs would add noise. Intake is inferred

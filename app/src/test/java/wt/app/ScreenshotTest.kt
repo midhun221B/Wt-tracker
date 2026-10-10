@@ -1,6 +1,8 @@
 package wt.app
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -30,6 +32,9 @@ import wt.app.ui.BodyScreen
 import wt.app.ui.LocalInlineDialogs
 import wt.app.ui.RunDialog
 import wt.app.ui.DashboardScreen
+import wt.app.ui.DistanceCard
+import wt.app.ui.DistanceRange
+import wt.app.ui.Palette
 import wt.app.ui.LogScreen
 import wt.app.ui.PlanScreen
 import wt.app.ui.RunLoggedBanner
@@ -117,6 +122,15 @@ class ScreenshotTest {
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
 
+    // The Trend distance card's other two ranges (2 weeks shows in 1-dashboard).
+    @Test fun distanceMonth() = shoot("1c-distance-month") {
+        Box(Modifier.background(Palette.Background).padding(16.dp)) { DistanceCard(sampleState().dashboard, DistanceRange.Month) }
+    }
+
+    @Test fun distanceAllTime() = shoot("1d-distance-all-time") {
+        Box(Modifier.background(Palette.Background).padding(16.dp)) { DistanceCard(sampleState().dashboard, DistanceRange.AllTime) }
+    }
+
     // Three daily weigh-ins losing 0.5 kg a day project far below the plan: the axis must stay readable.
     @Test fun dashboardSteep() = shoot("1b-dashboard-steep") {
         val day = Defaults.START.plusDays(2)
@@ -173,7 +187,7 @@ class ScreenshotTest {
 
     @Test fun runs() = shoot("3-runs") {
         val s = sampleState()
-        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
+        RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
     }
 
     // Fresh install: what each tab looks like with one weigh-in and nothing else.
@@ -183,7 +197,7 @@ class ScreenshotTest {
 
     @Test fun freshRuns() = shoot("9c-fresh-runs") {
         val s = freshState()
-        RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1)
+        RunsScreen(s.runs, s.today, {}, {}, onImportStrava = {}, weeks = s.dashboard.weekly, week1 = s.dashboard.week1, allTime = s.dashboard.allTime())
     }
 
     @Test fun freshBody() = shoot("9d-fresh-body") {
