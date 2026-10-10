@@ -33,6 +33,9 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
 - Every push also republishes the APK to the `debug-latest` pre-release, from a separate `publish` job that runs one at a time. The phone download link is
   `https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/wt-tracker-debug.apk`.
   From a cloud session, fetch that URL with curl: the artifact and log blob hosts are blocked, but release downloads work.
+- An `emulator` job boots an Android 14 emulator (Pixel 6 profile) on every push. It runs `.github/emulator/smoke.py`:
+  it updates from the previous release and checks the data survives, opens every tab and Settings, and fails on a crash.
+  Its screenshots go to the `emulator-latest` pre-release (download them with curl, like `debug-latest`).
 - Versioned releases: bump `versionCode` and `versionName` in `app/build.gradle.kts`. When that reaches `main`, the
   `publish` job creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` (once per version).
 - Debug builds are signed with the committed `app/debug.keystore` (standard debug credentials) so updates install over

@@ -42,7 +42,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#26](https://github.com/midhun221B/Wt-tracker/pull/26) | README screenshots refreshed from v0.3.2; README calls the first tab "Trend" |
 
 ### Not merged
-Nothing pending.
+- Branch `claude/fervent-ptolemy-ho7r2a`: CI `emulator` job (Android 14 emulator, Pixel 6 profile): installs v0.3.0, turns on today's rest day, updates to the new APK and checks the rest day is still there, screenshots every tab and Settings, fails on a crash; screenshots on the `emulator-latest` pre-release.
 
 ### Features in the app today
 - **Today:** one running card (today's run, add run, rest day, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).

@@ -54,6 +54,66 @@ jobs:
             core/build/reports/tests/
             app/build/reports/tests/
 
+  # Smoke test on an Android 14 emulator (Pixel 6 profile, 411 dp wide like the owner's phone): update from the
+  # previous release keeps the data, every tab and Settings open, no crash (.github/emulator/smoke.py).
+  # Its screenshots go to an "emulator-latest" pre-release, which a cloud session can download.
+  emulator:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: emulator-latest
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: wt-tracker-debug-apk
+          path: apk
+
+      - name: Previous release to update from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release download v0.3.0 --pattern 'wt-tracker-v0.3.0.apk' --output old.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Smoke test on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 .github/emulator/smoke.py apk/app-debug.apk old.apk emulator-shots
+
+      - name: Upload emulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-screenshots
+          path: emulator-shots/
+
+      - name: Publish emulator screenshots
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls emulator-shots/*.png > /dev/null 2>&1 || exit 0
+          gh release delete emulator-latest --yes --cleanup-tag || true
+          gh release create emulator-latest emulator-shots/*.png --prerelease --target "$GITHUB_SHA" \
+            --title "Emulator screenshots (latest)" \
+            --notes "Android 14 emulator (Pixel 6 profile) from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}, job ${{ job.status }}."
+
   # Stable download link for the phone: the latest debug APK on a "debug-latest" pre-release.
   # On main, a new versionName also gets its own tagged release (v0.2.0, ...), created once.
   # Its own job in one concurrency group, so two pushes never replace the release at the same time.
