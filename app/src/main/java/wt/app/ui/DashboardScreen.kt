@@ -105,11 +105,16 @@ private fun ProgressCard(d: Dashboard) {
                 }
                 RingStat("%.1f of %.1f kg".format(g.lostKg, g.totalKg), "lost toward %.0f kg".format(goalKg))
                 if (f != null) {
-                    val over = f.gapKgToday > 0.05
+                    // Same words as the Plan timeline and the weigh-in card: over / under plan.
+                    val gap = f.gapKgToday
                     RingStat(
-                        "%+.1f kg".format(f.gapKgToday),
-                        if (over) "above plan" else "below plan",
-                        if (over) Palette.Warn else Palette.Accent,
+                        "%.1f kg".format(abs(gap)),
+                        when {
+                            gap > 0.05 -> "over plan"
+                            gap < -0.05 -> "under plan"
+                            else -> "on plan"
+                        },
+                        if (gap > 0.05) Palette.Warn else Palette.Accent,
                     )
                 } else {
                     // The trend needs 3 weigh-ins; weekly that's a couple of weeks.
