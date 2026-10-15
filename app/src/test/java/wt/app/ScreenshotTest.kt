@@ -44,6 +44,7 @@ import wt.app.ui.SetupDraft
 import wt.app.ui.SetupStep
 import wt.app.ui.SettingsScreen
 import wt.app.ui.ShareCard
+import wt.app.ui.ShareDialog
 import wt.app.ui.UiState
 import wt.app.ui.WtTheme
 import wt.core.dashboard.buildDashboard
@@ -66,11 +67,12 @@ class ScreenshotTest {
 
     private val today = LocalDate.of(2026, 11, 5)
 
-    private fun sampleState(): UiState {
+    /** [extra] is a weigh-in added on top (e.g. today's, just saved). */
+    private fun sampleState(extra: WeightEntity? = null): UiState {
         val rnd = Random(7)
         val weights = listOf(0, 4, 11, 18, 25).map { d -> // 8 Oct, then Mondays 12 Oct to 2 Nov
             WeightEntity(Defaults.START.plusDays(d.toLong()), Math.round((88.3 - 0.05 * d + rnd.nextGaussian() * 0.35) * 10) / 10.0)
-        }
+        } + listOfNotNull(extra)
         val runs = (0..28).filter { it % 7 !in setOf(2, 5) }.mapIndexed { i, d ->
             RunEntity(i + 1L, Defaults.START.plusDays(d.toLong()), 3.0 + (d / 25) * 0.5, 1260 + rnd.nextInt(120))
         } + RunEntity(100, null, 2.81, 1216) + RunEntity(101, LocalDate.of(2026, 10, 4), 3.0, 1290) // a run before the plan
@@ -165,13 +167,19 @@ class ScreenshotTest {
 
     // Right after saving this week's weigh-in (86.9 kg today): the goal ring has filled to the new weight.
     @Test fun weighInSaved() = shoot("2g-weigh-in-saved") {
-        val s = sampleState()
-        LogScreen(s.copy(weights = s.weights + WeightEntity(today, 86.9)), {}, {}, { _, _ -> }, {}, onScreenshot = {}, savedWeighIn = today)
+        // Built with today's weight so the card can offer "Share with partner".
+        LogScreen(sampleState(WeightEntity(today, 86.9)), {}, {}, { _, _ -> }, {}, onScreenshot = {}, savedWeighIn = today)
     }
 
     // The picture sent to my partner from "Weigh-in saved": week 5 (2 Nov), and week 2 before the trend exists.
     @Test fun shareCard() = shoot("2i-share-card") {
         Box(Modifier.background(Palette.Card).padding(16.dp)) { ShareCard(weekShare(sampleState().dashboard, LocalDate.of(2026, 11, 2))!!) }
+    }
+
+    @Test fun sharePreview() = shoot("2k-share-preview") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            ShareDialog(weekShare(sampleState().dashboard, LocalDate.of(2026, 11, 2))!!) {}
+        }
     }
 
     @Test fun shareCardEarly() = shoot("2j-share-card-early") {
