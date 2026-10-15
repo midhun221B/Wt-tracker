@@ -43,10 +43,13 @@ import wt.app.ui.RunsScreen
 import wt.app.ui.SetupDraft
 import wt.app.ui.SetupStep
 import wt.app.ui.SettingsScreen
+import wt.app.ui.ShareCard
 import wt.app.ui.UiState
 import wt.app.ui.WtTheme
 import wt.core.dashboard.buildDashboard
 import wt.core.model.Defaults
+import wt.core.model.WeightEntry
+import wt.core.summary.weekShare
 import java.io.File
 import java.time.LocalDate
 import java.util.Random
@@ -164,6 +167,20 @@ class ScreenshotTest {
     @Test fun weighInSaved() = shoot("2g-weigh-in-saved") {
         val s = sampleState()
         LogScreen(s.copy(weights = s.weights + WeightEntity(today, 86.9)), {}, {}, { _, _ -> }, {}, onScreenshot = {}, savedWeighIn = today)
+    }
+
+    // The picture sent to my partner from "Weigh-in saved": week 5 (2 Nov), and week 2 before the trend exists.
+    @Test fun shareCard() = shoot("2i-share-card") {
+        Box(Modifier.background(Palette.Card).padding(16.dp)) { ShareCard(weekShare(sampleState().dashboard, LocalDate.of(2026, 11, 2))!!) }
+    }
+
+    @Test fun shareCardEarly() = shoot("2j-share-card-early") {
+        val day = LocalDate.of(2026, 10, 12)
+        val d = buildDashboard(
+            listOf(WeightEntry(Defaults.START, 88.3), WeightEntry(day, 88.1)), emptyList(), emptySet(), emptyList(),
+            Defaults.planCheckpoints, Defaults.profile, day,
+        )
+        Box(Modifier.background(Palette.Card).padding(16.dp)) { ShareCard(weekShare(d, day)!!) }
     }
 
     // Today before the run is logged, and a rest day instead of a run.
