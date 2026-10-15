@@ -45,7 +45,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
 
 ### Not merged
-- Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a`: spec for the partner share card, `docs/superpowers/specs/2026-10-15-partner-share-card-design.md` (waiting for review; no code yet). Design canvas: https://claude.ai/artifact/BcrEGMr357vuq6Q4yWhWuS (boards "Mix · week 5" and "Mix · week 2").
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -90,6 +90,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
 ## Product decisions
+- **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
 - **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.
 - **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.
