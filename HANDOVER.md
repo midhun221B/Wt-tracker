@@ -45,11 +45,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: partner share card spec `docs/superpowers/specs/2026-10-15-partner-share-card-design.md` (approved) and plan `docs/superpowers/plans/2026-10-15-partner-share-card.md` (no code yet). Design canvas: https://claude.ai/artifact/BcrEGMr357vuq6Q4yWhWuS (boards "Mix · week 5" and "Mix · week 2").
+- Branch `claude/fervent-ptolemy-ho7r2a` (v0.5.0): "Share with partner" on the Weigh-in saved card. A preview dialog shows a picture card (goal ring with the scale kg and "−0.4 kg since …", the plan as a downhill trail with my weigh-ins and the plan marker once the trend exists, last week's run strip) and Send opens the share menu (WhatsApp) with the PNG and a one-line caption. Core `weekShare` (tests in `WeekShareTest`); app `ShareCard.kt`, `Share.kt`, a FileProvider for `cache/share/`. Spec `docs/superpowers/specs/2026-10-15-partner-share-card-design.md`, plan `docs/superpowers/plans/2026-10-15-partner-share-card.md`, canvas https://claude.ai/artifact/BcrEGMr357vuq6Q4yWhWuS.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
-- **Today:** one running card (today's run, add run, rest day shown as a blue-grey moon, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
+- **Today:** one running card (today's run, add run, rest day shown as a blue-grey moon, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight and "Share with partner" (picture card + caption through the share menu); otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
 - **Dashboard ("Trend", program week in the top bar's small line):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
@@ -88,6 +88,9 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - the file pickers (export, restore, Strava CSV) and the date picker
    - only Strava's English date format has been tested
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
+
+4. **View-only partner app** (planned, after the share card): my partner (Android) installs the app in a read-only mode that follows my data, e.g. through a shared Google Drive file.
+5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
 
 ## Product decisions
 - **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.

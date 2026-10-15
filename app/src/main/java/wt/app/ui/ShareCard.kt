@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -74,7 +75,7 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            ProgressRing(s.fraction.toFloat(), Modifier.size(140.dp)) {
+            ProgressRing(s.fraction.toFloat(), Modifier.size(132.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.1f".format(s.kg), style = numberStyle(38.sp, Palette.Text))
                     Text("kg on the scale", fontSize = 10.sp, color = Palette.Muted)
@@ -129,7 +130,9 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
             Row(Modifier.fillMaxWidth()) { s.strip.forEach { StripDay(it, Modifier.weight(1f)) } }
         }
 
-        Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.Bottom) {
+        // The footer keeps its own height; the spacer above it takes whatever is left.
+        Spacer(Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth()) {
             Text("Estimates, not medical advice", Modifier.weight(1f), fontSize = 10.sp, color = Palette.Muted)
             Text("Wt-tracker", fontSize = 10.sp, color = Palette.Muted)
         }
@@ -168,7 +171,7 @@ private fun Trail(s: WeekShare) {
     val span = ChronoUnit.DAYS.between(start.date, goal.date).coerceAtLeast(1).toFloat()
     val description = "The plan as a downhill trail from ${plainKg(start.kg)} to ${plainKg(goal.kg)} kg by ${dayMonth(goal.date)}; " +
         "you are at ${"%.1f".format(s.kg)} kg" + (s.planMarkerKg?.let { ", where the plan is at ${"%.1f".format(it)} kg" } ?: "")
-    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = description }) {
+    Canvas(Modifier.fillMaxWidth().height(100.dp).semantics { contentDescription = description }) {
         val left = 16.dp.toPx()
         val right = size.width - 20.dp.toPx()
         val top = 22.dp.toPx()

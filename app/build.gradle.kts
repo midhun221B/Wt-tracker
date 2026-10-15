@@ -13,8 +13,8 @@ android {
         applicationId = "io.github.midhun.wttracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.4.2"
+        versionCode = 10
+        versionName = "0.5.0"
     }
 
     // Fixed debug key (standard debug credentials) so each CI build installs over the previous one
