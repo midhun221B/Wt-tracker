@@ -45,7 +45,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: spec for the partner share card, `docs/superpowers/specs/2026-10-15-partner-share-card-design.md` (waiting for review; no code yet). Design canvas: https://claude.ai/artifact/BcrEGMr357vuq6Q4yWhWuS (boards "Mix · week 5" and "Mix · week 2").
+- Branch `claude/fervent-ptolemy-ho7r2a`: partner share card spec `docs/superpowers/specs/2026-10-15-partner-share-card-design.md` (approved) and plan `docs/superpowers/plans/2026-10-15-partner-share-card.md` (no code yet). Design canvas: https://claude.ai/artifact/BcrEGMr357vuq6Q4yWhWuS (boards "Mix · week 5" and "Mix · week 2").
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
