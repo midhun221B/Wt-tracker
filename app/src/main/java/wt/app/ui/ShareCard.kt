@@ -1,6 +1,25 @@
 package wt.app.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,10 +71,10 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
     Column(
         modifier.size(360.dp, 450.dp).clip(RoundedCornerShape(8.dp)).background(Palette.Background)
             .padding(horizontal = 18.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            ProgressRing(s.fraction.toFloat(), Modifier.size(150.dp)) {
+            ProgressRing(s.fraction.toFloat(), Modifier.size(140.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.1f".format(s.kg), style = numberStyle(38.sp, Palette.Text))
                     Text("kg on the scale", fontSize = 10.sp, color = Palette.Muted)
@@ -99,7 +118,11 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Text(if (s.stripIsLastWeek) "Last week" else "This week", Modifier.weight(1f), fontSize = 12.sp, color = Palette.Muted)
                 Text(
-                    "${s.runs} ${if (s.runs == 1) "run" else "runs"} · ${"%.1f".format(s.km)} km",
+                    when (s.runs) {
+                        0 -> "No runs"
+                        1 -> "1 run · ${"%.1f".format(s.km)} km"
+                        else -> "${s.runs} runs · ${"%.1f".format(s.km)} km"
+                    },
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Palette.Text,
                 )
             }
@@ -206,7 +229,8 @@ private fun Trail(s: WeekShare) {
             Palette.Text,
         )
 
-        drawText(measurer, plainKg(start.kg), Offset(x(start.date), y(start.kg) - 18.dp.toPx()), label)
+        // The start label gives way to "You" when the two would overlap (the first weeks).
+        if (you.x - x(start.date) > 70.dp.toPx()) drawText(measurer, plainKg(start.kg), Offset(x(start.date), y(start.kg) - 18.dp.toPx()), label)
         val youText = measurer.measure("You · ${"%.1f".format(s.kg)}", strong)
         drawText(youText, topLeft = Offset((you.x - youText.size.width / 2f).coerceIn(0f, size.width - youText.size.width), you.y - 13.dp.toPx() - youText.size.height))
         val goalText = measurer.measure("${plainKg(goal.kg)} kg · ${dayMonth(goal.date)}", strong)
@@ -219,4 +243,62 @@ private fun signedTenth(v: Double): String {
     val tenths = Math.round(v * 10)
     val sign = if (tenths < 0) "−" else if (tenths > 0) "+" else ""
     return sign + "%.1f".format(abs(tenths) / 10.0)
+}
+
+/**
+ * Preview before sending: the card (scaled down on narrow screens, captured at full size), Cancel and Send.
+ * Send captures the card, saves it to the cache and opens the share menu with the caption.
+ */
+@Composable
+fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val layer = rememberGraphicsLayer()
+    var error by remember { mutableStateOf<String?>(null) }
+    // Screenshot tests draw the dialog inline, where there is nothing to capture.
+    val capture = if (LocalInlineDialogs.current) Modifier else Modifier.drawWithContent {
+        layer.record { this@drawWithContent.drawContent() }
+        drawLayer(layer)
+    }
+    val sheet = @Composable {
+        Column(
+            Modifier.padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Palette.Card).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("Share with partner", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = Palette.Text)
+            BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val scale = (maxWidth / 360.dp).coerceAtMost(1f)
+                Box(Modifier.size(360.dp * scale, 450.dp * scale)) {
+                    ShareCard(
+                        s,
+                        Modifier.wrapContentSize(Alignment.TopStart, unbounded = true)
+                            .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) }
+                            .then(capture),
+                    )
+                }
+            }
+            Text(s.caption, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+            error?.let { Text(it, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, color = Palette.Warn) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cancel", color = Palette.Muted) }
+                PrimaryButton("Send", {
+                    scope.launch {
+                        try {
+                            val uri = saveSharePng(context, layer.toImageBitmap(), "wt-week-${s.week}")
+                            context.startShare(uri, s.caption)
+                            onDismiss()
+                        } catch (e: Exception) {
+                            error = "Couldn't share the card"
+                        }
+                    }
+                }, Modifier.weight(1f))
+            }
+        }
+    }
+    if (LocalInlineDialogs.current) {
+        sheet()
+    } else {
+        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) { sheet() }
+    }
 }
