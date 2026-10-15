@@ -24,6 +24,8 @@ data class WeekShare(
     val week: Int,
     val totalWeeks: Int,
     val weeksToGo: Int,
+    /** "Week 5 of 14", or "Goal week" once past the goal's week (never "Week 15 of 14"). */
+    val headline: String,
     val kg: Double,
     val changeKg: Double?,
     val previousDate: LocalDate?,
@@ -60,12 +62,14 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         ?.takeIf { w -> w.days.any { it.kind != DayKind.BeforeStart } }
     val stripWeek = lastWeek ?: dashboard.distance.first { it.monday == weekStart(date) }
     val runs = stripWeek.days.sumOf { it.runs }
+    val headline = if (week > totalWeeks) "Goal week" else "Week $week of $totalWeeks"
 
     return WeekShare(
         date = date,
         week = week,
         totalWeeks = totalWeeks,
         weeksToGo = (totalWeeks - week).coerceAtLeast(0),
+        headline = headline,
         kg = p.kg,
         changeKg = p.changeKg,
         previousDate = p.previousDate,
@@ -80,12 +84,12 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         stripIsLastWeek = lastWeek != null,
         runs = runs,
         km = stripWeek.km,
-        caption = shareCaption(week, p.kg, p.changeKg, lastWeek != null, runs, stripWeek.km),
+        caption = shareCaption(if (week > totalWeeks) "Goal week" else "Week $week", p.kg, p.changeKg, lastWeek != null, runs, stripWeek.km),
     )
 }
 
 /** "Week 5 weigh-in: 87.5 kg (−0.4). Last week 5 runs, 15.0 km." Always with a decimal point, whatever the locale. */
-private fun shareCaption(week: Int, kg: Double, changeKg: Double?, lastWeek: Boolean, runs: Int, km: Double): String {
+private fun shareCaption(week: String, kg: Double, changeKg: Double?, lastWeek: Boolean, runs: Int, km: Double): String {
     fun one(v: Double) = String.format(Locale.ROOT, "%.1f", v)
     val change = changeKg?.let {
         val tenths = (it * 10).roundToLong()
@@ -101,5 +105,5 @@ private fun shareCaption(week: Int, kg: Double, changeKg: Double?, lastWeek: Boo
         1 -> "1 run, ${one(km)} km"
         else -> "$runs runs, ${one(km)} km"
     }
-    return "Week $week weigh-in: ${one(kg)} kg$change. ${if (lastWeek) "Last week" else "This week"} $ran."
+    return "$week weigh-in: ${one(kg)} kg$change. ${if (lastWeek) "Last week" else "This week"} $ran."
 }

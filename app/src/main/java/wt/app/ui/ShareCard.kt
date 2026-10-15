@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
@@ -70,7 +72,8 @@ import kotlin.math.abs
 @Composable
 fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
     Column(
-        modifier.size(360.dp, 450.dp).clip(RoundedCornerShape(8.dp)).background(Palette.Background)
+        // Square corners: the picture sent keeps them, so apps that drop transparency show no black corners.
+        modifier.size(360.dp, 450.dp).background(Palette.Background)
             .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -92,7 +95,7 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Week ${s.week} of ${s.totalWeeks}", style = numberStyle(28.sp, Palette.Text))
+                Text(s.headline, style = numberStyle(28.sp, Palette.Text))
                 Text("Weigh-in · ${shortDay(s.date)}", fontSize = 13.sp, color = Palette.Muted)
             }
         }
@@ -257,6 +260,8 @@ fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }
+    // One share at a time: a second tap on Send while saving would open a second share menu.
+    var sending by remember { mutableStateOf(false) }
     val inline = LocalInlineDialogs.current
     val sheet = @Composable {
         // Created inside the sheet so the layer belongs to the dialog's window, where the card is drawn.
@@ -267,14 +272,16 @@ fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
             drawLayer(layer)
         }
         Column(
-            Modifier.padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Palette.Card).padding(12.dp),
+            Modifier.padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Palette.Card)
+                .verticalScroll(rememberScrollState()).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("Share with partner", Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium, color = Palette.Text)
             BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 val scale = (maxWidth / 360.dp).coerceAtMost(1f)
-                Box(Modifier.size(360.dp * scale, 450.dp * scale)) {
+                // Rounded on screen only; the capture inside records the square card.
+                Box(Modifier.size(360.dp * scale, 450.dp * scale).clip(RoundedCornerShape(8.dp))) {
                     ShareCard(
                         s,
                         Modifier.wrapContentSize(Alignment.TopStart, unbounded = true)
@@ -288,6 +295,7 @@ fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cancel", color = Palette.Muted) }
                 PrimaryButton("Send", {
+                    sending = true
                     scope.launch {
                         try {
                             val uri = saveSharePng(context, layer.toImageBitmap(), "wt-week-${s.week}")
@@ -295,9 +303,10 @@ fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
                             onDismiss()
                         } catch (e: Exception) {
                             error = "Couldn't share the card"
+                            sending = false
                         }
                     }
-                }, Modifier.weight(1f))
+                }, Modifier.weight(1f), enabled = !sending)
             }
         }
     }

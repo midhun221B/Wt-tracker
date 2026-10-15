@@ -41,6 +41,7 @@ class WeekShareTest {
         assertEquals(5, s.week)
         assertEquals(14, s.totalWeeks)
         assertEquals(9, s.weeksToGo)
+        assertEquals("Week 5 of 14", s.headline)
         assertEquals(87.5, s.kg, 1e-9)
         assertEquals(-0.4, s.changeKg!!, 1e-9)
         assertEquals(d(26), s.previousDate)
@@ -120,6 +121,8 @@ class WeekShareTest {
         val day = d(11, 1, 2027)
         val s = assertNotNull(weekShare(dashboard(weights + WeightEntry(day, 84.0), asOf = day), day))
         assertEquals(0, s.weeksToGo)
+        assertEquals("Goal week", s.headline)
+        assertTrue(s.caption.startsWith("Goal week weigh-in: 84.0 kg"), s.caption)
     }
 
     @Test
