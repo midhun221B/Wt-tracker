@@ -108,6 +108,14 @@ class WeekShareTest {
     }
 
     @Test
+    fun rangeIncludesTheSharedWeighInAfterARebaseline() {
+        // Re-baselined on 2 Nov (start 86.0), then the 19 Oct weigh-in (87.6) is shared: it predates the plan start.
+        val points = listOf(Checkpoint(d(2, 11), 86.0), Checkpoint(d(7, 1, 2027), 82.0))
+        val s = assertNotNull(weekShare(dashboard(checkpoints = points), d(19)))
+        assertTrue(87.6 in s.kgRange, "${s.kgRange}")
+    }
+
+    @Test
     fun afterGoalDateHasNoWeeksToGo() {
         val day = d(11, 1, 2027)
         val s = assertNotNull(weekShare(dashboard(weights + WeightEntry(day, 84.0), asOf = day), day))

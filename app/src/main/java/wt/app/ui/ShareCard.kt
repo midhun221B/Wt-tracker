@@ -256,14 +256,16 @@ private fun signedTenth(v: Double): String {
 fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val layer = rememberGraphicsLayer()
     var error by remember { mutableStateOf<String?>(null) }
-    // Screenshot tests draw the dialog inline, where there is nothing to capture.
-    val capture = if (LocalInlineDialogs.current) Modifier else Modifier.drawWithContent {
-        layer.record { this@drawWithContent.drawContent() }
-        drawLayer(layer)
-    }
+    val inline = LocalInlineDialogs.current
     val sheet = @Composable {
+        // Created inside the sheet so the layer belongs to the dialog's window, where the card is drawn.
+        val layer = rememberGraphicsLayer()
+        // Screenshot tests draw the dialog inline, where there is nothing to capture.
+        val capture = if (inline) Modifier else Modifier.drawWithContent {
+            layer.record { this@drawWithContent.drawContent() }
+            drawLayer(layer)
+        }
         Column(
             Modifier.padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Palette.Card).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -299,7 +301,7 @@ fun ShareDialog(s: WeekShare, onDismiss: () -> Unit) {
             }
         }
     }
-    if (LocalInlineDialogs.current) {
+    if (inline) {
         sheet()
     } else {
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) { sheet() }

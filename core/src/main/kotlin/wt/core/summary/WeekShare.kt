@@ -50,7 +50,8 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
     val firstMonday = weekStart(dashboard.week1)
     val posts = (0 until totalWeeks).map { firstMonday.plusWeeks(it.toLong()) }.map { Checkpoint(it, plan.at(it)) }
     val weighIns = dashboard.weights.filter { it.date in plan.start.date..date }.sortedBy { it.date }
-    val kgs = weighIns.map { it.kg }
+    // The shared weigh-in is always in range, even when it predates a re-baselined plan's start.
+    val kgs = weighIns.map { it.kg } + p.kg
     val wait = trendWait(dashboard.weights, date)
     val readyOn = wait.readyOn
     val trendReady = wait.weighInsNeeded == 0 && readyOn != null && readyOn <= date
@@ -74,7 +75,7 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         currentPost = Checkpoint(weekStart(date), plan.at(weekStart(date))),
         weighIns = weighIns,
         planMarkerKg = if (trendReady) plan.at(date) else null,
-        kgRange = minOf(plan.goal.kg, kgs.minOrNull() ?: plan.goal.kg)..maxOf(plan.start.kg, kgs.maxOrNull() ?: plan.start.kg),
+        kgRange = minOf(plan.goal.kg, kgs.min())..maxOf(plan.start.kg, kgs.max()),
         strip = stripWeek.days,
         stripIsLastWeek = lastWeek != null,
         runs = runs,
