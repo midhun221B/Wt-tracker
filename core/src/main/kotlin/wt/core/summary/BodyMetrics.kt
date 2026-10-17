@@ -4,13 +4,55 @@ import wt.core.model.BodyComp
 import wt.core.model.WeightEntry
 import java.time.LocalDate
 
-/** The measures charted on the Body tab, in display order. [lowerIsBetter] decides whether a change is good. */
-enum class BodyMetric(val label: String, val unit: String, val lowerIsBetter: Boolean) {
-    Weight("Weight", " kg", true),
-    Bmi("BMI", "", true),
-    BodyFat("Body fat", "%", true),
-    Visceral("Visceral fat", "", true),
-    Muscle("Muscle", " kg", false),
+/**
+ * The measures charted on the Body tab, in display order. [lowerIsBetter] decides whether a change is good;
+ * [minChartSpan] is the smallest range a chart shows, so a small change doesn't fill the whole height.
+ */
+enum class BodyMetric(val label: String, val unit: String, val lowerIsBetter: Boolean, val minChartSpan: Double) {
+    Weight("Weight", " kg", true, 3.0),
+    Bmi("BMI", "", true, 1.0),
+    BodyFat("Body fat", "%", true, 3.0),
+    Visceral("Visceral fat", "", true, 3.0),
+    Muscle("Muscle", " kg", false, 3.0),
+}
+
+/** The chart's value range: the data's own when it spans at least [BodyMetric.minChartSpan], else that span centred on it. */
+fun chartRange(min: Double, max: Double, metric: BodyMetric): ClosedFloatingPointRange<Double> {
+    if (max - min >= metric.minChartSpan) return min..max
+    val mid = (min + max) / 2
+    return (mid - metric.minChartSpan / 2)..(mid + metric.minChartSpan / 2)
+}
+
+/**
+ * Slopes (per step) for a smooth curve through evenly spaced [ys] that never overshoots: flat at a turning point,
+ * and limited so each piece stays between its two values (Fritsch–Carlson monotone cubic).
+ */
+fun monotoneSlopes(ys: List<Double>): List<Double> {
+    if (ys.size < 2) return List(ys.size) { 0.0 }
+    val d = ys.zipWithNext { a, b -> b - a }
+    val m = MutableList(ys.size) { i ->
+        when (i) {
+            0 -> d.first()
+            ys.lastIndex -> d.last()
+            else -> if (d[i - 1] * d[i] <= 0) 0.0 else (d[i - 1] + d[i]) / 2
+        }
+    }
+    for (i in d.indices) {
+        if (d[i] == 0.0) {
+            m[i] = 0.0
+            m[i + 1] = 0.0
+            continue
+        }
+        val a = m[i] / d[i]
+        val b = m[i + 1] / d[i]
+        val h = a * a + b * b
+        if (h > 9) {
+            val t = 3 / Math.sqrt(h)
+            m[i] = t * a * d[i]
+            m[i + 1] = t * b * d[i]
+        }
+    }
+    return m
 }
 
 /** One measure over time, oldest first, with the numbers its card shows. */

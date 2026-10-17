@@ -77,3 +77,45 @@ class BodyMetricsTest {
         assertTrue(bodyMetrics(weights, body, heightCm = 0.0).none { it.metric == BodyMetric.Bmi })
     }
 }
+
+class ChartScaleTest {
+    @Test
+    fun smallChangesKeepAMinimumRange() {
+        // 1.1 kg of weight change must not fill the whole chart: the range is at least 3 kg, centred on the data.
+        val r = wt.core.summary.chartRange(87.5, 88.6, BodyMetric.Weight)
+        assertEquals(3.0, r.endInclusive - r.start, 1e-9)
+        assertEquals((87.5 + 88.6) / 2, (r.start + r.endInclusive) / 2, 1e-9)
+    }
+
+    @Test
+    fun largeChangesUseTheirOwnRange() {
+        val r = wt.core.summary.chartRange(82.0, 88.6, BodyMetric.Weight)
+        assertEquals(82.0, r.start, 1e-9)
+        assertEquals(88.6, r.endInclusive, 1e-9)
+    }
+
+    @Test
+    fun everyMeasureHasAMinimumRange() {
+        BodyMetric.entries.forEach { assertTrue(it.minChartSpan > 0, it.name) }
+    }
+
+    @Test
+    fun slopesAreFlatAtTurningPoints() {
+        // 88.6, 88.0, 87.6, 87.9, 87.5: 87.6 is a low point, so the curve must not dip below it.
+        val s = wt.core.summary.monotoneSlopes(listOf(88.6, 88.0, 87.6, 87.9, 87.5))
+        assertEquals(0.0, s[2], 1e-9)
+        assertEquals(0.0, s[3], 1e-9)
+    }
+
+    @Test
+    fun slopesFollowASteadyFall() {
+        val s = wt.core.summary.monotoneSlopes(listOf(3.0, 2.0, 1.0))
+        assertEquals(listOf(-1.0, -1.0, -1.0), s)
+    }
+
+    @Test
+    fun oneOrTwoPointsAreStraight() {
+        assertEquals(listOf(0.0), wt.core.summary.monotoneSlopes(listOf(5.0)))
+        assertEquals(listOf(-2.0, -2.0), wt.core.summary.monotoneSlopes(listOf(5.0, 3.0)))
+    }
+}

@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import wt.core.summary.BodyMetric
 import wt.core.summary.MetricSeries
+import wt.core.summary.chartRange
+import wt.core.summary.monotoneSlopes
 import kotlin.math.abs
 
 /** Each measure's colour; they also differ in lightness, and every card names its measure. */
@@ -54,11 +56,16 @@ fun BodyMetric.color(): Color = when (this) {
 
 /** Stroke icons drawn on a 24-unit grid. */
 private fun BodyMetric.iconPath(): String = when (this) {
-    BodyMetric.Weight -> "M6 9h12l-1.5 11h-9z M9 9a3 3 0 0 1 6 0"
-    BodyMetric.Bmi -> "M3 9h18v6H3z M7 9v3 M11 9v3 M15 9v3"
+    // A bathroom scale with its dial.
+    BodyMetric.Weight -> "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M8.5 11a3.5 3.5 0 0 1 7 0z M12 11l1.5-2"
+    // A gauge: BMI is an index read against ranges.
+    BodyMetric.Bmi -> "M4.5 16a7.5 7.5 0 0 1 15 0z M12 16l3.5-4.5"
+    // A drop of fat.
     BodyMetric.BodyFat -> "M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"
-    BodyMetric.Visceral -> "M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16z M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z"
-    BodyMetric.Muscle -> "M4 9v6 M7 7v10 M17 7v10 M20 9v6 M7 12h10"
+    // A torso with the fat around the organs.
+    BodyMetric.Visceral -> "M8 3c0 3-3 5-3 10a7 7 0 0 0 14 0c0-5-3-7-3-10 M12 12a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"
+    // A dumbbell.
+    BodyMetric.Muscle -> "M3 10v4 M6 7v10 M9 6v12 M15 6v12 M18 7v10 M21 10v4 M9 12h6"
 }
 
 /** The measure's icon in a filled circle of its colour. */
@@ -95,32 +102,41 @@ fun MetricSeries.deltaColor(): Color = when (improving) {
 private fun MetricSeries.fmt(v: Double) = "%.1f".format(v) + metric.unit
 
 /**
- * A smooth filled line through the values (Catmull-Rom curves), oldest at the left. [dots] marks each measurement;
- * the latest one is always marked. Values are spread evenly, one per measurement.
+ * A smooth filled line through the values, oldest at the left, spread evenly one per measurement. The curve never
+ * overshoots between two dots ([monotoneSlopes]). [range] is the value range from bottom to top (default: the data's).
+ * [dots] marks each measurement; the latest one is always marked.
  */
 @Composable
-fun AreaChart(values: List<Double>, color: Color, modifier: Modifier, dots: Boolean = false, inset: Dp = 6.dp) {
+fun AreaChart(
+    values: List<Double>,
+    color: Color,
+    modifier: Modifier,
+    dots: Boolean = false,
+    inset: Dp = 6.dp,
+    range: ClosedFloatingPointRange<Double>? = null,
+) {
     Canvas(modifier) {
         if (values.isEmpty()) return@Canvas
         val pad = inset.toPx()
-        val min = values.min()
-        val span = (values.max() - min).takeIf { it > 0 } ?: 1.0
+        val lo = range?.start ?: values.min()
+        val hi = range?.endInclusive ?: values.max()
+        val span = (hi - lo).takeIf { it > 0 } ?: 1.0
+        val plotH = size.height - 2 * pad
+        val step = if (values.size > 1) (size.width - 2 * pad) / (values.size - 1) else 0f
         val pts = values.mapIndexed { i, v ->
-            val x = if (values.size == 1) size.width / 2 else pad + i * (size.width - 2 * pad) / (values.size - 1)
-            Offset(x, pad + ((values.max() - v) / span).toFloat() * (size.height - 2 * pad))
+            val x = if (values.size == 1) size.width / 2 else pad + i * step
+            Offset(x, pad + ((hi - v) / span).toFloat() * plotH)
         }
         if (pts.size > 1) {
+            // Slope in value per step → pixels per step (y grows downwards).
+            val slopes = monotoneSlopes(values).map { (-it / span).toFloat() * plotH }
             fun Path.curve() {
                 moveTo(pts[0].x, pts[0].y)
                 for (i in 0 until pts.size - 1) {
-                    val p0 = pts.getOrElse(i - 1) { pts[i] }
-                    val p1 = pts[i]
-                    val p2 = pts[i + 1]
-                    val p3 = pts.getOrElse(i + 2) { p2 }
                     cubicTo(
-                        p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
-                        p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
-                        p2.x, p2.y,
+                        pts[i].x + step / 3, pts[i].y + slopes[i] / 3,
+                        pts[i + 1].x - step / 3, pts[i + 1].y - slopes[i + 1] / 3,
+                        pts[i + 1].x, pts[i + 1].y,
                     )
                 }
             }
@@ -168,17 +184,19 @@ fun BodyChartCard(s: MetricSeries) {
         if (s.points.size < 2) {
             Text("The chart starts after the second ${if (s.metric == BodyMetric.Weight || s.metric == BodyMetric.Bmi) "weigh-in" else "measurement"}.", style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
         } else {
+            // At least the measure's minimum range, so a small change doesn't look like a cliff.
+            val range = chartRange(s.min, s.max, s.metric)
             Row(Modifier.fillMaxWidth().height(170.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Column(Modifier.width(32.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
-                    Text("%.1f".format(s.max), style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
-                    Text("%.1f".format(s.min), style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
+                    Text("%.1f".format(range.endInclusive), style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
+                    Text("%.1f".format(range.start), style = MaterialTheme.typography.labelSmall, color = Palette.Muted)
                 }
                 AreaChart(
                     s.points.map { it.second }, color,
                     Modifier.weight(1f).fillMaxHeight().semantics {
                         contentDescription = "${s.metric.label} from ${s.fmt(s.first)} to ${s.fmt(s.last)}"
                     },
-                    dots = true, inset = 8.dp,
+                    dots = true, inset = 8.dp, range = range,
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -218,7 +236,9 @@ fun MetricCard(s: MetricSeries, selected: Boolean, onClick: () -> Unit) {
                     style = MaterialTheme.typography.labelMedium, color = Palette.Muted,
                 )
             }
-            if (s.points.size > 1) AreaChart(s.points.map { it.second }, color, Modifier.size(width = 84.dp, height = 32.dp), inset = 3.dp)
+            if (s.points.size > 1) {
+                AreaChart(s.points.map { it.second }, color, Modifier.size(width = 84.dp, height = 32.dp), inset = 3.dp, range = chartRange(s.min, s.max, s.metric))
+            }
             Text(
                 if (s.points.size > 1) s.deltaText() else "",
                 Modifier.width(68.dp), textAlign = TextAlign.End,
