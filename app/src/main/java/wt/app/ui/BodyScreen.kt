@@ -164,7 +164,8 @@ private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, toda
                     )
                     Text("Next: ${longDay(status.next)}", style = MaterialTheme.typography.titleSmall)
                 }
-                TextButton(onClick = onScreenshot ?: onAdd) { Text("Add", color = Palette.Accent) }
+                // The form, which also offers the screenshot import, so values can be typed too.
+                TextButton(onClick = onAdd) { Text("Add", color = Palette.Accent) }
             }
         }
     }

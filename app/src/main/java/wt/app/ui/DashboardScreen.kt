@@ -100,9 +100,11 @@ private fun ProgressCard(d: Dashboard) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (f != null) {
-                    RingStat("%+.2f kg".format(f.kgPerWeek), "per week", Palette.Accent)
+                    // A real minus sign, and amber when the trend goes up.
+                    val w = f.kgPerWeek
+                    RingStat((if (w < 0) "−" else "+") + "%.2f kg".format(abs(w)), "per week", if (w <= 0) Palette.Accent else Palette.Warn)
                 }
-                RingStat("%.1f of %.1f kg".format(g.lostKg, g.totalKg), "lost toward %.0f kg".format(goalKg))
+                RingStat("%.1f of %.1f kg".format(g.lostKg, g.totalKg), "lost toward ${plainKg(goalKg)} kg")
                 if (f != null) {
                     // Same words as the Plan timeline and the weigh-in card: over / under plan.
                     val gap = f.gapKgToday
@@ -158,7 +160,7 @@ private fun ChartCard(d: Dashboard) {
         }
         if (d.forecast?.lowConfidence == true) {
             Text(
-                "Low confidence: fewer than 7 weigh-ins in the last 21 days, so the forecast can swing a lot.",
+                "Early days: only a few weigh-ins so far, so the forecast can swing a lot. It settles after four weekly weigh-ins.",
                 style = MaterialTheme.typography.labelMedium,
                 color = Palette.Warn,
             )
@@ -179,7 +181,7 @@ private fun ForecastTiles(d: Dashboard) {
             val eta = f.eta
             val gap = f.gapDays
             StatTile(
-                "%.0f kg reached".format(f.goalKg), eta?.let(::dayMonth) ?: "Not yet", m,
+                "${plainKg(f.goalKg)} kg reached", eta?.let(::dayMonth) ?: "Not yet", m,
                 sub = when {
                     eta == null -> "trend is flat or rising"
                     gap == null || gap == 0L -> "on plan"

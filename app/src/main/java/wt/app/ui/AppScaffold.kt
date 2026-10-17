@@ -15,6 +15,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,8 +36,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -53,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wt.app.R
 import wt.app.notify.Reminder
@@ -86,7 +90,17 @@ fun AppScaffold(vm: AppViewModel) {
     val snackbar = remember { SnackbarHostState() }
     var notificationsAllowed by remember { mutableStateOf(Reminder.hasPermission(context)) }
 
-    LaunchedEffect(Unit) { vm.messages.collect { snackbar.showSnackbar(it) } }
+    LaunchedEffect(Unit) {
+        vm.messages.collect { m ->
+            val result = snackbar.showSnackbar(m.text, actionLabel = m.undo?.let { "Undo" }, duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed) m.undo?.invoke()
+        }
+    }
+    // Allowing notifications in Android settings and coming back clears the "blocked" warning.
+    LifecycleResumeEffect(Unit) {
+        notificationsAllowed = Reminder.hasPermission(context)
+        onPauseOrDispose {}
+    }
     BackHandler(enabled = settingsOpen) { settingsOpen = false }
 
     var pendingExport by remember { mutableStateOf<ExportKind?>(null) }
@@ -147,14 +161,18 @@ fun AppScaffold(vm: AppViewModel) {
     // A fresh install has no profile: first-run setup instead of the tabs (a restored backup also ends it).
     val needsSetup by vm.needsSetup.collectAsStateWithLifecycle()
     if (needsSetup == true) {
-        OnboardingScreen(
-            today = todayInTokyo(),
-            onFinish = vm::finishSetup,
-            onRestore = { restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
-            onReminderOn = {
-                if (Build.VERSION.SDK_INT >= 33 && !notificationsAllowed) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            },
-        )
+        // The snackbar shows restore errors (a wrong file) during setup too.
+        Box(Modifier.fillMaxSize()) {
+            OnboardingScreen(
+                today = todayInTokyo(),
+                onFinish = vm::finishSetup,
+                onRestore = { restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
+                onReminderOn = {
+                    if (Build.VERSION.SDK_INT >= 33 && !notificationsAllowed) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                },
+            )
+            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
+        }
         return
     }
 
@@ -165,7 +183,7 @@ fun AppScaffold(vm: AppViewModel) {
             val (subtitle, title) = when {
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
-                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "Week $w of $n · ${longDay(s.today)}" to tab.label }
+                tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "${weekHeadline(w, n)} · ${longDay(s.today)}" to tab.label }
                 // Today's day switcher already shows the date.
                 tab == Tab.LOG -> "" to tab.label
                 else -> longDay(s.today) to tab.label

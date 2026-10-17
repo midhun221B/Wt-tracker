@@ -94,7 +94,7 @@ fun WeightChart(d: Dashboard, modifier: Modifier = Modifier) {
         while (month <= xEnd) {
             val x = axes.x(month)
             drawLine(gridColor, Offset(x, top), Offset(x, top + axes.height), strokeWidth = 1f)
-            val text = measurer.measure(month.month.getDisplayName(DateTextStyle.SHORT, Locale.getDefault()), labelStyle)
+            val text = measurer.measure(month.month.getDisplayName(DateTextStyle.SHORT, Locale.ENGLISH), labelStyle)
             drawText(text, topLeft = Offset(x - text.size.width / 2, top + axes.height + 2.dp.toPx()))
             month = month.plusMonths(1)
         }

@@ -6,6 +6,7 @@ import wt.app.ui.duration
 import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
+import wt.app.ui.planLabel
 import wt.app.ui.roughKcal
 import wt.app.ui.weekRange
 import wt.core.model.TOKYO
@@ -65,5 +66,11 @@ class FormatTest {
         assertEquals(1.0, kgStep(8.0))
         assertEquals(2.0, kgStep(11.0))
         assertEquals(10.0, kgStep(50.0))
+    }
+
+    @Test
+    fun planLabelsUseShortDates() {
+        assertEquals("Re-baseline 17 Oct", planLabel("Re-baseline 2026-10-17"))
+        assertEquals("Original plan", planLabel("Original plan"))
     }
 }

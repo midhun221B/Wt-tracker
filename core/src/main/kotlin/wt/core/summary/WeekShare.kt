@@ -45,6 +45,9 @@ data class WeekShare(
     val caption: String,
 )
 
+/** "Week 5 of 14", or "Goal week" once past the goal's week (never "Week 15 of 14"). */
+fun weekHeadline(week: Int, totalWeeks: Int): String = if (week > totalWeeks) "Goal week" else "Week $week of $totalWeeks"
+
 /** The share card for the weigh-in on [date]; null when that day has no weight. */
 fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
     val plan = dashboard.plan
@@ -67,7 +70,7 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         ?.takeIf { w -> w.days.any { it.kind != DayKind.BeforeStart } }
     val stripWeek = lastWeek ?: dashboard.distance.first { it.monday == weekStart(date) }
     val runs = stripWeek.days.sumOf { it.runs }
-    val headline = if (week > totalWeeks) "Goal week" else "Week $week of $totalWeeks"
+    val headline = weekHeadline(week, totalWeeks)
 
     return WeekShare(
         date = date,

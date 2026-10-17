@@ -176,4 +176,10 @@ class WeekShareTest {
         assertEquals(points, s.trail)
         assertEquals(5, s.week)
     }
+
+    @Test
+    fun headlineStopsAtTheGoalWeek() {
+        assertEquals("Week 14 of 14", wt.core.summary.weekHeadline(14, 14))
+        assertEquals("Goal week", wt.core.summary.weekHeadline(15, 14))
+    }
 }

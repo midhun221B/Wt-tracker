@@ -8,6 +8,7 @@ import wt.core.model.Checkpoint
 import wt.core.model.PlanRecord
 import wt.core.model.Profile
 import wt.core.model.Run
+import wt.core.model.WeighInSchedule
 import wt.core.model.WeightEntry
 import java.time.LocalDate
 
@@ -34,6 +35,8 @@ data class BackupFile(
 data class ProfileDto(
     val sex: String, val birthYear: Int, val heightCm: Double, val bmrKcal: Double,
     val activityFactor: Double, val goalKg: Double, val goalDate: String, val plannedFoodDeficitKcal: Double,
+    // Optional, so backups made before 0.6.0 still read.
+    val weighInDay: Int? = null, val reminderEnabled: Boolean? = null, val reminderHour: Int? = null, val reminderMinute: Int? = null,
 )
 
 @Serializable
@@ -67,7 +70,10 @@ fun encodeBackup(data: AppData, exportedAt: String): String = json.encodeToStrin
     BackupFile(
         exportedAt = exportedAt,
         profile = data.profile.run {
-            ProfileDto(sex, birthYear, heightCm, bmrKcal, activityFactor, goalKg, goalDate.toString(), plannedFoodDeficitKcal)
+            ProfileDto(
+                sex, birthYear, heightCm, bmrKcal, activityFactor, goalKg, goalDate.toString(), plannedFoodDeficitKcal,
+                data.schedule?.weighInDay, data.schedule?.reminderEnabled, data.schedule?.reminderHour, data.schedule?.reminderMinute,
+            )
         },
         weights = data.weights.map { WeightDto(it.date.toString(), it.kg, it.sleepHours, it.hunger, it.snacks, it.note) },
         body = data.body.map { BodyDto(it.date.toString(), it.fatPct, it.visceral, it.muscleKg, it.skeletalPct, it.leanKg, it.bmrKcal) },
@@ -89,6 +95,7 @@ fun decodeBackup(text: String): AppData {
     require(file.format == BackupFile.FORMAT) { "Not a Wt Tracker backup (format '${file.format}')" }
     require(file.version <= BackupFile.VERSION) { "Backup version ${file.version} is newer than this app supports" }
     require(file.plans.count { it.active } == 1) { "Backup must contain exactly one active plan" }
+    require(file.plans.first { it.active }.checkpoints.size >= 2) { "The backup's active plan needs at least two checkpoints" }
 
     fun date(s: String): LocalDate = try {
         LocalDate.parse(s)
@@ -106,6 +113,10 @@ fun decodeBackup(text: String): AppData {
         restDays = file.restDays.map(::date).toSet(),
         plans = file.plans.mapIndexed { i, p ->
             PlanRecord(i + 1L, p.label, date(p.createdAt), p.active, p.checkpoints.map { Checkpoint(date(it.date), it.kg) })
+        },
+        schedule = file.profile.run {
+            if (weighInDay == null || reminderEnabled == null || reminderHour == null || reminderMinute == null) null
+            else WeighInSchedule(weighInDay.coerceIn(1, 7), reminderEnabled, reminderHour.coerceIn(0, 23), reminderMinute.coerceIn(0, 59))
         },
     )
 }

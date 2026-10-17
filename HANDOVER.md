@@ -47,6 +47,15 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 ### Not merged
 - Branch `claude/fervent-ptolemy-ho7r2a` (v0.6.0): Body tab redesign (mix of A and C on https://claude.ai/artifact/NzDEs9Ro5PyYyJyrUSnwRh): a big chart for the chosen measure (latest value, change, smooth filled curve with dots, min/max scale, min/max/average) and a stat card per measure underneath (Weight, BMI, Body fat, Visceral fat, Muscle: icon, first → latest, mini chart, change) that picks the chart; every measurement in a folded "Measurements" log at the end. Weight and BMI (from the 170 cm height) use each week's last weigh-in. Charts keep a minimum range (3 kg, 1 BMI, 3 %, 3 visceral, 3 kg muscle; `chartRange`) and a monotone curve that never dips past a dot (`monotoneSlopes`). New icons: Body measures (scale, gauge, drop, torso, dumbbell) and tabs (Today sun, Trend down-arrow line, Runs runner). Core `bodyMetrics` (tests in `BodyMetricsTest`); app `BodyCharts.kt`.
+- Same branch, whole-app polish pass (review of every screen and the code):
+  - Today follows the calendar past midnight; with no weigh-ins the weight field starts at the planned weight (was 80.0).
+  - Deleting a weigh-in, run or measurement offers Undo; snackbars use "5 Nov" dates; restore errors show during setup too.
+  - Setup keeps its progress across rotation; the "Notifications are blocked" note clears after allowing them.
+  - Backups now carry the weigh-in day and reminder (older backups keep the phone's); restore reschedules the reminder; a backup whose active plan has fewer than two checkpoints is refused.
+  - Plan: the checkpoint editor refuses any stretch above 1 kg/week and shows gains as "↑ … gain"; "Add checkpoint" goes before the goal, halfway; "1 week to go."; re-baseline at or below the goal says "goal reached"; re-baseline uses the same trend as Trend.
+  - Trend: "Goal week" instead of "Week 15 of 14"; goal shown as 81.5 kg when not whole; kg/week with a real minus, amber when rising; a plain early-days note instead of "fewer than 7 weigh-ins in 21 days"; month labels always English.
+  - Runs: "Fastest pace" in the Last 28 days card is from those 28 days. Body: "Add" opens the form (with the screenshot button); a one-day chart shows one date; simpler visceral and muscle icons. Settings: "Weigh-in reminder" label.
+  - The "Log your weight" alert counts scale measurements, like Today does.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.

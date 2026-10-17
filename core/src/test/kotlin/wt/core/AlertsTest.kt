@@ -74,4 +74,13 @@ class AlertsTest {
         assertTrue(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(data, emptyList(), emptySet(), last.plusDays(8))))
         assertTrue(AlertKind.LOG_REMINDER in kinds(evaluateAlerts(emptyList(), emptyList(), emptySet(), today)))
     }
+
+    @Test
+    fun aScaleMeasurementCountsAsLogging() {
+        // Today says "This week done: scale measurement", so Trend must not ask for a weight.
+        val data = Synthetic.series(days = 10)
+        val asOf = data.last().date.plusDays(9)
+        val alerts = evaluateAlerts(data, emptyList(), emptySet(), asOf, measuredOn = setOf(asOf.minusDays(2)))
+        assertFalse(AlertKind.LOG_REMINDER in kinds(alerts))
+    }
 }

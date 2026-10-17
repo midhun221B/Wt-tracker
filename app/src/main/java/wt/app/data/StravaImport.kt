@@ -23,14 +23,16 @@ suspend fun AppDatabase.importStrava(csv: String): String {
     }
     return buildString {
         appendLine("${parsed.totalActivities} activities in the file, ${parsed.runs.size} runs.")
-        appendLine("• $inserted new runs added")
-        if (plan.updates.isNotEmpty()) appendLine("• ${plan.updates.size} matched runs already in the app (updated with Strava data)")
+        appendLine("• $inserted new ${if (inserted == 1) "run" else "runs"} added")
+        if (plan.updates.isNotEmpty()) {
+            appendLine("• ${plan.updates.size} matched ${if (plan.updates.size == 1) "run" else "runs"} already in the app (updated with Strava data)")
+        }
         if (plan.alreadyImported > 0) appendLine("• ${plan.alreadyImported} already imported before")
         if (parsed.skippedTypes.isNotEmpty()) {
             appendLine("• skipped: " + parsed.skippedTypes.entries.joinToString { "${it.value} ${it.key}" })
         }
         if (parsed.errors.isNotEmpty()) {
-            appendLine("• ${parsed.errors.size} rows could not be read:")
+            appendLine("• ${parsed.errors.size} ${if (parsed.errors.size == 1) "row" else "rows"} could not be read:")
             parsed.errors.take(5).forEach { appendLine("   $it") }
             if (parsed.errors.size > 5) appendLine("   …")
         }

@@ -65,6 +65,25 @@ class RebaselineTest {
     }
 
     @Test
+    fun atOrBelowTheGoalHasNothingToPlan() {
+        // A plan that rises to the goal makes no sense: no checkpoints, flagged as reached.
+        val asOf = LocalDate.of(2026, 12, 1)
+        val r = rebaseline(listOf(WeightEntry(asOf, 81.8)), asOf, Defaults.GOAL_DATE, Defaults.GOAL_KG)
+        assertTrue(r.goalReached)
+        assertTrue(r.checkpoints.isEmpty())
+        assertFalse(r.unrealistic)
+    }
+
+    @Test
+    fun usesTheSameTrendAsTheTrendTab() {
+        // Three weekly weigh-ins over two weeks: Trend already shows a (low-confidence) trend, so re-baseline uses it.
+        val start = LocalDate.of(2026, 10, 5)
+        val weights = listOf(WeightEntry(start, 88.0), WeightEntry(start.plusDays(7), 87.6), WeightEntry(start.plusDays(14), 87.3))
+        val r = rebaseline(weights, start.plusDays(14), Defaults.GOAL_DATE, Defaults.GOAL_KG)
+        assertTrue(r.fromTrend)
+    }
+
+    @Test
     fun needsAWeight() {
         assertFailsWith<IllegalStateException> { rebaseline(emptyList(), Defaults.START, Defaults.GOAL_DATE, 82.0) }
     }

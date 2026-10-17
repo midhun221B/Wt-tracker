@@ -78,7 +78,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** What the last screenshot contained, shown in a confirm dialog until saved or dismissed. */
     val screenshot = MutableStateFlow<ScreenshotReading?>(null)
 
-    private val messageChannel = Channel<String>(Channel.BUFFERED)
+    /** A snackbar message; with [undo], the snackbar offers "Undo". */
+    class Message(val text: String, val undo: (() -> Unit)? = null)
+
+    private val messageChannel = Channel<Message>(Channel.BUFFERED)
     /** One-off messages for the snackbar. */
     val messages = messageChannel.receiveAsFlow()
 
@@ -147,9 +150,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private fun launchWithMessage(done: String?, block: suspend () -> Unit) = viewModelScope.launch {
         try {
             block()
-            done?.let { messageChannel.send(it) }
+            done?.let { messageChannel.send(Message(it)) }
         } catch (e: Exception) {
-            messageChannel.send(e.message ?: "Something went wrong")
+            messageChannel.send(Message(e.message ?: "Something went wrong"))
         }
     }
 
@@ -161,7 +164,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         weighInSaved.value = entry.date
     }
 
-    fun deleteWeight(date: LocalDate) = launchWithMessage("Deleted weight for $date") { db.weights().delete(date) }
+    fun deleteWeight(date: LocalDate) = launchWithMessage(null) {
+        val old = db.weights().get(date) ?: return@launchWithMessage
+        db.weights().delete(date)
+        messageChannel.send(Message("Deleted %.1f kg for %s".format(old.kg, dayMonth(date))) { launchWithMessage(null) { db.weights().upsert(old) } })
+    }
 
     fun setRestDay(date: LocalDate, rest: Boolean) = launchWithMessage(null) {
         if (rest) db.restDays().insert(RestDayEntity(date)) else db.restDays().delete(date)
@@ -176,11 +183,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (run.id == 0L) runLogged.value = true
     }
 
-    fun deleteRun(run: RunEntity) = launchWithMessage("Run deleted") { db.runs().delete(run) }
+    fun deleteRun(run: RunEntity) = launchWithMessage(null) {
+        db.runs().delete(run)
+        messageChannel.send(Message("Run deleted") { launchWithMessage(null) { db.runs().upsert(run) } })
+    }
 
     fun saveBody(entry: BodyCompEntity) = launchWithMessage("Measurement saved") { db.bodyComp().upsert(entry) }
 
-    fun deleteBody(date: LocalDate) = launchWithMessage("Measurement deleted") { db.bodyComp().delete(date) }
+    fun deleteBody(date: LocalDate) = launchWithMessage(null) {
+        val old = db.bodyComp().all().firstOrNull { it.date == date } ?: return@launchWithMessage
+        db.bodyComp().delete(date)
+        messageChannel.send(Message("Measurement deleted") { launchWithMessage(null) { db.bodyComp().upsert(old) } })
+    }
 
     fun saveCheckpoints(points: List<Checkpoint>) = launchWithMessage("Plan updated") {
         require(points.size >= 2) { "A plan needs at least two checkpoints" }
@@ -190,7 +204,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun applyRebaseline(points: List<Checkpoint>) = launchWithMessage("New plan from today's weight") {
         db.plans().activateNewPlan(
-            PlanEntity(createdAt = today.value, active = true, label = "Re-baseline ${today.value}"),
+            PlanEntity(createdAt = today.value, active = true, label = "Re-baseline ${dayMonth(today.value)}"),
             points.map { CheckpointEntity(0, it.date, it.kg) },
         )
     }
@@ -223,6 +237,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun restore(uri: Uri) = launchWithMessage("Backup restored") {
         db.replaceAll(decodeBackup(readText(uri)))
+        db.profile().get()?.let { Reminder.schedule(getApplication(), it.reminderEnabled, it.reminderHour, it.reminderMinute) }
     }
 
     fun importStrava(uri: Uri) = launchWithMessage(null) {
@@ -233,7 +248,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun readScreenshot(uri: Uri) = launchWithMessage(null) {
         val rows = ocrRows(recognizeLines(getApplication(), uri))
         val reading = withContext(Dispatchers.Default) { readScreenshot(rows, db.profile().get()?.heightCm) }
-        if (reading == null) messageChannel.send("Couldn't find a run or body measurement in this image")
+        if (reading == null) messageChannel.send(Message("Couldn't find a run or body measurement in this image"))
         screenshot.value = reading
     }
 
@@ -250,7 +265,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Saves a body measurement read from a screenshot and, when given, the weight for the same day. */
     fun saveScreenshotBody(entry: BodyCompEntity, weightKg: Double?) = launchWithMessage(
-        if (weightKg != null) "Saved measurement and ${weightKg} kg for ${entry.date}" else "Measurement saved",
+        if (weightKg != null) "Saved measurement and %.1f kg for %s".format(weightKg, dayMonth(entry.date)) else "Measurement saved",
     ) {
         screenshot.value = null
         db.withTransaction {

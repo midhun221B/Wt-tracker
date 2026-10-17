@@ -96,7 +96,7 @@ data class ProfileEntity(
     @ColumnInfo(defaultValue = "1") val reminderEnabled: Boolean = true,
     /** Weekly weigh-in day as an ISO weekday (1 = Monday … 7 = Sunday). */
     @ColumnInfo(defaultValue = "1") val weighInDay: Int = 1,
-) {
+) : java.io.Serializable {
     fun toModel() = Profile(sex, birthYear, heightCm, bmrKcal, activityFactor, goalKg, goalDate, plannedFoodDeficitKcal)
 
     companion object {
