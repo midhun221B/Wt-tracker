@@ -46,7 +46,13 @@ fun SettingsScreen(
             Text("Weigh-in day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
             WeekdayPicker(profile.weighInDay, onWeighInDay)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Remind me that morning if I haven't logged by", Modifier.weight(1f))
+                Column(Modifier.weight(1f)) {
+                    Text("Weigh-in reminder")
+                    Text(
+                        "On weigh-in day, if no weight is logged by the time below",
+                        style = MaterialTheme.typography.bodySmall, color = Palette.Muted,
+                    )
+                }
                 Switch(
                     checked = profile.reminderEnabled,
                     onCheckedChange = { on -> onReminder(on, profile.reminderHour, profile.reminderMinute) },

@@ -62,10 +62,10 @@ private fun BodyMetric.iconPath(): String = when (this) {
     BodyMetric.Bmi -> "M4.5 16a7.5 7.5 0 0 1 15 0z M12 16l3.5-4.5"
     // A drop of fat.
     BodyMetric.BodyFat -> "M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"
-    // A torso with the fat around the organs.
-    BodyMetric.Visceral -> "M8 3c0 3-3 5-3 10a7 7 0 0 0 14 0c0-5-3-7-3-10 M12 12a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"
+    // A core with a ring around it: the fat around the organs.
+    BodyMetric.Visceral -> "M12 5a7 7 0 1 0 0 14a7 7 0 1 0 0-14z M12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"
     // A dumbbell.
-    BodyMetric.Muscle -> "M3 10v4 M6 7v10 M9 6v12 M15 6v12 M18 7v10 M21 10v4 M9 12h6"
+    BodyMetric.Muscle -> "M4 9v6 M7.5 6.5v11 M16.5 6.5v11 M20 9v6 M7.5 12h9"
 }
 
 /** The measure's icon in a filled circle of its colour. */
@@ -169,7 +169,9 @@ fun BodyChartCard(s: MetricSeries) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             MetricIcon(s.metric, 32.dp)
             Text(s.metric.label, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-            Text("${dayMonth(s.points.first().first)} – ${dayMonth(s.points.last().first)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            val from = dayMonth(s.points.first().first)
+            val to = dayMonth(s.points.last().first)
+            Text(if (from == to) from else "$from – $to", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
         }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(s.fmt(s.last), style = numberStyle(40.sp))
