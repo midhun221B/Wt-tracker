@@ -30,8 +30,8 @@ import wt.core.summary.STREAK_RUNS_PER_WEEK
 /** Solid: the streak is on and this week counts. Waiting: on, but this week needs more runs. Off: no streak. */
 enum class FlameLook { Solid, Waiting, Off }
 
-/** A flame in a 40 × 48 box with a wide round base for the number. */
-private const val FLAME = "M20 2 C23 11 35 17 35 31 A15 15 0 0 1 5 31 C5 23 10 18 13 14 C13.5 19 15.5 22 18 23 C17 15 18 8 20 2 Z"
+/** A flame in a 40 × 48 box with a wide round base for the number; the inner curve stays above the number. */
+private const val FLAME = "M20 2 C23 11 35 17 35 31 A15 15 0 0 1 5 31 C5 23 10 18 13 14 C13.5 17 15 19 17.5 19.5 C16.5 13 18 8 20 2 Z"
 
 /** The run-streak flame, [width] wide, with [weeks] inside. Decorative: the text beside it says the same. */
 @Composable
@@ -50,8 +50,8 @@ fun StreakFlame(weeks: Int, look: FlameLook, width: Dp) {
                 drawPath(path, edge, style = Stroke(2.5f))
             }
         }
-        // The number sits in the round base, about two thirds down.
-        Text("$weeks", Modifier.align(BiasAlignment(0f, 0.45f)), style = numberStyle(fontSize, number))
+        // The number sits in the round base, below the inner curve.
+        Text("$weeks", Modifier.align(BiasAlignment(0f, 0.55f)), style = numberStyle(fontSize, number))
     }
 }
 
@@ -85,6 +85,6 @@ fun TodayStreak(s: RunWeekStreak, modifier: Modifier = Modifier) {
             Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = titleColor)
             Text(sub, fontSize = 11.sp, color = Palette.Muted)
         }
-        StreakFlame(s.weeks, look, 28.dp)
+        StreakFlame(s.weeks, look, 30.dp)
     }
 }
