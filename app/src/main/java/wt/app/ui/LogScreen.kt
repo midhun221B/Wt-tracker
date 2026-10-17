@@ -103,6 +103,12 @@ fun LogScreen(
     runJustLogged: Boolean = false,
 ) {
     var date by rememberSaveable { mutableStateOf(state.today) }
+    // Left open on today past midnight, the page moves on to the new today (a past day the owner chose stays).
+    var shownToday by rememberSaveable { mutableStateOf(state.today) }
+    LaunchedEffect(state.today) {
+        if (date == shownToday) date = state.today
+        shownToday = state.today
+    }
     // The "Weigh-in saved" card belongs to the day it was saved on; moving to another day closes it.
     LaunchedEffect(date) { if (savedWeighIn != null && savedWeighIn != date) onSavedSeen() }
     var showRunDialog by remember { mutableStateOf(false) }
@@ -118,7 +124,8 @@ fun LogScreen(
     // Weekly: the big card shows only while this week's weigh-in is due, or when asked for ("Weigh in" / "Edit").
     // A day that already has a weight shows it in the small card instead.
     val showWeighIn = (status.due && existing == null) || weighInFor == date
-    val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg ?: 80.0
+    val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg
+        ?: (round(state.dashboard.plan.at(date) * 10) / 10)
 
     // Field state resets when the date (or its stored entry) changes.
     var weight by remember(date, existing) { mutableStateOf(fieldText(existing?.kg ?: lastKg)) }
@@ -338,7 +345,7 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
             // The ring is the trend, like the Trend tab; the scale shows only as the change above.
             val g = p.goal
             Text(
-                "%.1f of %.1f kg toward %.0f kg".format(g.lostKg, g.totalKg, goalKg) + if (g.fromTrend) " · trend" else "",
+                "%.1f of %.1f kg toward %s kg".format(g.lostKg, g.totalKg, plainKg(goalKg)) + if (g.fromTrend) " · trend" else "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.Muted,
             )

@@ -87,16 +87,17 @@ fun PlanScreen(
                 "Re-baseline",
                 when {
                     d.fit == null -> "after 2 weeks of weigh-ins"
+                    preview?.goalReached == true -> "goal reached"
                     rate == null -> "goal date passed"
                     else -> "%.2f kg/week needed".format(rate)
                 },
-                enabled = d.fit != null && preview != null,
+                enabled = d.fit != null && preview != null && !preview.goalReached,
             ) { sheet = PlanSheet.Rebaseline }
             ListRow(
                 "Energy estimate",
                 "%,.0f × %s − %,.0f".format(state.profile.bmrKcal, fieldText(state.profile.activityFactor), state.profile.plannedFoodDeficitKcal),
             ) { sheet = PlanSheet.Energy }
-            ListRow("History", state.plans.firstOrNull { it.active }?.label ?: "${state.plans.size} plans") { sheet = PlanSheet.History }
+            ListRow("History", state.plans.firstOrNull { it.active }?.let { planLabel(it.label) } ?: "${state.plans.size} plans") { sheet = PlanSheet.History }
         }
         Disclaimer()
     }
@@ -123,7 +124,7 @@ internal fun GoalSentence(goal: Checkpoint, today: LocalDate) {
                     when {
                         days < 0 -> "The goal date has passed."
                         days < 7 -> "This week."
-                        else -> "${ceil(days / 7.0).toInt()} weeks to go."
+                        else -> ceil(days / 7.0).toInt().let { w -> if (w == 1) "1 week to go." else "$w weeks to go." }
                     },
                 )
             }
@@ -281,7 +282,7 @@ internal fun HistoryDialog(plans: List<PlanEntity>, onDismiss: () -> Unit) {
         plans.forEach { p ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(p.label, style = MaterialTheme.typography.titleSmall)
+                    Text(planLabel(p.label), style = MaterialTheme.typography.titleSmall)
                     Text("Created ${dayMonthYear(p.createdAt)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 }
                 if (p.active) Pill("Active", filled = true)
@@ -347,8 +348,11 @@ internal fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Check
     var points by remember(checkpoints) { mutableStateOf(checkpoints.sortedBy { it.date }.map { EditablePoint(it.date, kgField(it.kg)) }) }
     val parsed = points.map { p -> p.date?.let { d -> parseDecimal(p.kg)?.takeIf { it in 30.0..250.0 }?.let { Checkpoint(d, it) } } }
     val complete = parsed.filterNotNull()
-    val valid = complete.size == points.size && complete.size >= 2 && complete.map { it.date }.toSet().size == complete.size
+    val distinct = complete.size == points.size && complete.size >= 2 && complete.map { it.date }.toSet().size == complete.size
     val sorted = complete.sortedBy { it.date }
+    // Never save a plan that asks for more than the safe weekly loss on any stretch.
+    val tooSteep = sorted.zipWithNext().any { (a, b) -> (a.kg - b.kg) / (ChronoUnit.DAYS.between(a.date, b.date) / 7.0) > Safety.MAX_LOSS_KG_PER_WEEK }
+    val valid = distinct && !tooSteep
 
     FormDialog(
         title = "Planned checkpoints",
@@ -376,19 +380,36 @@ internal fun CheckpointDialog(checkpoints: List<Checkpoint>, onSave: (List<Check
             if (a != null && b != null && b.date > a.date) {
                 val rate = (a.kg - b.kg) / (ChronoUnit.DAYS.between(a.date, b.date) / 7.0)
                 Text(
-                    "↓ %.2f kg/week".format(rate),
+                    if (rate >= 0) "↓ %.2f kg/week".format(rate) else "↑ %.2f kg/week gain".format(-rate),
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (rate > Safety.UNREALISTIC_KG_PER_WEEK) Palette.Warn else Palette.Muted,
+                    color = when {
+                        rate > Safety.MAX_LOSS_KG_PER_WEEK -> Palette.Error
+                        rate > Safety.UNREALISTIC_KG_PER_WEEK -> Palette.Warn
+                        else -> Palette.Muted
+                    },
                     modifier = Modifier.padding(start = 14.dp),
                 )
             }
         }
-        if (!valid && complete.size == points.size) {
+        if (!distinct && complete.size == points.size) {
             Text("Dates must be different.", style = MaterialTheme.typography.bodySmall, color = Palette.Error)
         }
+        if (tooSteep) {
+            Text(
+                "A stretch is above the ${Safety.MAX_LOSS_KG_PER_WEEK} kg/week safety limit. Choose a later date or a higher weight.",
+                style = MaterialTheme.typography.bodySmall, color = Palette.Error,
+            )
+        }
         SecondaryButton("Add checkpoint", {
-            val last = sorted.lastOrNull()
-            points = points + EditablePoint(last?.date?.plusDays(14), last?.kg?.let(::kgField).orEmpty())
+            // Halfway between the last checkpoint and the goal, on the line between them; the goal stays last.
+            val (a, b) = sorted.takeLast(2).let { if (it.size == 2) it[0] to it[1] else null to null }
+            val mid = if (a != null && b != null) {
+                val date = a.date.plusDays(ChronoUnit.DAYS.between(a.date, b.date) / 2)
+                EditablePoint(date, kgField(Math.round((a.kg + b.kg) / 2 * 10) / 10.0))
+            } else {
+                EditablePoint(null, "")
+            }
+            points = points.toMutableList().also { it.add((points.size - 1).coerceAtLeast(0), mid) }
         })
     }
 }

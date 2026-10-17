@@ -12,6 +12,7 @@ import wt.core.model.AppData
 import wt.core.model.Defaults
 import wt.core.model.PlanRecord
 import wt.core.model.Run
+import wt.core.model.WeighInSchedule
 import wt.core.model.WeightEntry
 import java.time.LocalDate
 import kotlin.test.Test
@@ -42,6 +43,22 @@ class IoAndDashboardTest {
         val text = encodeBackup(sample, "2026-10-09T08:00+09:00")
         assertEquals(sample, decodeBackup(text))
         assertTrue(text.contains("\"format\": \"wt-tracker-backup\""))
+    }
+
+    @Test
+    fun backupKeepsTheWeighInDayAndReminder() {
+        val withSchedule = sample.copy(schedule = WeighInSchedule(weighInDay = 4, reminderEnabled = false, reminderHour = 6, reminderMinute = 45))
+        assertEquals(withSchedule, decodeBackup(encodeBackup(withSchedule, "x")))
+        // Backups from before 0.6.0 have none: restore keeps the phone's own.
+        val old = encodeBackup(sample, "x")
+        assertNull(decodeBackup(old).schedule)
+    }
+
+    @Test
+    fun backupNeedsAUsablePlan() {
+        // An active plan with one checkpoint would leave the app with nothing to draw.
+        val broken = sample.copy(plans = listOf(PlanRecord(1, "Original plan", Defaults.START, true, Defaults.planCheckpoints.take(1))))
+        assertFailsWith<IllegalArgumentException> { decodeBackup(encodeBackup(broken, "x")) }
     }
 
     @Test

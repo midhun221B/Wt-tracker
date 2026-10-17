@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,13 +73,16 @@ import kotlin.math.roundToInt
 /** The first-run setup screens (design A): welcome, today's weight, goal, weigh-in day, then the plan. */
 internal enum class SetupStep { Welcome, Weight, Goal, WeighIn, Plan }
 
-/** What setup has collected so far. The profile starts from the defaults; energy can be changed on the last step. */
+/**
+ * What setup has collected so far. The profile starts from the defaults; energy can be changed on the last step.
+ * Serializable, so a rotation or the app being stopped behind a picker doesn't send setup back to the start.
+ */
 internal data class SetupDraft(
     val kg: String = "80.0",
     val goalKg: String = "",
     val goalDate: LocalDate? = null,
     val profile: ProfileEntity = ProfileEntity.from(Defaults.profile),
-)
+) : java.io.Serializable
 
 /**
  * First-run setup, shown while there is no profile. "Start" saves the profile, today's weight and the first plan
@@ -93,8 +97,8 @@ internal fun OnboardingScreen(
     initialStep: SetupStep = SetupStep.Welcome,
     initialDraft: SetupDraft = SetupDraft(),
 ) {
-    var step by remember { mutableStateOf(initialStep) }
-    var draft by remember { mutableStateOf(initialDraft) }
+    var step by rememberSaveable { mutableStateOf(initialStep) }
+    var draft by rememberSaveable { mutableStateOf(initialDraft) }
     BackHandler(enabled = step != SetupStep.Welcome) { step = SetupStep.entries[step.ordinal - 1] }
 
     val kg = parseDecimal(draft.kg)?.takeIf { it in 30.0..250.0 }

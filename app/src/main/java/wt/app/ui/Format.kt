@@ -89,3 +89,10 @@ fun fieldText(v: Double?): String = when {
 
 /** Short bar label for a week: its Monday ("5 Oct"), or "Before" for weeks before the plan. */
 fun weekLabel(w: wt.core.summary.WeekSummary): String = if (w.index < 1) "Before" else dayMonth(w.start)
+
+/** A plan's name; older re-baselines were named with an ISO date ("Re-baseline 2026-10-17" → "Re-baseline 17 Oct"). */
+fun planLabel(label: String): String {
+    val iso = Regex("""\d{4}-\d{2}-\d{2}""").find(label) ?: return label
+    val date = runCatching { LocalDate.parse(iso.value) }.getOrNull() ?: return label
+    return label.replace(iso.value, dayMonth(date))
+}

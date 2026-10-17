@@ -73,4 +73,9 @@ data class AppData(
     val runs: List<Run>,
     val restDays: Set<LocalDate>,
     val plans: List<PlanRecord>,
+    /** Weigh-in day and reminder; null in backups made before they were saved. */
+    val schedule: WeighInSchedule? = null,
 )
+
+/** The weekly weigh-in day (ISO weekday, 1 = Monday) and the morning reminder. */
+data class WeighInSchedule(val weighInDay: Int, val reminderEnabled: Boolean, val reminderHour: Int, val reminderMinute: Int)

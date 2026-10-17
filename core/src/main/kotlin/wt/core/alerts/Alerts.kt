@@ -24,6 +24,7 @@ data class AlertSettings(
 /**
  * Dashboard alerts as of [asOf].
  * [estimatedIntake] (from the energy report) lets the slow-loss advice respect the intake floor.
+ * [measuredOn] are scale measurement days: like a weight, they count as logging for the reminder.
  */
 fun evaluateAlerts(
     weights: List<WeightEntry>,
@@ -32,6 +33,7 @@ fun evaluateAlerts(
     asOf: LocalDate,
     estimatedIntake: Double? = null,
     settings: AlertSettings = AlertSettings(),
+    measuredOn: Set<LocalDate> = emptySet(),
 ): List<Alert> {
     val alerts = mutableListOf<Alert>()
 
@@ -72,7 +74,7 @@ fun evaluateAlerts(
         )
     }
 
-    val last = weights.filter { it.date <= asOf }.maxOfOrNull { it.date }
+    val last = (weights.map { it.date } + measuredOn).filter { it <= asOf }.maxOrNull()
     val gap = last?.let { ChronoUnit.DAYS.between(it, asOf) }
     if (gap == null || gap >= settings.reminderAfterDays) {
         alerts += Alert(

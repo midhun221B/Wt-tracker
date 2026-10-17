@@ -103,7 +103,7 @@ fun buildDashboard(
         fit = fit,
         forecast = fit?.let { forecast(it, plan) },
         energy = energy,
-        alerts = evaluateAlerts(sorted, runs, restDays, asOf, energy?.estimatedIntake, alertSettings),
+        alerts = evaluateAlerts(sorted, runs, restDays, asOf, energy?.estimatedIntake, alertSettings, body.map { it.date }.toSet()),
         weekly = weeklySummary(sorted, runs, week1, asOf).reversed(),
         body = body.sortedBy { it.date },
         latestWeight = sorted.lastOrNull(),

@@ -63,8 +63,10 @@ fun RunsScreen(
 
     val dated = runs.filter { it.date != null }
     val last28 = dated.filter { it.date!! > today.minusDays(28) }
-    // Fastest pace over runs of at least 1 km, so a short sprint doesn't win.
+    // Fastest pace over runs of at least 1 km, so a short sprint doesn't win: ever (the "Fastest yet" pill) and in the
+    // last 28 days (the summary card).
     val fastest = dated.filter { it.km >= 1.0 }.minByOrNull { it.durationSec / it.km }
+    val fastest28 = last28.filter { it.km >= 1.0 }.minByOrNull { it.durationSec / it.km }
     val anchor = week1 ?: dated.minOfOrNull { it.date!! } ?: today
     val thisWeek = weekStart(today)
     val groups = dated.sortedByDescending { it.date }.groupBy { weekStart(it.date!!) }
@@ -79,7 +81,7 @@ fun RunsScreen(
                     Row(Modifier.fillMaxWidth()) {
                         SummaryFigure("Runs", "${last28.size}", Modifier.weight(1f))
                         SummaryFigure("Distance", "%.1f km".format(last28.sumOf { it.km }), Modifier.weight(1f))
-                        SummaryFigure("Fastest pace", fastest?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), if (fastest != null) Palette.Accent else Palette.Muted)
+                        SummaryFigure("Fastest pace", fastest28?.let { formatMinSec(it.durationSec / it.km) } ?: "–", Modifier.weight(1f), if (fastest28 != null) Palette.Accent else Palette.Muted)
                     }
                 }
             }

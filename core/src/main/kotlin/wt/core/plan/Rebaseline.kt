@@ -19,20 +19,26 @@ data class RebaselineResult(
     val unrealistic: Boolean,
     /** Above the 1 kg/week safety cap. */
     val exceedsSafeMax: Boolean,
+    /** The start is already at or below the goal: there is nothing to plan ([checkpoints] is empty). */
+    val goalReached: Boolean = false,
 )
 
 /**
  * Builds a new planned line from the current weight to the same goal.
- * Uses the trend weight when the fit is confident, otherwise the latest weigh-in.
+ * Uses the trend weight whenever there is a trend (the same one the Trend tab shows), otherwise the latest weigh-in.
  */
 fun rebaseline(weights: List<WeightEntry>, asOf: LocalDate, goalDate: LocalDate, goalKg: Double): RebaselineResult {
-    val fit = fitTrend(weights, asOf)?.takeUnless { it.lowConfidence }
+    val fit = fitTrend(weights, asOf)
     val latest = weights.filter { it.date <= asOf }.maxByOrNull { it.date }
         ?: throw IllegalStateException("Log a weight before re-baselining")
     val startKg = fit?.valueAt(asOf) ?: latest.kg
 
     val days = ChronoUnit.DAYS.between(asOf, goalDate)
     if (days <= 0) return RebaselineResult(startKg, fit != null, emptyList(), null, unrealistic = true, exceedsSafeMax = true)
+
+    if (startKg <= goalKg) {
+        return RebaselineResult(startKg, fit != null, emptyList(), 0.0, unrealistic = false, exceedsSafeMax = false, goalReached = true)
+    }
 
     val perDay = (startKg - goalKg) / days
     val points = mutableListOf(Checkpoint(asOf, startKg))
@@ -43,7 +49,7 @@ fun rebaseline(weights: List<WeightEntry>, asOf: LocalDate, goalDate: LocalDate,
     }
     points += Checkpoint(goalDate, goalKg)
 
-    val perWeek = (perDay * 7).coerceAtLeast(0.0)
+    val perWeek = perDay * 7
     return RebaselineResult(
         startKg = startKg,
         fromTrend = fit != null,
