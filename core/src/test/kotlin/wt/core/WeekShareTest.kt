@@ -71,13 +71,16 @@ class WeekShareTest {
     }
 
     @Test
-    fun streakCountsWeeksInARow() {
-        assertEquals(5, assertNotNull(weekShare(dashboard(), d(2, 11))).streakWeeks)
-        val gap = weights.filter { it.date != d(19) }
-        assertEquals(2, assertNotNull(weekShare(dashboard(gap), d(2, 11))).streakWeeks)
-        // A scale measurement counts as that week's weigh-in, as everywhere else in the app.
-        val scale = BodyComp(d(20), 29.0, 15.5, 60.0, 37.0, 62.4, 1815.0)
-        assertEquals(5, assertNotNull(weekShare(dashboard(gap, body = listOf(scale)), d(2, 11))).streakWeeks)
+    fun runStreakIsWeeksWithThreeRuns() {
+        // Only last week has runs: a 1-week streak, too short for the card.
+        val one = assertNotNull(weekShare(dashboard(), d(2, 11)))
+        assertEquals(1, one.runStreakWeeks)
+        assertFalse(one.caption.contains("streak"))
+        // Three runs the week before make it two; the weigh-in Monday's open week doesn't break it.
+        val more = runs + listOf(19, 21, 23).map { Run(d(it), 3.0, 1200) }
+        val two = assertNotNull(weekShare(dashboard(r = more), d(2, 11)))
+        assertEquals(2, two.runStreakWeeks)
+        assertEquals("Week 5 weigh-in: 87.5 kg (−0.4). Last week 5 runs, 15.0 km. 2-week run streak.", two.caption)
     }
 
     @Test

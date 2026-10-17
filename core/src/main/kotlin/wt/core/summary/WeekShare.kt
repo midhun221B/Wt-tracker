@@ -34,8 +34,8 @@ data class WeekShare(
     val posts: List<Checkpoint>,
     val currentPost: Checkpoint,
     val weighIns: List<WeightEntry>,
-    /** Monday–Sunday weeks in a row, up to [date]'s week, with a weigh-in (a scale measurement counts too). */
-    val streakWeeks: Int,
+    /** The run streak on [date] ([runWeekStreak]): weeks in a row with 3+ runs. The card shows it from 2 weeks. */
+    val runStreakWeeks: Int,
     val planMarkerKg: Double?,
     val kgRange: ClosedFloatingPointRange<Double>,
     val strip: List<DayDistance>,
@@ -58,8 +58,8 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
     val posts = (0 until totalWeeks).map { firstMonday.plusWeeks(it.toLong()) }.map { Checkpoint(it, plan.at(it)) }
     val weighIns = dashboard.weights.filter { it.date in plan.start.date..date }
         .groupBy { weekStart(it.date) }.values.map { week -> week.maxBy { it.date } }.sortedBy { it.date }
-    val weighedWeeks = (dashboard.weights.map { it.date } + dashboard.body.map { it.date }).filter { it <= date }.map { weekStart(it) }.toSet()
-    val streak = generateSequence(weekStart(date)) { it.minusWeeks(1) }.takeWhile { it in weighedWeeks }.count()
+    val runDates = dashboard.distance.flatMap { w -> w.days.flatMap { day -> List(day.runs) { day.date } } }
+    val streak = runWeekStreak(runDates, date).weeks
     // The shared weigh-in is always in range, even when it predates a re-baselined plan's start.
     val kgs = weighIns.map { it.kg } + p.kg
     val wait = trendWait(dashboard.weights, date)
@@ -86,19 +86,19 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         posts = posts,
         currentPost = Checkpoint(weekStart(date), plan.at(weekStart(date))),
         weighIns = weighIns,
-        streakWeeks = streak,
+        runStreakWeeks = streak,
         planMarkerKg = if (trendReady) plan.at(date) else null,
         kgRange = minOf(plan.goal.kg, kgs.min())..maxOf(plan.start.kg, kgs.max()),
         strip = stripWeek.days,
         stripIsLastWeek = lastWeek != null,
         runs = runs,
         km = stripWeek.km,
-        caption = shareCaption(if (week > totalWeeks) "Goal week" else "Week $week", p.kg, p.changeKg, lastWeek != null, runs, stripWeek.km),
+        caption = shareCaption(if (week > totalWeeks) "Goal week" else "Week $week", p.kg, p.changeKg, lastWeek != null, runs, stripWeek.km, streak),
     )
 }
 
-/** "Week 5 weigh-in: 87.5 kg (−0.4). Last week 5 runs, 15.0 km." Always with a decimal point, whatever the locale. */
-private fun shareCaption(week: String, kg: Double, changeKg: Double?, lastWeek: Boolean, runs: Int, km: Double): String {
+/** "Week 5 weigh-in: 87.5 kg (−0.4). Last week 5 runs, 15.0 km. 4-week run streak." Always with a decimal point, whatever the locale. */
+private fun shareCaption(week: String, kg: Double, changeKg: Double?, lastWeek: Boolean, runs: Int, km: Double, streak: Int): String {
     fun one(v: Double) = String.format(Locale.ROOT, "%.1f", v)
     val change = changeKg?.let {
         val tenths = (it * 10).roundToLong()
@@ -114,5 +114,6 @@ private fun shareCaption(week: String, kg: Double, changeKg: Double?, lastWeek: 
         1 -> "1 run, ${one(km)} km"
         else -> "$runs runs, ${one(km)} km"
     }
-    return "$week weigh-in: ${one(kg)} kg$change. ${if (lastWeek) "Last week" else "This week"} $ran."
+    val streakText = if (streak >= 2) " $streak-week run streak." else ""
+    return "$week weigh-in: ${one(kg)} kg$change. ${if (lastWeek) "Last week" else "This week"} $ran.$streakText"
 }
