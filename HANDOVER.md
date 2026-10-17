@@ -43,13 +43,14 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#27](https://github.com/midhun221B/Wt-tracker/pull/27) | First-run setup (onboarding A: welcome or restore, weight, goal with kg/week check, weigh-in day and reminder, plan; `startPlan`, `firstPlan`) instead of seed data; rest-day moon (`RestMark`); Trend "Distance" strip and "Every day" calendar (`dailyDistance`, `distanceSpan`); chart kg-axis step and projection clamp; no trend before two weeks of weigh-ins (`trendWait`); CI emulator smoke test (`emulator-latest`); version 0.4.0 (`v0.4.0` release) |
 | [#28](https://github.com/midhun221B/Wt-tracker/pull/28) | One Distance card on Trend (2 weeks bars with tap-for-details, Month calendar circles, All time weekly columns; `distanceMonth`, `allTimeDistance`); "Every week" ring on Runs; version 0.4.1 (`v0.4.1` release) |
 | [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
+| [#30](https://github.com/midhun221B/Wt-tracker/pull/30) | Partner share card: "Share with partner" on Weigh-in saved and a share icon on Trend's top bar open a preview of a picture card (goal ring with the scale kg, weigh-in streak, downhill plan trail with one weigh-in per week and the plan marker, last week's run strip) and Send opens the share menu (WhatsApp) with the PNG and a caption (`weekShare`, `ShareCard`, `Share.kt`, FileProvider); spec and plan in `docs/superpowers/`; version 0.5.0 (`v0.5.0` release) |
 
 ### Not merged
 - Nothing.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
-- **Today:** one running card (today's run, add run, rest day shown as a blue-grey moon, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight; otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
+- **Today:** one running card (today's run, add run, rest day shown as a blue-grey moon, week numbers); while the week's weigh-in is due, the weigh-in card (drag ruler in 0.1 kg steps with plan and last-week marks, typing, or scale screenshot), weight only, then a "Weigh-in saved" card with the goal ring filling to the new weight and "Share with partner" (picture card + caption through the share menu); otherwise a one-line "Next weigh-in" card (tap to change the day; "Edit" opens the week's logged entry).
 - **Dashboard ("Trend", program week in the top bar's small line):**
   - Progress ring and planned vs realistic chart (7-day average, Theil–Sen fit over 21 days or 42 days for weekly weigh-ins, 80 % band; no trend until the weigh-ins span two weeks, "Trend from …").
   - Forecast for the goal date and the goal-weight ETA, gap vs plan.
@@ -89,7 +90,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - only Strava's English date format has been tested
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
+4. **View-only partner app** (planned; the share card shipped in v0.5.0): my partner (Android) installs the app in a read-only mode that follows my data, e.g. through a shared Google Drive file.
+5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
+
 ## Product decisions
+- **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
 - **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.
 - **First-run setup instead of seed data** (2026-10-10): a fresh install asks for today's weight, the goal, the weigh-in day and the reminder (design A, step by step), or restores a backup. Energy settings start from the defaults and can be changed on the last step or later in Plan.

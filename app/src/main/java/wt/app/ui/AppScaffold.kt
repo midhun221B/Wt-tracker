@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,6 +59,8 @@ import wt.app.notify.Reminder
 import kotlinx.coroutines.delay
 import wt.core.model.todayInTokyo
 import wt.core.summary.weekStart
+import wt.core.summary.WeekShare
+import wt.core.summary.weekShare
 import wt.core.io.BodyReading
 import wt.core.io.RunReading
 
@@ -76,6 +79,9 @@ fun AppScaffold(vm: AppViewModel) {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.LOG) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    // The partner card being previewed from Trend's share icon, if any.
+    var sharing by remember { mutableStateOf<WeekShare?>(null) }
+    sharing?.let { ShareDialog(it) { sharing = null } }
     val snackbar = remember { SnackbarHostState() }
     var notificationsAllowed by remember { mutableStateOf(Reminder.hasPermission(context)) }
 
@@ -174,6 +180,18 @@ fun AppScaffold(vm: AppViewModel) {
                     if (settingsOpen) IconButton(onClick = { settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
                 actions = {
+                    // Trend: share the card for the latest weigh-in, any day (not only right after saving it).
+                    val share = if (!settingsOpen && tab == Tab.DASHBOARD && s != null) {
+                        s.dashboard.latestWeight?.let { w -> weekShare(s.dashboard, w.date) }
+                    } else null
+                    if (share != null) {
+                        FilledIconButton(
+                            onClick = { sharing = share },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.Card, contentColor = Palette.Text),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) { Icon(Icons.Default.Share, "Share with partner") }
+                    }
                     if (!settingsOpen) {
                         FilledIconButton(
                             onClick = { settingsOpen = true },

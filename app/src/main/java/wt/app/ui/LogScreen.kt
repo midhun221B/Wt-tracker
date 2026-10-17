@@ -14,6 +14,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.BorderStroke
+import wt.core.summary.WeekShare
+import wt.core.summary.weekShare
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
@@ -101,6 +106,8 @@ fun LogScreen(
     // The "Weigh-in saved" card belongs to the day it was saved on; moving to another day closes it.
     LaunchedEffect(date) { if (savedWeighIn != null && savedWeighIn != date) onSavedSeen() }
     var showRunDialog by remember { mutableStateOf(false) }
+    // The partner card being previewed, if any.
+    var sharing by remember { mutableStateOf<WeekShare?>(null) }
     var editingBody by remember { mutableStateOf<BodyCompEntity?>(null) }
     val existing = state.weights.firstOrNull { it.date == date }
     val weighInDay = DayOfWeek.of(state.profile.weighInDay.coerceIn(1, 7))
@@ -214,7 +221,12 @@ fun LogScreen(
             }
         } else if (savedWeighIn == date && existing != null) {
             weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg, planned)?.let { p ->
-                WeighInSavedCard(p, goalKg = state.dashboard.plan.goal.kg, onEdit = { onSavedSeen(); weighInFor = date })
+                // The card for my partner; null (no button) if the dashboard doesn't have this weigh-in yet.
+                val share = remember(state.dashboard, date) { weekShare(state.dashboard, date) }
+                WeighInSavedCard(
+                    p, goalKg = state.dashboard.plan.goal.kg, onEdit = { onSavedSeen(); weighInFor = date },
+                    onShare = share?.let { { sharing = it } },
+                )
             }
         } else {
             NextWeighInCard(
@@ -261,6 +273,8 @@ fun LogScreen(
         Disclaimer()
     }
 
+    sharing?.let { ShareDialog(it) { sharing = null } }
+
     if (showRunDialog) {
         RunDialog(
             initial = null,
@@ -289,7 +303,7 @@ fun LogScreen(
  * new one, with the change since then and the gap to the plan. "Edit" reopens the weigh-in card.
  */
 @Composable
-private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> Unit) {
+private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> Unit, onShare: (() -> Unit)? = null) {
     val reduceMotion = rememberReduceMotion()
     val ring = remember(p.kg) { Animatable(if (reduceMotion) p.goal.fraction.toFloat() else p.previousFraction.toFloat()) }
     LaunchedEffect(ring) {
@@ -340,6 +354,17 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
             )
+            onShare?.let {
+                OutlinedButton(
+                    onClick = it,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Palette.Accent),
+                ) {
+                    Icon(Icons.Default.Share, null, Modifier.size(18.dp), tint = Palette.Accent)
+                    Text("Share with partner", Modifier.padding(start = 8.dp), color = Palette.Accent, fontWeight = FontWeight.SemiBold)
+                }
+            }
             TextButton(onClick = onEdit) { Text("Edit", color = Palette.Muted) }
         }
     }
