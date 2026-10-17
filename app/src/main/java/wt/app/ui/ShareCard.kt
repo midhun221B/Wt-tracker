@@ -86,6 +86,9 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(s.headline, style = numberStyle(28.sp, Palette.Text))
                 Text("Weigh-in · ${shortDay(s.date)}", fontSize = 13.sp, color = Palette.Muted)
+                if (s.streakWeeks >= 2) {
+                    Text("${s.streakWeeks}-week weigh-in streak", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Accent)
+                }
             }
         }
 
@@ -188,17 +191,20 @@ private fun Trail(s: WeekShare) {
             val current = p.date == s.currentPost.date
             val px = x(p.date)
             val py = y(p.kg)
-            drawLine(if (current) Palette.Accent else Palette.CardHigh, Offset(px, py + 2.dp.toPx()), Offset(px, py + 8.dp.toPx()), (if (current) 2.5 else 2.0).dp.toPx(), StrokeCap.Round)
+            drawLine(if (current) Palette.Accent else Palette.Muted.copy(alpha = 0.45f), Offset(px, py + 2.dp.toPx()), Offset(px, py + 8.dp.toPx()), (if (current) 2.5 else 2.0).dp.toPx(), StrokeCap.Round)
         }
 
         val mine = s.weighIns.map { Offset(x(it.date), y(it.kg)) }
+        val you = mine.lastOrNull() ?: Offset(x(s.date), y(s.kg))
         if (mine.size > 1) {
             drawPath(
                 Path().apply { mine.forEachIndexed { i, o -> if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y) } },
                 Palette.Accent, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
         }
-        drawCircle(Palette.Text, 3.5.dp.toPx(), Offset(x(start.date), y(start.kg)))
+        // The start dot hides under "You" in the first weeks rather than peeking out beside it.
+        val startDot = Offset(x(start.date), y(start.kg))
+        if ((you - startDot).getDistance() > 16.dp.toPx()) drawCircle(Palette.Text, 3.5.dp.toPx(), startDot)
 
         s.planMarkerKg?.let { kg ->
             val o = Offset(x(s.date), y(kg))
@@ -207,7 +213,6 @@ private fun Trail(s: WeekShare) {
             drawText(measurer, "plan ${"%.1f".format(kg)}", Offset(o.x + 9.dp.toPx(), o.y - 7.dp.toPx()), label)
         }
 
-        val you = mine.lastOrNull() ?: Offset(x(s.date), y(s.kg))
         drawCircle(Palette.Accent, 7.dp.toPx(), you)
         drawCircle(Palette.Text, 7.dp.toPx(), you, style = Stroke(2.5.dp.toPx()))
 

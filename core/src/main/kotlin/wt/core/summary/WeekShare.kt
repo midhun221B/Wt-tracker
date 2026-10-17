@@ -13,7 +13,7 @@ import kotlin.math.roundToLong
  * Everything the partner share card shows for the weigh-in on [date].
  *
  * - The trail is the active plan ([trail]) with a post on the Monday of each program week ([posts]); my weigh-ins
- *   since the plan start ([weighIns]) run beside it. [kgRange] covers both, so a weight above the start still fits.
+ *   since the plan start ([weighIns], each week's last one, so extra weigh-ins don't zigzag) run beside it. [kgRange] covers both, so a weight above the start still fits.
  * - [planMarkerKg] is the planned weight on [date], shown only once the trend wait is over (three weigh-ins over two
  *   weeks), the same moment the Trend tab starts showing over/under plan.
  * - The strip is the Monday–Sunday week before [date]'s week ([stripIsLastWeek]), or [date]'s own week when there
@@ -34,6 +34,8 @@ data class WeekShare(
     val posts: List<Checkpoint>,
     val currentPost: Checkpoint,
     val weighIns: List<WeightEntry>,
+    /** Monday–Sunday weeks in a row, up to [date]'s week, with a weigh-in (a scale measurement counts too). */
+    val streakWeeks: Int,
     val planMarkerKg: Double?,
     val kgRange: ClosedFloatingPointRange<Double>,
     val strip: List<DayDistance>,
@@ -51,7 +53,10 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
     val totalWeeks = dashboard.programWeek().second
     val firstMonday = weekStart(dashboard.week1)
     val posts = (0 until totalWeeks).map { firstMonday.plusWeeks(it.toLong()) }.map { Checkpoint(it, plan.at(it)) }
-    val weighIns = dashboard.weights.filter { it.date in plan.start.date..date }.sortedBy { it.date }
+    val weighIns = dashboard.weights.filter { it.date in plan.start.date..date }
+        .groupBy { weekStart(it.date) }.values.map { week -> week.maxBy { it.date } }.sortedBy { it.date }
+    val weighedWeeks = (dashboard.weights.map { it.date } + dashboard.body.map { it.date }).filter { it <= date }.map { weekStart(it) }.toSet()
+    val streak = generateSequence(weekStart(date)) { it.minusWeeks(1) }.takeWhile { it in weighedWeeks }.count()
     // The shared weigh-in is always in range, even when it predates a re-baselined plan's start.
     val kgs = weighIns.map { it.kg } + p.kg
     val wait = trendWait(dashboard.weights, date)
@@ -78,6 +83,7 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         posts = posts,
         currentPost = Checkpoint(weekStart(date), plan.at(weekStart(date))),
         weighIns = weighIns,
+        streakWeeks = streak,
         planMarkerKg = if (trendReady) plan.at(date) else null,
         kgRange = minOf(plan.goal.kg, kgs.min())..maxOf(plan.start.kg, kgs.max()),
         strip = stripWeek.days,

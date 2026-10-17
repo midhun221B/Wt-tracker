@@ -2,6 +2,7 @@ package wt.core
 
 import wt.core.dashboard.Dashboard
 import wt.core.dashboard.buildDashboard
+import wt.core.model.BodyComp
 import wt.core.model.Checkpoint
 import wt.core.model.Defaults
 import wt.core.model.Run
@@ -32,7 +33,8 @@ class WeekShareTest {
         r: List<Run> = runs,
         asOf: LocalDate = d(2, 11),
         checkpoints: List<Checkpoint> = Defaults.planCheckpoints,
-    ): Dashboard = buildDashboard(w, r, setOf(d(28)), emptyList(), checkpoints, Defaults.profile, asOf)
+        body: List<BodyComp> = emptyList(),
+    ): Dashboard = buildDashboard(w, r, setOf(d(28)), body, checkpoints, Defaults.profile, asOf)
 
     @Test
     fun weekFiveCard() {
@@ -58,6 +60,24 @@ class WeekShareTest {
         assertEquals(d(2, 11), s.currentPost.date)
         assertEquals(14, s.posts.size)
         assertEquals(dash.plan.checkpoints, s.trail)
+    }
+
+    @Test
+    fun trailHasOneWeighInPerWeek() {
+        // Extra weigh-ins a few days apart would zigzag at the start of a 13-week trail: keep each week's last.
+        val w = listOf(WeightEntry(d(8), 88.6), WeightEntry(d(12), 88.4), WeightEntry(d(14), 88.5), WeightEntry(d(16), 88.3))
+        val s = assertNotNull(weekShare(dashboard(w, emptyList(), d(16)), d(16)))
+        assertEquals(listOf(d(8), d(16)), s.weighIns.map { it.date })
+    }
+
+    @Test
+    fun streakCountsWeeksInARow() {
+        assertEquals(5, assertNotNull(weekShare(dashboard(), d(2, 11))).streakWeeks)
+        val gap = weights.filter { it.date != d(19) }
+        assertEquals(2, assertNotNull(weekShare(dashboard(gap), d(2, 11))).streakWeeks)
+        // A scale measurement counts as that week's weigh-in, as everywhere else in the app.
+        val scale = BodyComp(d(20), 29.0, 15.5, 60.0, 37.0, 62.4, 1815.0)
+        assertEquals(5, assertNotNull(weekShare(dashboard(gap, body = listOf(scale)), d(2, 11))).streakWeeks)
     }
 
     @Test

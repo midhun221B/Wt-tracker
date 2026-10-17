@@ -22,12 +22,14 @@ One portrait image, 360 × 450 dp (about 1080 × 1350 px), in the "B orange" dar
    - Inside the ring: the scale weight ("87.5") and "kg on the scale". (The change since the previous weigh-in is in the
      caption only; the "−0.4 kg since …" pill was removed from the picture on 2026-10-17.)
    - Beside the ring: "Week 5 of 14" (`Dashboard.programWeek()`) and "Weigh-in · Mon, 2 Nov".
+     Under them, from 2 weeks on, "5-week weigh-in streak" (weeks in a row with a weigh-in or scale measurement).
 2. **Downhill trail**
    - Label row: "Downhill to 82 kg" on the left, "9 weeks to go" on the right (total weeks − current week).
    - The plan as a trail: a dashed blue-grey line through the active plan's checkpoints, start kg at the top left
      ("88.3"), falling to a white flag at the bottom right ("82 kg · 7 Jan"), on a darker hillside fill.
    - A small post on the trail for each program week; this week's post is orange.
-   - My weigh-ins since the plan start as a solid orange line, ending in an orange dot labelled "You · 87.5".
+   - My weigh-ins since the plan start as a solid orange line, one point per week (that week's last weigh-in), ending
+     in an orange dot labelled "You · 87.5". The white start dot hides while "You" sits on top of it.
    - A dashed blue-grey "plan 86.6" marker on the trail at today's date. It appears only once the weigh-ins span two
      weeks (the same moment the Trend tab starts showing over/under plan, see `trendWait`), so early cards don't have it.
    - Planned and mine stay apart by dash and lightness, not hue alone.
