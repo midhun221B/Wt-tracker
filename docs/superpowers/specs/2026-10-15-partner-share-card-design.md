@@ -19,8 +19,8 @@ One portrait image, 360 × 450 dp (about 1080 × 1350 px), in the "B orange" dar
 
 1. **Ring and week**
    - Goal ring (`GoalProgress.fraction`, the same trend-based progress as Trend and "Weigh-in saved").
-   - Inside the ring: the scale weight ("87.5"), "kg on the scale", and a small orange pill with the change since the
-     previous weigh-in and its date ("−0.4 kg since 26 Oct"; "+0.3 kg since …" when up). No pill on the first weigh-in.
+   - Inside the ring: the scale weight ("87.5") and "kg on the scale". (The change since the previous weigh-in is in the
+     caption only; the "−0.4 kg since …" pill was removed from the picture on 2026-10-17.)
    - Beside the ring: "Week 5 of 14" (`Dashboard.programWeek()`) and "Weigh-in · Mon, 2 Nov".
 2. **Downhill trail**
    - Label row: "Downhill to 82 kg" on the left, "9 weeks to go" on the right (total weeks − current week).

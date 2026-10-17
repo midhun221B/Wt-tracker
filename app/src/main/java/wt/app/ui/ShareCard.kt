@@ -63,7 +63,6 @@ import java.time.LocalDate
 import java.time.format.TextStyle as DayStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
-import kotlin.math.abs
 
 /**
  * The picture sent to my partner after a weigh-in (360 × 450 dp): the goal ring with the scale weight, the plan as a
@@ -82,16 +81,6 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.1f".format(s.kg), style = numberStyle(38.sp, Palette.Text))
                     Text("kg on the scale", fontSize = 10.sp, color = Palette.Muted)
-                    val change = s.changeKg
-                    val since = s.previousDate
-                    if (change != null && since != null) {
-                        Text(
-                            "${signedTenth(change)} kg since ${dayMonth(since)}",
-                            Modifier.padding(top = 4.dp).clip(RoundedCornerShape(50)).background(Palette.Accent.copy(alpha = 0.16f))
-                                .padding(horizontal = 7.dp, vertical = 2.dp),
-                            fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Palette.Accent, maxLines = 1,
-                        )
-                    }
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -242,13 +231,6 @@ private fun Trail(s: WeekShare) {
         val goalText = measurer.measure("${plainKg(goal.kg)} kg · ${dayMonth(goal.date)}", strong)
         drawText(goalText, topLeft = Offset(flagX - 4.dp.toPx() - goalText.size.width, size.height - goalText.size.height - 2.dp.toPx()))
     }
-}
-
-/** "−0.4", "+0.3" or "0.0": one decimal with a real minus sign. */
-private fun signedTenth(v: Double): String {
-    val tenths = Math.round(v * 10)
-    val sign = if (tenths < 0) "−" else if (tenths > 0) "+" else ""
-    return sign + "%.1f".format(abs(tenths) / 10.0)
 }
 
 /**
