@@ -11,7 +11,7 @@ unless I tap Send.
 
 Out of scope for now:
 - A view-only app for my partner that stays in sync (planned later; they use Android).
-- Sharing from other screens (Trend, Today), automatic sending, or a card for any day other than the weigh-in.
+- Automatic sending.
 
 ## The card
 
@@ -48,6 +48,7 @@ All text in sentence case. Numbers use one decimal ("15.0 km", "87.5 kg").
 ## Flow
 
 1. The "Weigh-in saved" card on Today gets a **Share with partner** button (≥ 44 dp, under the plan line, above Edit).
+   Trend's top bar also has a share icon (next to Settings) for the latest weigh-in, any day.
 2. It opens a preview dialog with the card at full width, and **Send** / **Cancel**.
 3. **Send** captures the card as drawn (Compose graphics layer → bitmap → PNG in `cacheDir/share/`, overwritten each
    time), then opens Android's share menu: `ACTION_SEND`, type `image/png`, the image through a `FileProvider`,
