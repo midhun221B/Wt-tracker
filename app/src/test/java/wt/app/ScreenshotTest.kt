@@ -51,6 +51,8 @@ import wt.core.dashboard.buildDashboard
 import wt.core.model.Defaults
 import wt.core.model.WeightEntry
 import wt.core.summary.weekShare
+import wt.core.summary.BodyMetric
+import wt.core.summary.bodyMetrics
 import java.io.File
 import java.time.LocalDate
 import java.util.Random
@@ -226,12 +228,28 @@ class ScreenshotTest {
     }
 
     @Test fun freshBody() = shoot("9d-fresh-body") {
-        BodyScreen(emptyList(), Defaults.START, {}, {}, onScreenshot = {}, weighInDay = 1, weightDates = listOf(Defaults.START))
+        val f = freshState()
+        BodyScreen(
+            emptyList(), Defaults.START, {}, {}, onScreenshot = {}, weighInDay = 1, weightDates = listOf(Defaults.START),
+            metrics = bodyMetrics(f.dashboard.weights, f.dashboard.body, f.profile.heightCm),
+        )
     }
 
     @Test fun freshPlan() = shoot("9e-fresh-plan") { PlanScreen(freshState(), {}, {}, {}) }
 
-    @Test fun body() = shoot("5-body") { BodyScreen(sampleState().body, today, {}, {}, onScreenshot = {}) }
+    @Test fun body() = shoot("5-body") {
+        val s = sampleState()
+        BodyScreen(s.body, today, {}, {}, onScreenshot = {}, metrics = bodyMetrics(s.dashboard.weights, s.dashboard.body, s.profile.heightCm))
+    }
+
+    // Body fat picked from its stat card, and the measurement log opened at the end.
+    @Test fun bodyFatAndLog() = shoot("5b-body-fat-log") {
+        val s = sampleState()
+        BodyScreen(
+            s.body, today, {}, {}, onScreenshot = {}, metrics = bodyMetrics(s.dashboard.weights, s.dashboard.body, s.profile.heightCm),
+            initialMetric = BodyMetric.BodyFat, logInitiallyOpen = true,
+        )
+    }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
 

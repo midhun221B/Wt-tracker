@@ -61,6 +61,7 @@ import wt.core.model.todayInTokyo
 import wt.core.summary.weekStart
 import wt.core.summary.WeekShare
 import wt.core.summary.weekShare
+import wt.core.summary.bodyMetrics
 import wt.core.io.BodyReading
 import wt.core.io.RunReading
 
@@ -276,7 +277,8 @@ fun AppScaffold(vm: AppViewModel) {
                 onScreenshot = pickScreenshot,
                 allTime = s.dashboard.allTime(),
             )
-            Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot, weighInDay = s.profile.weighInDay, weightDates = s.weights.map { it.date })
+            Tab.BODY -> BodyScreen(s.body, s.today, vm::saveBody, vm::deleteBody, modifier, onScreenshot = pickScreenshot, weighInDay = s.profile.weighInDay, weightDates = s.weights.map { it.date },
+                metrics = bodyMetrics(s.dashboard.weights, s.dashboard.body, s.profile.heightCm))
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
         }
     }

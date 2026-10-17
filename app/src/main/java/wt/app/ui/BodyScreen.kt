@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,21 +21,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import wt.app.chart.MiniLineChart
 import wt.app.data.BodyCompEntity
 import wt.core.io.BodyReading
+import wt.core.summary.BodyMetric
+import wt.core.summary.MetricSeries
 import wt.core.summary.WeighInStatus
 import wt.core.summary.weighInStatus
 import java.time.LocalDate
 
 /**
- * Body-scale measurements: the next weekly measurement (same morning as the weigh-in) with a scale-screenshot
- * import, change tiles, fat, visceral and muscle trends, and the entries.
+ * Body: the next weekly measurement (same morning as the weigh-in) with a scale-screenshot import, a big chart of
+ * the chosen measure, a stat card per measure (weight, BMI, body fat, visceral fat, muscle) that picks the chart, and
+ * every measurement in a folded log at the end.
  */
 @Composable
 fun BodyScreen(
@@ -48,7 +50,12 @@ fun BodyScreen(
     onScreenshot: (() -> Unit)? = null,
     weighInDay: Int = 1,
     weightDates: List<LocalDate> = emptyList(),
+    metrics: List<MetricSeries> = emptyList(),
+    initialMetric: BodyMetric = BodyMetric.Weight,
+    logInitiallyOpen: Boolean = false,
 ) {
+    // The measure shown in the big chart; tapping a stat card below switches it.
+    var chosen by rememberSaveable { mutableStateOf(initialMetric) }
     var editing by remember { mutableStateOf<BodyCompEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
     val sorted = body.sortedBy { it.date }
@@ -73,47 +80,29 @@ fun BodyScreen(
                     )
                 }
             }
+            if (metrics.isNotEmpty()) {
+                item { BodyChartCard(metrics.firstOrNull { it.metric == chosen } ?: metrics.first()) }
+                item {
+                    Text("Tap a measure to chart it", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(start = 4.dp))
+                }
+                items(metrics, key = { it.metric.name }) { m -> MetricCard(m, selected = m.metric == chosen) { chosen = m.metric } }
+            }
+            // Every measurement, newest first, folded away by default.
             if (sorted.isNotEmpty()) item {
-                val first = sorted.first()
-                val last = sorted.last()
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ChangeTile("Body fat", "%.1f%%".format(last.fatPct), last.fatPct - first.fatPct, "%+.1f", Modifier.weight(1f))
-                        ChangeTile("Visceral", "%.1f".format(last.visceral), last.visceral - first.visceral, "%+.1f", Modifier.weight(1f))
-                        // Muscle going down is the one change to watch, so it shows amber.
-                        ChangeTile("Muscle", "%.1f".format(last.muscleKg), last.muscleKg - first.muscleKg, "%+.1f kg", Modifier.weight(1f), lowerIsBetter = false)
-                    }
-                    if (sorted.size >= 2) {
-                        Text(
-                            "Change since ${dayMonth(first.date)}. Losing fat while keeping muscle is the goal.",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Palette.Muted,
-                            modifier = Modifier.padding(horizontal = 4.dp),
-                        )
-                    }
+                CollapsibleSection(
+                    "Measurements",
+                    "${sorted.size} ${if (sorted.size == 1) "entry" else "entries"} · latest ${dayMonth(sorted.last().date)}",
+                    initiallyExpanded = logInitiallyOpen,
+                ) {
+                    sorted.asReversed().forEach { entry -> MeasurementCard(entry) { editing = entry } }
                 }
             }
-            if (sorted.size >= 2) {
-                item {
-                    SectionCard("Body fat", trailing = "%.1f → %.1f%%".format(sorted.first().fatPct, sorted.last().fatPct)) {
-                        MiniLineChart(sorted.map { it.date to it.fatPct }, Palette.Accent, Modifier.fillMaxWidth().height(110.dp), fill = true)
-                    }
-                }
-                item {
-                    SectionCard("Visceral fat", trailing = "%.1f → %.1f".format(sorted.first().visceral, sorted.last().visceral)) {
-                        MiniLineChart(sorted.map { it.date to it.visceral }, Palette.Planned, Modifier.fillMaxWidth().height(110.dp))
-                    }
-                }
-                item {
-                    SectionCard("Muscle", trailing = "%.1f → %.1f kg".format(sorted.first().muscleKg, sorted.last().muscleKg)) {
-                        MiniLineChart(sorted.map { it.date to it.muscleKg }, Palette.Text, Modifier.fillMaxWidth().height(110.dp))
-                    }
-                }
+            item {
+                Text(
+                    "Losing fat while keeping muscle is the goal. Estimates, not medical advice.",
+                    style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(horizontal = 4.dp),
+                )
             }
-            if (sorted.isNotEmpty()) item {
-                Text("Measurements", style = MaterialTheme.typography.labelLarge, color = Palette.Muted, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
-            }
-            items(sorted.asReversed(), key = { it.date.toString() }) { entry -> MeasurementCard(entry) { editing = entry } }
         }
     }
 
@@ -181,30 +170,14 @@ private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, toda
     }
 }
 
-/** Latest value with its change since the first measurement; good changes in orange, bad in amber. */
-@Composable
-private fun ChangeTile(label: String, value: String, change: Double, changeFormat: String, modifier: Modifier, lowerIsBetter: Boolean = true) {
-    val good = if (lowerIsBetter) change <= 0 else change >= 0
-    Card(
-        modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
-    ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
-            Text(value, style = numberStyle(28.sp))
-            Text(changeFormat.format(change), style = MaterialTheme.typography.labelMedium, color = if (good) Palette.Accent else Palette.Warn)
-        }
-    }
-}
-
 @Composable
 private fun MeasurementCard(entry: BodyCompEntity, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
+        // Sits inside the Measurements section, so it uses the page colour to stand apart.
+        colors = CardDefaults.cardColors(containerColor = Palette.Background, contentColor = Palette.Text),
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(longDay(entry.date), style = MaterialTheme.typography.titleSmall)

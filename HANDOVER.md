@@ -46,7 +46,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#30](https://github.com/midhun221B/Wt-tracker/pull/30) | Partner share card: "Share with partner" on Weigh-in saved and a share icon on Trend's top bar open a preview of a picture card (goal ring with the scale kg, weigh-in streak, downhill plan trail with one weigh-in per week and the plan marker, last week's run strip) and Send opens the share menu (WhatsApp) with the PNG and a caption (`weekShare`, `ShareCard`, `Share.kt`, FileProvider); spec and plan in `docs/superpowers/`; version 0.5.0 (`v0.5.0` release) |
 
 ### Not merged
-- Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a` (v0.6.0): Body tab redesign (mix of A and C on https://claude.ai/artifact/NzDEs9Ro5PyYyJyrUSnwRh): a big chart for the chosen measure (latest value, change, smooth filled curve with dots, min/max scale, min/max/average) and a stat card per measure underneath (Weight, BMI, Body fat, Visceral fat, Muscle: icon, first → latest, mini chart, change) that picks the chart; every measurement in a folded "Measurements" log at the end. Weight and BMI (from the 170 cm height) use each week's last weigh-in. Core `bodyMetrics` (tests in `BodyMetricsTest`); app `BodyCharts.kt`.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -60,7 +60,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Screenshot import:** buttons inside the "Add run" and "Add measurement" forms, and "Fill from a scale screenshot" on the Today weigh-in card.
   Reads a Strava share image or the body-scale app screen on the phone and opens a pre-filled confirm dialog.
 - **Runs:** "Last 28 days" summary (runs, distance, fastest pace), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
-- **Body:** body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR).
+- **Body:** a big chart of the chosen measure and stat cards for weight, BMI, body fat, visceral fat and muscle (tap to chart); body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR) in a folded log.
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
 - **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
 
