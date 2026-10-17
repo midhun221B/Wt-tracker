@@ -65,6 +65,7 @@ import wt.core.model.todayInTokyo
 import wt.core.summary.weekStart
 import wt.core.summary.WeekShare
 import wt.core.summary.weekShare
+import wt.core.summary.weekHeadline
 import wt.core.summary.bodyMetrics
 import wt.core.io.BodyReading
 import wt.core.io.RunReading
