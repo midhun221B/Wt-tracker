@@ -299,7 +299,7 @@ class ScreenshotTest {
 
     // Partner sharing card on my phone: off, on, waiting, needs sign-in, file removed.
     private val sharingNow = 1_793_000_000_000L
-    private fun sharingOn(error: wt.app.share.ShareError? = null) = wt.app.ui.AppViewModel.SharingState(
+    private fun sharingState(error: wt.app.share.ShareError? = null) = wt.app.ui.AppViewModel.SharingState(
         on = true, name = "Midhun", link = "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012345/view?usp=sharing",
         lastUploadMillis = sharingNow - 5 * 60_000, error = error,
     )
@@ -313,13 +313,13 @@ class ScreenshotTest {
 
     @Test fun sharingOff() = shoot("12a-sharing-off") { SharingCard(wt.app.ui.AppViewModel.SharingState()) }
 
-    @Test fun sharingOn() = shoot("12b-sharing-on") { SharingCard(sharingOn()) }
+    @Test fun sharingOn() = shoot("12b-sharing-on") { SharingCard(sharingState()) }
 
-    @Test fun sharingWaiting() = shoot("12c-sharing-waiting") { SharingCard(sharingOn(wt.app.share.ShareError.Offline)) }
+    @Test fun sharingWaiting() = shoot("12c-sharing-waiting") { SharingCard(sharingState(wt.app.share.ShareError.Offline)) }
 
-    @Test fun sharingSignIn() = shoot("12d-sharing-sign-in") { SharingCard(sharingOn(wt.app.share.ShareError.NeedsSignIn)) }
+    @Test fun sharingSignIn() = shoot("12d-sharing-sign-in") { SharingCard(sharingState(wt.app.share.ShareError.NeedsSignIn)) }
 
-    @Test fun sharingRemoved() = shoot("12e-sharing-removed") { SharingCard(sharingOn(wt.app.share.ShareError.FileRemoved)) }
+    @Test fun sharingRemoved() = shoot("12e-sharing-removed") { SharingCard(sharingState(wt.app.share.ShareError.FileRemoved)) }
 
     @Test fun shareLinkMessage() {
         kotlin.test.assertEquals(
