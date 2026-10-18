@@ -88,7 +88,7 @@ fun RunsScreen(
             if (allTime != null && dated.isNotEmpty()) item { WeekRingCard(allTime) }
             val undated = runs.filter { it.date == null }
             if (undated.isNotEmpty()) {
-                item { GroupHeader("Date not set · tap a run to set it") }
+                item { GroupHeader(if (LocalReadOnly.current) "Date not set" else "Date not set · tap a run to set it") }
                 items(undated, key = { it.id }) { run -> RunCard(run, fastest = false) { editing = run } }
             }
             groups.forEach { (monday, list) ->
