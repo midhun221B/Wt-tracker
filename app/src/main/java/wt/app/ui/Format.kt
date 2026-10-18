@@ -105,3 +105,6 @@ fun planLabel(label: String): String {
     val date = runCatching { LocalDate.parse(iso.value) }.getOrNull() ?: return label
     return label.replace(iso.value, dayMonth(date))
 }
+
+/** How long ago [updatedAt] (ISO time) was: "just now", "5 min ago", "2 h ago", "3 days ago". */
+fun ageText(updatedAt: String, now: java.time.ZonedDateTime): String = TODO()
