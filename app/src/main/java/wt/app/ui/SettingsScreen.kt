@@ -34,6 +34,7 @@ fun SettingsScreen(
     onExport: (ExportKind) -> Unit,
     onRestore: () -> Unit,
     modifier: Modifier = Modifier,
+    partnerSharing: (@Composable () -> Unit)? = null,
 ) {
     var pickingTime by remember { mutableStateOf(false) }
     var confirmRestore by remember { mutableStateOf(false) }
@@ -84,12 +85,14 @@ fun SettingsScreen(
             SecondaryButton("Restore from backup…", { confirmRestore = true }, Modifier.fillMaxWidth())
         }
 
+        partnerSharing?.invoke()
+
         SectionCard("About") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Version", Modifier.weight(1f))
                 Text(BuildConfig.VERSION_NAME, color = Palette.Muted)
             }
-            Text("All data stays on this phone. No accounts, no cloud. Dates use Asia/Tokyo time.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
+            Text("All data stays on this phone unless you turn on Partner sharing. No accounts. Dates use Asia/Tokyo time.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
             Disclaimer()
         }
     }

@@ -27,5 +27,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         vm.refreshToday()
+        vm.refreshFollow()
+        vm.refreshSharing()
     }
 }

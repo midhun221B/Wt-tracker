@@ -7,6 +7,7 @@ import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
 import wt.app.ui.planLabel
+import wt.app.ui.ageText
 import wt.app.ui.signed
 import wt.app.ui.roughKcal
 import wt.app.ui.weekRange
@@ -81,5 +82,14 @@ class FormatTest {
         assertEquals("+0.3", signed(0.3))
         assertEquals("0.0", signed(0.0))
         assertEquals("0.0", signed(-0.04)) // rounds to zero: no sign
+    }
+
+    @Test
+    fun ageText() {
+        val now = java.time.ZonedDateTime.parse("2026-11-05T10:00+09:00")
+        assertEquals("just now", ageText("2026-11-05T10:00+09:00", now))
+        assertEquals("5 min ago", ageText("2026-11-05T09:55+09:00", now))
+        assertEquals("2 h ago", ageText("2026-11-05T07:50+09:00", now))
+        assertEquals("3 days ago", ageText("2026-11-02T10:00+09:00", now))
     }
 }

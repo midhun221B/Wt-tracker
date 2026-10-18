@@ -131,12 +131,14 @@ fun BodyScreen(
  */
 @Composable
 private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, today: LocalDate, onScreenshot: (() -> Unit)?, onAdd: () -> Unit) {
+    // A phone that follows someone gets the one-line status, never the "measure now" card or Add.
+    val readOnly = LocalReadOnly.current
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(if (status.due) 24.dp else 16.dp),
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),
     ) {
-        if (status.due) {
+        if (status.due && !readOnly) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Weekly measurement", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                 Text(if (status.next == today) "Today" else "Due since ${dayMonth(status.next)}", style = numberStyle(30.sp))
@@ -165,7 +167,7 @@ private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, toda
                     Text("Next: ${longDay(status.next)}", style = MaterialTheme.typography.titleSmall)
                 }
                 // The form, which also offers the screenshot import, so values can be typed too.
-                TextButton(onClick = onAdd) { Text("Add", color = Palette.Accent) }
+                if (!readOnly) TextButton(onClick = onAdd) { Text("Add", color = Palette.Accent) }
             }
         }
     }
@@ -175,6 +177,7 @@ private fun NextMeasurementCard(status: WeighInStatus, weightOnly: Boolean, toda
 private fun MeasurementCard(entry: BodyCompEntity, onClick: () -> Unit) {
     Card(
         onClick = onClick,
+        enabled = !LocalReadOnly.current,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         // Sits inside the Measurements section, so it uses the page colour to stand apart.

@@ -48,6 +48,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#32](https://github.com/midhun221B/Wt-tracker/pull/32) | Run streak: weeks in a row with 3+ runs (`runWeekStreak`, the week in progress doesn't break it), a flame with the number inside (`StreakFlame.kt`) on Today's week card (solid, waiting or off) and on the share card's run strip from 2 weeks (caption too), replacing the weigh-in streak; version 0.7.0 (`v0.7.0` release) |
 | [#33](https://github.com/midhun221B/Wt-tracker/pull/33) | Streak in words on Today ("5-week streak", "keeps your 4-week streak"), the Weigh-in saved card without " · trend" endings plus one muted trend note, and a real minus for signed numbers (`signed()`); version 0.7.1 (`v0.7.1` release) |
 | [#34](https://github.com/midhun221B/Wt-tracker/pull/34) | Cleanups: Trend's Weeks table puts the date and the change on separate lines (no wrapping at 411 dp; screenshot `1e-weeks-open`), and re-sharing week 1 leaves out runs after the weigh-in day (`weekShare`); version 0.7.2 (`v0.7.2` release) |
+| [#35](https://github.com/midhun221B/Wt-tracker/pull/35) | Partner follow mode: "Follow a partner" at first-run setup turns a phone into a read-only follower of one "anyone with the link" Drive file (`ShareSnapshot`, `fetchSnapshot`, `LocalReadOnly`, `FollowBar`); Settings → Partner sharing on the owner's phone (Google consent with `drive.file` only, `DriveClient`, `ShareWorker` uploads a minute after each change, Send/Copy/New link, Turn off); final-review fixes (`ShareFlowsTest`); emulator follow smoke; setup guide `docs/partner-sharing-setup.md`; home page and privacy policy on GitHub Pages (`docs/index.html`, `docs/privacy.html`); tested by the owner on both phones; version 0.8.0 (`v0.8.0` release) |
 
 ### Not merged
 Nothing.
@@ -66,7 +67,8 @@ Nothing.
 - **Runs:** "Last 28 days" summary (runs, distance, fastest pace), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** a big chart of the chosen measure and stat cards for weight, BMI, body fat, visceral fat and muscle (tap to chart); body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR) in a folded log.
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
-- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
+- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, Partner sharing (Turn on with Google, Send/Copy/New link, Turn off), app version under About.
+- **Follow a partner** (first-run setup): paste the partner's link; the app becomes a read-only copy of their data, refreshed on open, with "Following <name> · updated …" above the tabs and Stop following in Settings.
 
 ## Open items / next steps
 1. **Screenshot import: merged via #6, confirmed working on the owner's phone with both screenshots.**
@@ -94,12 +96,13 @@ Nothing.
    - only Strava's English date format has been tested
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
-4. **View-only partner app** (planned; the share card shipped in v0.5.0): my partner (Android) installs the app in a read-only mode that follows my data, e.g. through a shared Google Drive file.
+4. **View-only partner app**: done in v0.8.0 (#35). The owner's Google Cloud project is published and sign-in works. GitHub Pages must serve `/docs` from `main` (the consent screen links to the privacy page).
 5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
 6. **Run streak**: shipped in v0.7.0 (#32). Not yet seen on the phone.
 
 ## Product decisions
 - **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
+- **Partner follow mode via a Drive link** (2026-10-18): the partner's phone runs the same app in a read-only follow mode and reads one "anyone with the link" file in my Drive, so the partner never signs in. Only the `drive.file` scope (no Google verification, no weekly re-sign-in). No notifications on the partner's phone. Pasting the link (or the whole WhatsApp message) instead of opening it, because Android 12+ won't let an app open drive.google.com links.
 - **Run streak instead of a weigh-in streak** (2026-10-17): weekly weigh-ins make a weigh-in streak automatic, so the streak counts weeks with 3+ runs (the owner runs about 5 a week, so 1 run would never break it). A flame with the number inside, on Today and on the share card's run strip (variant 2).
 - **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.

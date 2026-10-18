@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -45,6 +44,24 @@ import wt.core.io.weightsCsv
 import wt.core.model.Checkpoint
 import wt.core.model.TOKYO
 import wt.core.model.todayInTokyo
+import wt.app.data.clearAll
+import wt.app.share.Mode
+import wt.app.share.ShareError
+import wt.app.share.ShareScheduler
+import wt.app.share.shareSnapshot
+import wt.core.io.DriveClient
+import wt.core.io.driveLink
+import wt.core.io.encodeShare
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import wt.app.share.SharePrefs
+import wt.app.share.fetchFollow
+import wt.app.share.followSource
+import wt.core.io.FetchResult
+import wt.core.io.FollowError
+import wt.core.io.ShareSnapshot
+import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -128,12 +145,208 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val needsSetup: StateFlow<Boolean?> = db.profile().observe().map { it == null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val share = SharePrefs(app)
+
     init {
         viewModelScope.launch {
             db.removeSampleRuns()
             val p = db.profile().get() ?: return@launch
-            Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
+            // A phone following my partner never reminds anyone to weigh in.
+            if (share.mode == Mode.Follow) Reminder.schedule(getApplication(), false, 0, 0)
+            else Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
         }
+    }
+
+    /** Follow mode: whose data this phone shows, how fresh it is and what went wrong last. */
+    data class FollowState(
+        val following: Boolean = false,
+        val ownerName: String? = null,
+        val updatedAt: String? = null,
+        val error: FollowError? = null,
+        val busy: Boolean = false,
+        /** Where the copy comes from, shown in follow-mode Settings. */
+        val link: String? = null,
+    )
+
+    private fun followFromPrefs() = FollowState(
+        following = share.mode == Mode.Follow,
+        ownerName = share.ownerName.takeIf { share.mode == Mode.Follow },
+        updatedAt = share.lastUpdatedAt,
+        error = share.followError,
+        link = share.followUrl.takeIf { share.mode == Mode.Follow },
+    )
+
+    private val _follow = MutableStateFlow(followFromPrefs())
+    val follow: StateFlow<FollowState> = _follow
+    private var lastFollowFetch = 0L
+
+    /**
+     * First-run "Follow a partner": downloads the shared file and, only if it reads, makes this phone a read-only
+     * copy of my partner's data. A bad link or no connection leaves the phone as it was.
+     */
+    fun follow(text: String) = viewModelScope.launch {
+        val url = followSource(text)
+        if (url == null) {
+            _follow.value = _follow.value.copy(error = FollowError.NotALink)
+            return@launch
+        }
+        _follow.value = _follow.value.copy(busy = true, error = null)
+        when (val r = fetchFollow(url)) {
+            is FetchResult.Ok -> {
+                share.mode = Mode.Follow
+                share.followUrl = url
+                // Read-only from the first frame the tabs appear.
+                _follow.value = followFromPrefs().copy(busy = true)
+                applySnapshot(r.snapshot, url)
+                Reminder.schedule(getApplication(), false, 0, 0)
+            }
+            is FetchResult.Failed -> _follow.value = _follow.value.copy(busy = false, error = r.error)
+        }
+    }
+
+    /** Follow mode: fetches the latest copy (on start, on resume, on Refresh), at most every 30 s unless [force]. */
+    fun refreshFollow(force: Boolean = false) {
+        if (share.mode != Mode.Follow || _follow.value.busy) return
+        val url = share.followUrl ?: return
+        if (!force && System.currentTimeMillis() - lastFollowFetch < 30_000) return
+        _follow.value = _follow.value.copy(busy = true)
+        refreshJob = viewModelScope.launch {
+            when (val r = fetchFollow(url)) {
+                is FetchResult.Ok -> applySnapshot(r.snapshot, url)
+                is FetchResult.Failed -> if (share.mode == Mode.Follow) {
+                    // Keep showing the last good copy.
+                    share.followError = r.error
+                    _follow.value = followFromPrefs()
+                }
+            }
+        }
+    }
+
+    /** The refresh in flight, cancelled by Stop following so it can't write the data back afterwards. */
+    private var refreshJob: Job? = null
+
+    /** Writes [s] in, but only while this phone still follows [url] (not after Stop following). */
+    private suspend fun applySnapshot(s: ShareSnapshot, url: String) {
+        if (share.mode != Mode.Follow || share.followUrl != url) return
+        db.replaceAll(s.data)
+        share.ownerName = s.ownerName
+        share.lastUpdatedAt = s.updatedAt
+        share.followError = null
+        lastFollowFetch = System.currentTimeMillis()
+        _follow.value = followFromPrefs()
+    }
+
+    /** Makes the Drive client for a token; tests point it at a local server. */
+    internal var driveFor: (String) -> DriveClient = { DriveClient(it) }
+
+    /** Partner sharing on my phone: on or off, the link, the last upload and why uploads stopped. */
+    data class SharingState(
+        val on: Boolean = false,
+        val name: String? = null,
+        val link: String? = null,
+        val lastUploadMillis: Long = 0,
+        val error: ShareError? = null,
+        val busy: Boolean = false,
+    )
+
+    private fun sharingFromPrefs() = SharingState(
+        on = share.fileId != null,
+        name = share.ownerName,
+        link = share.fileId?.let(::driveLink),
+        lastUploadMillis = share.lastUploadMillis,
+        error = share.error,
+    )
+
+    private val _sharing = MutableStateFlow(sharingFromPrefs())
+    val sharing: StateFlow<SharingState> = _sharing
+
+    /** Re-reads what the background upload wrote (call on resume). */
+    fun refreshSharing() {
+        if (!_sharing.value.busy) _sharing.value = sharingFromPrefs()
+    }
+
+    /** After signing in again: clears the error and uploads now-ish. */
+    fun resumeSharing() {
+        share.error = null
+        ShareScheduler.changed(getApplication())
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** Google sign-in failed or was cancelled. */
+    fun signInFailed(detail: String?) = viewModelScope.launch {
+        messageChannel.send(Message("Couldn't sign in with Google" + (detail?.let { " ($it)" } ?: "") + ". See the setup guide."))
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** Turn on: creates the file in my Drive, lets anyone with the link view it and uploads my data. */
+    fun startSharing(name: String, token: String) = viewModelScope.launch {
+        _sharing.value = _sharing.value.copy(busy = true)
+        try {
+            share.ownerName = name
+            val json = encodeShare(shareSnapshot(getApplication(), name))
+            val id = withContext(Dispatchers.IO) { driveFor(token).createPublic("Wt-tracker share.json", json) }
+            share.fileId = id
+            share.lastUploadMillis = System.currentTimeMillis()
+            share.error = null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            messageChannel.send(Message(turnOnErrorText(e)))
+        }
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** New link: deletes the shared file (the old link stops working) and makes a new one. */
+    fun newLink(token: String) = viewModelScope.launch {
+        val old = share.fileId
+        _sharing.value = _sharing.value.copy(busy = true)
+        try {
+            if (old != null) withContext(Dispatchers.IO) { driveFor(token).delete(old) }
+            share.fileId = null
+            ShareScheduler.cancel(getApplication())
+        } catch (e: IOException) {
+            messageChannel.send(Message("Couldn't make a new link. Check your connection and try again."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
+        }
+        startSharing(share.ownerName.orEmpty(), token).join()
+    }
+
+    /**
+     * Turn off: deletes the shared file (the link stops working), withdraws the app's Drive access and stops uploads.
+     * Sharing stays on, link and all, until the file is really deleted: offline or without a token nothing changes.
+     */
+    fun stopSharing(token: String?) = viewModelScope.launch {
+        if (token == null) {
+            messageChannel.send(Message("Couldn't turn off. Your partner's link still works. Try again when you're online."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
+        }
+        _sharing.value = _sharing.value.copy(busy = true)
+        val id = share.fileId
+        try {
+            if (id != null) withContext(Dispatchers.IO) { driveFor(token).delete(id) }
+        } catch (e: IOException) {
+            messageChannel.send(Message("Couldn't turn off. Your partner's link still works. Try again when you're online."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
+        }
+        // The file is gone. Withdrawing access is a courtesy: if it fails, the app can only reach files it made.
+        runCatching { withContext(Dispatchers.IO) { driveFor(token).revoke() } }
+        ShareScheduler.cancel(getApplication())
+        share.fileId = null
+        share.error = null
+        share.lastUploadMillis = 0
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** "Stop following": removes my partner's data and returns to first-run setup. */
+    fun stopFollowing() = viewModelScope.launch {
+        refreshJob?.cancel()
+        refreshJob = null
+        db.clearAll()
+        share.clear()
+        _follow.value = followFromPrefs()
     }
 
     /** Saves first-run setup: profile, today's weight and the first plan; then sets the reminder. */
@@ -147,9 +360,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         today.value = todayInTokyo()
     }
 
-    private fun launchWithMessage(done: String?, block: suspend () -> Unit) = viewModelScope.launch {
+    /** Runs [block]; a change to my data ([changes]) also queues an upload to my partner when sharing is on. */
+    private fun launchWithMessage(done: String?, changes: Boolean = true, block: suspend () -> Unit) = viewModelScope.launch {
         try {
             block()
+            if (changes) ShareScheduler.changed(getApplication())
             done?.let { messageChannel.send(Message(it)) }
         } catch (e: Exception) {
             messageChannel.send(Message(e.message ?: "Something went wrong"))
@@ -224,7 +439,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         db.profile().upsert(p.copy(weighInDay = day))
     }
 
-    fun export(kind: ExportKind, uri: Uri) = launchWithMessage("Exported ${kind.fileName}") {
+    fun export(kind: ExportKind, uri: Uri) = launchWithMessage("Exported ${kind.fileName}", changes = false) {
         val data = db.loadAll()
         val text = when (kind) {
             ExportKind.WEIGHTS_CSV -> weightsCsv(data.weights, data.restDays)
@@ -245,7 +460,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         importReport.value = db.importStrava(text)
     }
 
-    fun readScreenshot(uri: Uri) = launchWithMessage(null) {
+    fun readScreenshot(uri: Uri) = launchWithMessage(null, changes = false) {
         val rows = ocrRows(recognizeLines(getApplication(), uri))
         val reading = withContext(Dispatchers.Default) { readScreenshot(rows, db.profile().get()?.heightCm) }
         if (reading == null) messageChannel.send(Message("Couldn't find a run or body measurement in this image"))

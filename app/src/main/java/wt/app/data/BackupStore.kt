@@ -22,6 +22,16 @@ suspend fun AppDatabase.loadAll(): AppData {
     )
 }
 
+/** Deletes everything, the profile too, so the app is back at first-run setup (used by "Stop following"). */
+suspend fun AppDatabase.clearAll() = withTransaction {
+    weights().deleteAll()
+    bodyComp().deleteAll()
+    runs().deleteAll()
+    restDays().deleteAll()
+    plans().deleteAll()
+    profile().deleteAll()
+}
+
 /**
  * Replaces all stored data with [data] in one transaction. The weigh-in day and reminder come from the backup; an
  * older backup without them keeps the phone's own.

@@ -84,6 +84,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Follow mode in the smoke test reads the share fixture from the host (10.0.2.2:8765 inside the emulator).
+      - name: Serve the follow-mode test file
+        run: nohup python3 -m http.server 8765 --directory core/src/test/resources > /dev/null 2>&1 &
+
       - name: Smoke test on the emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

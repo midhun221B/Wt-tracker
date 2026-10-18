@@ -88,7 +88,7 @@ fun RunsScreen(
             if (allTime != null && dated.isNotEmpty()) item { WeekRingCard(allTime) }
             val undated = runs.filter { it.date == null }
             if (undated.isNotEmpty()) {
-                item { GroupHeader("Date not set · tap a run to set it") }
+                item { GroupHeader(if (LocalReadOnly.current) "Date not set" else "Date not set · tap a run to set it") }
                 items(undated, key = { it.id }) { run -> RunCard(run, fastest = false) { editing = run } }
             }
             groups.forEach { (monday, list) ->
@@ -113,11 +113,11 @@ fun RunsScreen(
             if (runs.isEmpty()) {
                 item {
                     // One way in: Add run also imports Strava screenshots and files.
-                    Text("No runs yet. Tap Add run to log one, or to import a Strava screenshot or file.", color = Palette.Muted)
+                    Text(if (LocalReadOnly.current) "No runs yet." else "No runs yet. Tap Add run to log one, or to import a Strava screenshot or file.", color = Palette.Muted)
                 }
             }
         }
-        ExtendedFloatingActionButton(
+        if (!LocalReadOnly.current) ExtendedFloatingActionButton(
             onClick = { adding = true },
             icon = { Icon(Icons.Default.Add, null) },
             text = { Text("Add run", style = MaterialTheme.typography.labelLarge) },
@@ -196,6 +196,7 @@ private fun SummaryFigure(label: String, value: String, modifier: Modifier = Mod
 private fun RunCard(run: RunEntity, fastest: Boolean, onClick: () -> Unit) {
     Card(
         onClick = onClick,
+        enabled = !LocalReadOnly.current,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Palette.Card, contentColor = Palette.Text),

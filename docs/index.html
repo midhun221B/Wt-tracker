@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wt-tracker</title>
+<meta name="description" content="A personal Android weight-loss tracker: your plan next to an honest forecast from your own weigh-ins and runs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
+<style>
+  :root { --bg: #0E1113; --card: #171C20; --text: #F2F4F5; --muted: #9AA4AC; --accent: #FC5200; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 'Barlow', system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font: 700 64px/1 'Barlow Condensed', sans-serif; margin: 0 0 12px; }
+  h2 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  .lead { font-size: 21px; color: var(--muted); margin: 0 0 32px; }
+  .card { background: var(--card); border-radius: 16px; padding: 20px 22px; margin: 0 0 16px; }
+  ul { margin: 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  a { color: var(--accent); }
+  a:hover { color: #FF7A3D; }
+  .button { display: inline-block; min-height: 44px; padding: 10px 20px; border-radius: 999px; background: var(--accent);
+    color: #0E1113; font-weight: 600; text-decoration: none; }
+  .button:hover { color: #0E1113; background: #FF7A3D; }
+  footer { color: var(--muted); font-size: 15px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Wt-tracker</h1>
+  <p class="lead">A personal Android weight-loss tracker. It puts your plan next to an honest forecast built from your
+    own weigh-ins and runs.</p>
+
+  <section class="card">
+    <h2>What it does</h2>
+    <ul>
+      <li>One weigh-in a week, on the day you choose, and a realistic trend with a range and an expected date.</li>
+      <li>Runs from Strava's export file, with a weekly run streak.</li>
+      <li>Estimates of how much to eat to stay on plan. It never suggests below 1,800 kcal a day or more than 1 kg a
+        week.</li>
+      <li>Optional partner sharing: your partner follows your progress on their own phone, read-only.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Your data stays yours</h2>
+    <p style="margin: 0">No account, no ads, no analytics. Everything lives on your phone unless you turn on partner
+      sharing. Read the <a href="privacy.html">privacy policy</a>.</p>
+  </section>
+
+  <p><a class="button" href="https://github.com/midhun221B/Wt-tracker/releases/download/debug-latest/wt-tracker-debug.apk">Download the app (Android)</a></p>
+
+  <footer>
+    <p>Estimates, not medical advice. Source code and questions on
+      <a href="https://github.com/midhun221B/Wt-tracker">GitHub</a>.</p>
+  </footer>
+</main>
+</body>
+</html>

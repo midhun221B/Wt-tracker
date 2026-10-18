@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.activity.result.IntentSenderRequest
+import androidx.compose.runtime.rememberCoroutineScope
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.launch
+import wt.app.share.DriveAuth
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -83,6 +92,7 @@ enum class Tab(val label: String, @DrawableRes val icon: Int) {
 fun AppScaffold(vm: AppViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     var tab by rememberSaveable { mutableStateOf(Tab.LOG) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     // The partner card being previewed from Trend's share icon, if any.
@@ -159,8 +169,40 @@ fun AppScaffold(vm: AppViewModel) {
         notificationsAllowed = granted
     }
 
+    // Partner sharing: Google asks for consent in its own screen the first time; the token comes back here.
+    val partnerSharing by vm.sharing.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var afterAuth by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    val authLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val then = afterAuth
+        afterAuth = null
+        val token = runCatching { Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(result.data).accessToken }.getOrNull()
+        if (token != null) then?.invoke(token) else vm.signInFailed(null)
+    }
+    /** Gets a Drive token (showing Google's consent screen if needed), then runs [then]; [onFail] if sign-in fails. */
+    fun withToken(onFail: () -> Unit = {}, then: (String) -> Unit) {
+        scope.launch {
+            try {
+                val r = DriveAuth.authorize(context)
+                val pending = r.pendingIntent
+                when {
+                    r.hasResolution() && pending != null -> {
+                        afterAuth = then
+                        authLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
+                    }
+                    r.accessToken != null -> then(r.accessToken!!)
+                    else -> { vm.signInFailed(null); onFail() }
+                }
+            } catch (e: Exception) {
+                vm.signInFailed((e as? ApiException)?.statusCode?.let { "code $it" })
+                onFail()
+            }
+        }
+    }
+
     // A fresh install has no profile: first-run setup instead of the tabs (a restored backup also ends it).
     val needsSetup by vm.needsSetup.collectAsStateWithLifecycle()
+    val follow by vm.follow.collectAsStateWithLifecycle()
     if (needsSetup == true) {
         // The snackbar shows restore errors (a wrong file) during setup too.
         Box(Modifier.fillMaxSize()) {
@@ -171,17 +213,23 @@ fun AppScaffold(vm: AppViewModel) {
                 onReminderOn = {
                     if (Build.VERSION.SDK_INT >= 33 && !notificationsAllowed) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 },
+                onFollow = { vm.follow(it) },
+                followError = follow.error,
+                followBusy = follow.busy,
             )
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
         }
         return
     }
 
+    // A phone that follows someone shows the same screens with every edit control hidden.
+    CompositionLocalProvider(LocalReadOnly provides follow.following) {
     Scaffold(
         containerColor = Palette.Background,
         topBar = { Column {
             val s = state
             val (subtitle, title) = when {
+                settingsOpen && follow.following -> "Following ${follow.ownerName.orEmpty()}" to "Settings"
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
                 tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "${weekHeadline(w, n)} · ${longDay(s.today)}" to tab.label }
@@ -201,7 +249,7 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 actions = {
                     // Trend: share the card for the latest weigh-in, any day (not only right after saving it).
-                    val share = if (!settingsOpen && tab == Tab.DASHBOARD && s != null) {
+                    val share = if (!settingsOpen && !follow.following && tab == Tab.DASHBOARD && s != null) {
                         s.dashboard.latestWeight?.let { w -> weekShare(s.dashboard, w.date) }
                     } else null
                     if (share != null) {
@@ -223,6 +271,9 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Palette.Background, titleContentColor = Palette.Text),
             )
+            if (follow.following) {
+                FollowBar(follow.ownerName.orEmpty(), follow.updatedAt, follow.error, follow.busy, onRefresh = { vm.refreshFollow(force = true) })
+            }
             // "Run logged" banner under the top bar for a few seconds after any new run is saved.
             AnimatedVisibility(visible = runLogged && s != null, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 val monday = weekStart(s?.today ?: todayInTokyo())
@@ -260,6 +311,10 @@ fun AppScaffold(vm: AppViewModel) {
             Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             return@Scaffold
         }
+        if (settingsOpen && follow.following) {
+            FollowSettings(follow.ownerName.orEmpty(), follow.updatedAt, follow.link.orEmpty(), onStop = { settingsOpen = false; vm.stopFollowing() }, modifier = modifier)
+            return@Scaffold
+        }
         if (settingsOpen) {
             SettingsScreen(
                 profile = s.profile,
@@ -281,6 +336,20 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 onRestore = { restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
                 modifier = modifier,
+                partnerSharing = {
+                    PartnerSharingCard(
+                        partnerSharing,
+                        onTurnOn = { name -> withToken { vm.startSharing(name, it) } },
+                        onSendLink = { partnerSharing.link?.let { context.startActivity(shareLinkIntent(it)) } },
+                        onCopyLink = {
+                            partnerSharing.link?.let { clipboard.setText(AnnotatedString(it)) }
+                            scope.launch { snackbar.showSnackbar("Link copied") }
+                        },
+                        onNewLink = { withToken { vm.newLink(it) } },
+                        onTurnOff = { withToken(onFail = { vm.stopSharing(null) }) { vm.stopSharing(it) } },
+                        onSignIn = { withToken { vm.resumeSharing() } },
+                    )
+                },
             )
             return@Scaffold
         }
@@ -300,5 +369,6 @@ fun AppScaffold(vm: AppViewModel) {
                 metrics = bodyMetrics(s.dashboard.weights, s.dashboard.body, s.profile.heightCm))
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
         }
+    }
     }
 }
