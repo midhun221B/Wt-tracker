@@ -63,8 +63,8 @@ fun StreakFlame(weeks: Int, look: FlameLook, width: Dp) {
 fun TodayStreak(s: RunWeekStreak, modifier: Modifier = Modifier) {
     fun runs(n: Int) = if (n == 1) "1 more run" else "$n more runs"
     val (look, title, sub) = when {
-        s.thisWeekCounts -> Triple(FlameLook.Solid, "Week streak", "This week counts")
-        s.weeks > 0 -> Triple(FlameLook.Waiting, runs(s.runsToGo), "keeps it going")
+        s.thisWeekCounts -> Triple(FlameLook.Solid, "${s.weeks}-week streak", "This week counts")
+        s.weeks > 0 -> Triple(FlameLook.Waiting, runs(s.runsToGo), "keeps your ${s.weeks}-week streak")
         else -> Triple(
             FlameLook.Off,
             s.endedWeeks?.let { if (it == 1) "Last streak: 1 week" else "Last streak: $it weeks" } ?: "No streak yet",

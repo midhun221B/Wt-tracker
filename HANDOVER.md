@@ -48,7 +48,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#32](https://github.com/midhun221B/Wt-tracker/pull/32) | Run streak: weeks in a row with 3+ runs (`runWeekStreak`, the week in progress doesn't break it), a flame with the number inside (`StreakFlame.kt`) on Today's week card (solid, waiting or off) and on the share card's run strip from 2 weeks (caption too), replacing the weigh-in streak; version 0.7.0 (`v0.7.0` release) |
 
 ### Not merged
-Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a` (v0.7.1): Today's streak reads "5-week streak" (and "1 more run · keeps your 4-week streak" while waiting); the Weigh-in saved card drops the " · trend" suffixes ("1.4 of 6.6 kg lost toward 82 kg", "0.8 kg over plan") and adds one muted line, "From your trend weight, which smooths out day-to-day swings.", once there is a trend.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
