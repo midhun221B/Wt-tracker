@@ -54,7 +54,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
   - Core: `ShareSnapshot`/`encodeShare`/`decodeShare` (a backup plus owner name and updated time), `driveFileId` (also inside a pasted WhatsApp message), `fetchSnapshot`/`followSourceUrl` (tests against a local HTTP server); fixture `core/src/test/resources/share-sample.json`.
   - App: first-run setup has "Follow a partner" (paste the link; nothing is stored until it reads). A following phone keeps a read-only copy in its own database (`replaceAll`), refreshes on open/resume or Refresh, shows "Following Midhun · updated 2 h ago" (or why the last update failed) above the tabs, hides every add/edit/delete control (`LocalReadOnly`), has no reminders, and Settings has only "Stop following" (clears everything, back to setup) and About. Follow state lives in SharedPreferences ("share"), no Room change. The app now has the INTERNET permission; debug builds allow plain HTTP to 10.0.2.2 for the emulator test.
   - Emulator smoke follows the fixture served from the CI host and checks the read-only tabs and Stop following.
-  - Not built yet: the owner side (Google sign-in, Drive upload, Partner sharing card, setup guide), version 0.8.0.
+- Same branch, part 2 (owner side), version 0.8.0:
+  - Core `DriveClient` (create, make public, update via `X-HTTP-Method-Override: PATCH`, delete, revoke; tests against a local server).
+  - `DriveAuth` (Play services authorization, `drive.file` only), `ShareWorker` + `ShareScheduler` (unique "share-upload", 60 s delay, needs a connection, REPLACE): every data change in the view model queues one upload. Errors: NeedsSignIn, FileRemoved, Offline (shown on the card).
+  - Settings → **Partner sharing** card: Turn on (name, then Google consent), Send link to partner (share sheet), Copy link, New link, Turn off (deletes the file, revokes access), Sign in again.
+  - Owner's one-time Google Cloud setup: `docs/partner-sharing-setup.md` (package `io.github.midhun.wttracker`, debug-key SHA-1 `2D:08:2D:82:9E:FA:2A:1B:A0:DC:13:D0:C6:A0:D6:20:5B:69:0A:25`). Real sign-in and upload can't run in CI: the owner tests them on the phone before merging.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -98,12 +102,13 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - only Strava's English date format has been tested
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
-4. **View-only partner app** (planned; the share card shipped in v0.5.0): my partner (Android) installs the app in a read-only mode that follows my data, e.g. through a shared Google Drive file.
+4. **View-only partner app**: built on the branch (v0.8.0, see Not merged). Waiting for the owner's Google Cloud setup and a test on both phones.
 5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
 6. **Run streak**: shipped in v0.7.0 (#32). Not yet seen on the phone.
 
 ## Product decisions
 - **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
+- **Partner follow mode via a Drive link** (2026-10-18): the partner's phone runs the same app in a read-only follow mode and reads one "anyone with the link" file in my Drive, so the partner never signs in. Only the `drive.file` scope (no Google verification, no weekly re-sign-in). No notifications on the partner's phone. Pasting the link (or the whole WhatsApp message) instead of opening it, because Android 12+ won't let an app open drive.google.com links.
 - **Run streak instead of a weigh-in streak** (2026-10-17): weekly weigh-ins make a weigh-in streak automatic, so the streak counts weeks with 3+ runs (the owner runs about 5 a week, so 1 run would never break it). A flame with the number inside, on Today and on the share card's run strip (variant 2).
 - **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.
 - **The trend waits for two weeks of weigh-ins** (2026-10-10): three daily weigh-ins losing a kilo projected 42.8 kg by January. Weekly weigh-ins reach this at the third one, same as before.

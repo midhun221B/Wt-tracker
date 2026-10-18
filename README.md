@@ -28,6 +28,7 @@ Screenshots are rendered from sample data by the Robolectric screenshot tests; C
   - **Re-baseline** from today's trend weight to the same goal date. The weekly loss it would need is flagged as unrealistic above 0.7 kg/week and blocked above 1 kg/week.
   - Energy settings (BMR, activity factor, food deficit) and plan history, each from the list.
 - **Settings:** weigh-in day and its reminder (time picker, Asia/Tokyo time), CSV export, JSON backup/restore.
+- **Partner sharing:** turn it on in Settings and your data goes to one file in your Google Drive that only people with the link can open; it updates a minute after each change. Your partner installs the same app, chooses "Follow a partner" and pastes the link: their phone shows your Today, Trend, Runs, Body and Plan read-only and refreshes each time they open it. Needs a one-time, free Google Cloud setup: [docs/partner-sharing-setup.md](docs/partner-sharing-setup.md).
 
 ## How the forecast works (`core/`)
 - **Smoothing:** 7-day trailing moving average.
