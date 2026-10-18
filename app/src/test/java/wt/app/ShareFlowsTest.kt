@@ -3,7 +3,6 @@ package wt.app
 import android.app.Application
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
-import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Test
@@ -19,7 +18,10 @@ import wt.app.ui.turnOnErrorText
 import wt.core.io.DriveClient
 import wt.core.io.DriveException
 import java.io.IOException
-import java.net.InetSocketAddress
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
+import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -29,29 +31,50 @@ import kotlin.test.assertTrue
 @Config(sdk = [34])
 class ShareFlowsTest {
     private val app: Application = ApplicationProvider.getApplicationContext()
-    private val fixture = javaClass.getResource("/share-sample.json")!!.readText()
-    private var server: HttpServer? = null
+    // Shared with core's tests; Gradle runs these from the app module's directory.
+    private val fixture = java.io.File("../core/src/test/resources/share-sample.json").readText()
+    private var server: ServerSocket? = null
     private val methods = mutableListOf<String>()
 
-    /** Answers every request with [code] and [body] after [delayMs]; returns the base URL. */
+    /**
+     * Answers every request with [code] and [body] after [delayMs]; returns the base URL. A bare socket server, since
+     * the JDK's HttpServer isn't on the Android unit-test classpath.
+     */
     private fun serve(code: Int, body: String = "", delayMs: Long = 0): String {
-        val s = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        s.createContext("/") { ex ->
-            synchronized(methods) { methods += ex.requestMethod }
-            Thread.sleep(delayMs)
-            val bytes = body.toByteArray()
-            ex.sendResponseHeaders(code, if (bytes.isEmpty()) -1 else bytes.size.toLong())
-            ex.responseBody.use { if (bytes.isNotEmpty()) it.write(bytes) }
+        val s = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
+        thread(isDaemon = true) {
+            while (!s.isClosed) {
+                val c = try { s.accept() } catch (e: IOException) { break }
+                thread(isDaemon = true) { c.use { answer(it, code, body, delayMs) } }
+            }
         }
-        s.executor = java.util.concurrent.Executors.newCachedThreadPool()
-        s.start()
         server = s
-        return "http://127.0.0.1:${s.address.port}"
+        return "http://127.0.0.1:${s.localPort}"
+    }
+
+    private fun answer(c: Socket, code: Int, body: String, delayMs: Long) {
+        val input = c.getInputStream().bufferedReader()
+        val requestLine = input.readLine() ?: return
+        synchronized(methods) { methods += requestLine.substringBefore(' ') }
+        var length = 0
+        while (true) {
+            val header = input.readLine()
+            if (header.isNullOrEmpty()) break
+            if (header.startsWith("Content-Length:", ignoreCase = true)) length = header.substringAfter(':').trim().toInt()
+        }
+        repeat(length) { input.read() }
+        Thread.sleep(delayMs)
+        val bytes = body.toByteArray()
+        c.getOutputStream().apply {
+            write("HTTP/1.1 $code X\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n".toByteArray())
+            write(bytes)
+            flush()
+        }
     }
 
     @After
     fun stop() {
-        server?.stop(0)
+        server?.close()
     }
 
     /** Runs the main looper (where the view model's coroutines resume) for [ms]. */
