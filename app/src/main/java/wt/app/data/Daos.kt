@@ -150,4 +150,7 @@ interface ProfileDao {
     suspend fun get(): ProfileEntity?
 
     @Upsert suspend fun upsert(profile: ProfileEntity)
+
+    @Query("DELETE FROM profile")
+    suspend fun deleteAll()
 }

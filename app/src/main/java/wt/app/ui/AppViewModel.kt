@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -45,6 +44,15 @@ import wt.core.io.weightsCsv
 import wt.core.model.Checkpoint
 import wt.core.model.TOKYO
 import wt.core.model.todayInTokyo
+import wt.app.data.clearAll
+import wt.app.share.Mode
+import wt.app.share.SharePrefs
+import wt.app.share.fetchFollow
+import wt.app.share.followSource
+import wt.core.io.FetchResult
+import wt.core.io.FollowError
+import wt.core.io.ShareSnapshot
+import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -128,12 +136,92 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val needsSetup: StateFlow<Boolean?> = db.profile().observe().map { it == null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val share = SharePrefs(app)
+
     init {
         viewModelScope.launch {
             db.removeSampleRuns()
             val p = db.profile().get() ?: return@launch
-            Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
+            // A phone following my partner never reminds anyone to weigh in.
+            if (share.mode == Mode.Follow) Reminder.schedule(getApplication(), false, 0, 0)
+            else Reminder.schedule(getApplication(), p.reminderEnabled, p.reminderHour, p.reminderMinute)
         }
+    }
+
+    /** Follow mode: whose data this phone shows, how fresh it is and what went wrong last. */
+    data class FollowState(
+        val following: Boolean = false,
+        val ownerName: String? = null,
+        val updatedAt: String? = null,
+        val error: FollowError? = null,
+        val busy: Boolean = false,
+    )
+
+    private fun followFromPrefs() = FollowState(
+        following = share.mode == Mode.Follow,
+        ownerName = share.ownerName.takeIf { share.mode == Mode.Follow },
+        updatedAt = share.lastUpdatedAt,
+        error = share.followError,
+    )
+
+    private val _follow = MutableStateFlow(followFromPrefs())
+    val follow: StateFlow<FollowState> = _follow
+    private var lastFollowFetch = 0L
+
+    /**
+     * First-run "Follow a partner": downloads the shared file and, only if it reads, makes this phone a read-only
+     * copy of my partner's data. A bad link or no connection leaves the phone as it was.
+     */
+    fun follow(text: String) = viewModelScope.launch {
+        val url = followSource(text)
+        if (url == null) {
+            _follow.value = _follow.value.copy(error = FollowError.NotALink)
+            return@launch
+        }
+        _follow.value = _follow.value.copy(busy = true, error = null)
+        when (val r = fetchFollow(url)) {
+            is FetchResult.Ok -> {
+                share.mode = Mode.Follow
+                share.followUrl = url
+                applySnapshot(r.snapshot)
+                Reminder.schedule(getApplication(), false, 0, 0)
+            }
+            is FetchResult.Failed -> _follow.value = _follow.value.copy(busy = false, error = r.error)
+        }
+    }
+
+    /** Follow mode: fetches the latest copy (on start, on resume, on Refresh), at most every 30 s unless [force]. */
+    fun refreshFollow(force: Boolean = false) {
+        if (share.mode != Mode.Follow || _follow.value.busy) return
+        val url = share.followUrl ?: return
+        if (!force && System.currentTimeMillis() - lastFollowFetch < 30_000) return
+        _follow.value = _follow.value.copy(busy = true)
+        viewModelScope.launch {
+            when (val r = fetchFollow(url)) {
+                is FetchResult.Ok -> applySnapshot(r.snapshot)
+                is FetchResult.Failed -> {
+                    // Keep showing the last good copy.
+                    share.followError = r.error
+                    _follow.value = followFromPrefs()
+                }
+            }
+        }
+    }
+
+    private suspend fun applySnapshot(s: ShareSnapshot) {
+        db.replaceAll(s.data)
+        share.ownerName = s.ownerName
+        share.lastUpdatedAt = s.updatedAt
+        share.followError = null
+        lastFollowFetch = System.currentTimeMillis()
+        _follow.value = followFromPrefs()
+    }
+
+    /** "Stop following": removes my partner's data and returns to first-run setup. */
+    fun stopFollowing() = viewModelScope.launch {
+        db.clearAll()
+        share.clear()
+        _follow.value = followFromPrefs()
     }
 
     /** Saves first-run setup: profile, today's weight and the first plan; then sets the reminder. */
