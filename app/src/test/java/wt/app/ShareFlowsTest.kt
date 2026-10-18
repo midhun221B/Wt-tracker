@@ -3,8 +3,10 @@ package wt.app
 import android.app.Application
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.testing.WorkManagerTestInitHelper
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -70,6 +72,12 @@ class ShareFlowsTest {
             write(bytes)
             flush()
         }
+    }
+
+    @Before
+    fun workManager() {
+        // Turn off cancels the upload work; without this WorkManager throws and the flow stops half way.
+        WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
     @After
