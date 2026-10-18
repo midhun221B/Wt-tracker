@@ -68,7 +68,12 @@ class ShareWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         }
         return try {
             val json = encodeShare(shareSnapshot(applicationContext, prefs.ownerName.orEmpty()))
-            withContext(Dispatchers.IO) { DriveClient(token).update(id, json) }
+            val trashed = withContext(Dispatchers.IO) { DriveClient(token).update(id, json) }
+            if (trashed) {
+                // Deleted in the Drive app (the trash): my partner's link no longer works.
+                prefs.error = ShareError.FileRemoved
+                return Result.failure()
+            }
             prefs.lastUploadMillis = System.currentTimeMillis()
             prefs.error = null
             Result.success()

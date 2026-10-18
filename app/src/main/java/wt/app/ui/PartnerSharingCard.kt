@@ -16,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import wt.app.share.ShareError
+import wt.core.io.DriveException
+import java.io.IOException
 import wt.core.model.TOKYO
 import java.time.Instant
 
@@ -114,4 +116,8 @@ fun PartnerSharingCard(
 }
 
 /** What a failed Turn on says: Drive's HTTP code (a setup mistake, see the guide) or the connection. */
-fun turnOnErrorText(e: Exception): String = TODO()
+fun turnOnErrorText(e: Exception): String = when (e) {
+    is DriveException -> "Couldn't turn on sharing (Drive error ${e.code}). See the setup guide."
+    is IOException -> "Couldn't turn on sharing. Check your connection and try again."
+    else -> "Couldn't turn on sharing. See the setup guide."
+}

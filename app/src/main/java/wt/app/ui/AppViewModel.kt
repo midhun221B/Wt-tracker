@@ -53,6 +53,8 @@ import wt.core.io.DriveClient
 import wt.core.io.driveLink
 import wt.core.io.encodeShare
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import wt.app.share.SharePrefs
 import wt.app.share.fetchFollow
 import wt.app.share.followSource
@@ -195,7 +197,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 share.followUrl = url
                 // Read-only from the first frame the tabs appear.
                 _follow.value = followFromPrefs().copy(busy = true)
-                applySnapshot(r.snapshot)
+                applySnapshot(r.snapshot, url)
                 Reminder.schedule(getApplication(), false, 0, 0)
             }
             is FetchResult.Failed -> _follow.value = _follow.value.copy(busy = false, error = r.error)
@@ -208,10 +210,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val url = share.followUrl ?: return
         if (!force && System.currentTimeMillis() - lastFollowFetch < 30_000) return
         _follow.value = _follow.value.copy(busy = true)
-        viewModelScope.launch {
+        refreshJob = viewModelScope.launch {
             when (val r = fetchFollow(url)) {
-                is FetchResult.Ok -> applySnapshot(r.snapshot)
-                is FetchResult.Failed -> {
+                is FetchResult.Ok -> applySnapshot(r.snapshot, url)
+                is FetchResult.Failed -> if (share.mode == Mode.Follow) {
                     // Keep showing the last good copy.
                     share.followError = r.error
                     _follow.value = followFromPrefs()
@@ -220,7 +222,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private suspend fun applySnapshot(s: ShareSnapshot) {
+    /** The refresh in flight, cancelled by Stop following so it can't write the data back afterwards. */
+    private var refreshJob: Job? = null
+
+    /** Writes [s] in, but only while this phone still follows [url] (not after Stop following). */
+    private suspend fun applySnapshot(s: ShareSnapshot, url: String) {
+        if (share.mode != Mode.Follow || share.followUrl != url) return
         db.replaceAll(s.data)
         share.ownerName = s.ownerName
         share.lastUpdatedAt = s.updatedAt
@@ -277,15 +284,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         try {
             share.ownerName = name
             val json = encodeShare(shareSnapshot(getApplication(), name))
-            val id = withContext(Dispatchers.IO) {
-                val drive = driveFor(token)
-                drive.create("Wt-tracker share.json", json).also { drive.makePublic(it) }
-            }
+            val id = withContext(Dispatchers.IO) { driveFor(token).createPublic("Wt-tracker share.json", json) }
             share.fileId = id
             share.lastUploadMillis = System.currentTimeMillis()
             share.error = null
-        } catch (e: IOException) {
-            messageChannel.send(Message("Couldn't turn on sharing. Check your connection and try again."))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            messageChannel.send(Message(turnOnErrorText(e)))
         }
         _sharing.value = sharingFromPrefs()
     }
@@ -306,22 +312,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         startSharing(share.ownerName.orEmpty(), token).join()
     }
 
-    /** Turn off: deletes the shared file, withdraws the app's Drive access and stops uploads. */
+    /**
+     * Turn off: deletes the shared file (the link stops working), withdraws the app's Drive access and stops uploads.
+     * Sharing stays on, link and all, until the file is really deleted: offline or without a token nothing changes.
+     */
     fun stopSharing(token: String?) = viewModelScope.launch {
+        if (token == null) {
+            messageChannel.send(Message("Couldn't turn off. Your partner's link still works. Try again when you're online."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
+        }
         _sharing.value = _sharing.value.copy(busy = true)
         val id = share.fileId
-        if (token != null) {
-            try {
-                withContext(Dispatchers.IO) {
-                    val drive = driveFor(token)
-                    if (id != null) drive.delete(id)
-                    drive.revoke()
-                }
-            } catch (e: IOException) {
-                // Offline or already revoked: the file can still be deleted from Drive by hand.
-                messageChannel.send(Message("Sharing is off. The file stays in your Drive until you delete it there."))
-            }
+        try {
+            if (id != null) withContext(Dispatchers.IO) { driveFor(token).delete(id) }
+        } catch (e: IOException) {
+            messageChannel.send(Message("Couldn't turn off. Your partner's link still works. Try again when you're online."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
         }
+        // The file is gone. Withdrawing access is a courtesy: if it fails, the app can only reach files it made.
+        runCatching { withContext(Dispatchers.IO) { driveFor(token).revoke() } }
         ShareScheduler.cancel(getApplication())
         share.fileId = null
         share.error = null
@@ -331,6 +342,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** "Stop following": removes my partner's data and returns to first-run setup. */
     fun stopFollowing() = viewModelScope.launch {
+        refreshJob?.cancel()
+        refreshJob = null
         db.clearAll()
         share.clear()
         _follow.value = followFromPrefs()
