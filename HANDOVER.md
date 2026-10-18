@@ -45,11 +45,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#29](https://github.com/midhun221B/Wt-tracker/pull/29) | Polish: Distance card hidden until the first run; setup ruler fades into the setup background (`WeightRuler(fadeColor)`); Runs ring fills its card; "Run days" tile shows just the count; Today top bar without the date (the day switcher shows it); muted "This week done"; one-decimal km on run cards; Runs drops the weekly km bars; Trend "Weeks" is weight only; 2-week bars take taps and slides along the whole chart; version 0.4.2 (`v0.4.2` release) |
 | [#30](https://github.com/midhun221B/Wt-tracker/pull/30) | Partner share card: "Share with partner" on Weigh-in saved and a share icon on Trend's top bar open a preview of a picture card (goal ring with the scale kg, weigh-in streak, downhill plan trail with one weigh-in per week and the plan marker, last week's run strip) and Send opens the share menu (WhatsApp) with the PNG and a caption (`weekShare`, `ShareCard`, `Share.kt`, FileProvider); spec and plan in `docs/superpowers/`; version 0.5.0 (`v0.5.0` release) |
 | [#31](https://github.com/midhun221B/Wt-tracker/pull/31) | Body tab redesign (big chart for the chosen measure with a minimum range and a monotone curve, a stat card per measure, folded measurements log; `bodyMetrics`, `BodyCharts.kt`), new Body and tab icons, and a whole-app polish pass: Today follows midnight, Undo on deletes, backups keep the weigh-in day and reminder, the checkpoint editor refuses stretches above 1 kg/week, re-baseline "goal reached", "Goal week" on Trend, signed kg/week, alerts count scale measurements, fastest pace from the last 28 days; version 0.6.0 (`v0.6.0` release) |
+| [#32](https://github.com/midhun221B/Wt-tracker/pull/32) | Run streak: weeks in a row with 3+ runs (`runWeekStreak`, the week in progress doesn't break it), a flame with the number inside (`StreakFlame.kt`) on Today's week card (solid, waiting or off) and on the share card's run strip from 2 weeks (caption too), replacing the weigh-in streak; version 0.7.0 (`v0.7.0` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a` (v0.7.0): run streak. A Monday–Sunday week counts once it has 3 runs (`STREAK_RUNS_PER_WEEK`); the streak is the weeks in a row that do, and the week in progress doesn't break it until it ends (`runWeekStreak`, tests in `RunWeekStreakTest`). Shown as a flame with the number inside (`StreakFlame.kt`):
-  - Today's week card, top right: solid "Week streak · This week counts", outlined "N more runs · keeps it going", or grey "No streak yet" / "Last streak: N weeks".
-  - Share card (variant 2 from the canvas): on the run strip, "N-week run streak" above "Last week", from 2 weeks; the caption ends "N-week run streak.". It replaces the weigh-in streak.
+Nothing.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -95,7 +94,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 
 4. **View-only partner app** (planned; the share card shipped in v0.5.0): my partner (Android) installs the app in a read-only mode that follows my data, e.g. through a shared Google Drive file.
 5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
-6. **Run streak**: built on the branch (see Not merged). Not yet seen on the phone.
+6. **Run streak**: shipped in v0.7.0 (#32). Not yet seen on the phone.
 
 ## Product decisions
 - **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
