@@ -323,7 +323,7 @@ class ScreenshotTest {
 
     @Test fun shareLinkMessage() {
         kotlin.test.assertEquals(
-            "Open this in Wt-tracker to follow my progress: https://drive.google.com/file/d/X/view?usp=sharing",
+            "Open this in Downhill to follow my progress: https://drive.google.com/file/d/X/view?usp=sharing",
             wt.app.ui.shareLinkText("https://drive.google.com/file/d/X/view?usp=sharing"),
         )
     }

@@ -49,7 +49,7 @@ class ShareSnapshotTest {
     fun newerVersionAsksToUpdate() {
         val newer = encodeShare(snapshot).replaceFirst("\"version\": 1", "\"version\": 2")
         val e = assertFailsWith<IllegalArgumentException> { decodeShare(newer) }
-        assertTrue(e.message!!.contains("Update Wt-tracker"), e.message)
+        assertTrue(e.message!!.contains("Update Downhill"), e.message)
     }
 
     @Test

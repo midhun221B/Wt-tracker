@@ -328,7 +328,7 @@ fun AppScaffold(vm: AppViewModel) {
                 onWeighInDay = vm::setWeighInDay,
                 onExport = { kind ->
                     if (kind == ExportKind.BACKUP_JSON) {
-                        jsonLauncher.launch("wt-tracker-backup-${s.today}.json")
+                        jsonLauncher.launch("downhill-backup-${s.today}.json")
                     } else {
                         pendingExport = kind
                         csvLauncher.launch(kind.fileName.replace(".csv", "-${s.today}.csv"))

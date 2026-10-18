@@ -51,7 +51,9 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#35](https://github.com/midhun221B/Wt-tracker/pull/35) | Partner follow mode: "Follow a partner" at first-run setup turns a phone into a read-only follower of one "anyone with the link" Drive file (`ShareSnapshot`, `fetchSnapshot`, `LocalReadOnly`, `FollowBar`); Settings → Partner sharing on the owner's phone (Google consent with `drive.file` only, `DriveClient`, `ShareWorker` uploads a minute after each change, Send/Copy/New link, Turn off); final-review fixes (`ShareFlowsTest`); emulator follow smoke; setup guide `docs/partner-sharing-setup.md`; home page and privacy policy on GitHub Pages (`docs/index.html`, `docs/privacy.html`); tested by the owner on both phones; version 0.8.0 (`v0.8.0` release) |
 
 ### Not merged
-Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a`, version 0.8.1: the app is now called **Downhill** (launcher label, welcome screen, share link message, follow errors, backup file name `downhill-backup-….json`, new Drive files "Downhill share.json", release titles, README, web pages, setup guide). Internal names stay: package `io.github.midhun.wttracker`, database `wt-tracker.db`, backup/share format ids, APK file names and the repo, so updates install over 0.8.0 and old backups and share links keep working.
+  - Launcher icon: the road (orange road winding down with the plan's dashed centre line and a white dot; dashes are trimmed copies of the path, since vector drawables have no dash effect). `RoadMark`/`Wordmark` in `Brand.kt`.
+  - Share card redesigned in the "road" style chosen from the mock-ups: Downhill wordmark and "Week N of M · date", the weight, "3.1 kg down · 3.2 kg to go" (`WeekShare.downKg`/`toGoKg`, `downText`/`toGoText`), my weigh-ins as an orange road beside the dashed plan to the goal flag, a Me/Plan legend, the run strip with km per run day and the streak flame (or the week's runs before a 2-week streak).
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -102,6 +104,7 @@ Nothing.
 
 ## Product decisions
 - **Partner sharing** (2026-10-15): a picture card sent from "Weigh-in saved" through the share menu (WhatsApp), with a ring, a downhill plan trail and last week's run strip. A view-only app for the partner (Android) comes later.
+- **App name Downhill** (2026-10-18): tagline "Every week, a little further down the road."; road icon and road share card picked from the mock-ups. User-visible text only; technical names keep wt-tracker.
 - **Partner follow mode via a Drive link** (2026-10-18): the partner's phone runs the same app in a read-only follow mode and reads one "anyone with the link" file in my Drive, so the partner never signs in. Only the `drive.file` scope (no Google verification, no weekly re-sign-in). No notifications on the partner's phone. Pasting the link (or the whole WhatsApp message) instead of opening it, because Android 12+ won't let an app open drive.google.com links.
 - **Run streak instead of a weigh-in streak** (2026-10-17): weekly weigh-ins make a weigh-in streak automatic, so the streak counts weeks with 3+ runs (the owner runs about 5 a week, so 1 run would never break it). A flame with the number inside, on Today and on the share card's run strip (variant 2).
 - **BMR stays the value set in Plan** (2026-10-10): using the scale's BMR was offered and declined.

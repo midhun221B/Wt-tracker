@@ -47,10 +47,10 @@ import java.time.ZonedDateTime
 
 /** What each follow problem says, on the setup step and on the follow bar. */
 fun followErrorText(e: FollowError): String = when (e) {
-    FollowError.NotALink -> "This isn't a Wt-tracker share link"
+    FollowError.NotALink -> "This isn't a $APP_NAME share link"
     FollowError.LinkDead -> "This link no longer works. Ask for a new one."
     FollowError.Unreadable -> "Couldn't read the latest update"
-    FollowError.NewerVersion -> "Update Wt-tracker to read this"
+    FollowError.NewerVersion -> "Update $APP_NAME to read this"
     FollowError.Offline -> "No connection. Try again when you're online."
 }
 

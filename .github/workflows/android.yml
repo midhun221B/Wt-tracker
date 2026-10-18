@@ -164,5 +164,5 @@ jobs:
           fi
           cp apk/app-debug.apk "wt-tracker-${tag}.apk"
           gh release create "$tag" "wt-tracker-${tag}.apk" --target "$GITHUB_SHA" \
-            --title "Wt-tracker ${tag}" \
-            --notes "Wt-tracker ${tag} from main @ ${GITHUB_SHA::7} (debug-signed, installs over earlier builds and keeps data). Estimates, not medical advice."
+            --title "Downhill ${tag}" \
+            --notes "Downhill ${tag} from main @ ${GITHUB_SHA::7} (debug-signed, installs over earlier builds and keeps data). Estimates, not medical advice."

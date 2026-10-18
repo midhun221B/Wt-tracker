@@ -22,7 +22,7 @@ import wt.core.model.TOKYO
 import java.time.Instant
 
 /** The message my partner gets with the link. */
-fun shareLinkText(link: String) = "Open this in Wt-tracker to follow my progress: $link"
+fun shareLinkText(link: String) = "Open this in $APP_NAME to follow my progress: $link"
 
 /** The share sheet for sending my partner the link (WhatsApp and the like). */
 fun shareLinkIntent(link: String): Intent = Intent.createChooser(

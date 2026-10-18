@@ -52,6 +52,6 @@ fun fetchSnapshot(url: String, timeoutMs: Int = 15_000): FetchResult {
     return try {
         FetchResult.Ok(decodeShare(text))
     } catch (e: IllegalArgumentException) {
-        FetchResult.Failed(if (e.message?.contains("Update Wt-tracker") == true) FollowError.NewerVersion else FollowError.Unreadable)
+        FetchResult.Failed(if (e.message == NEWER_VERSION) FollowError.NewerVersion else FollowError.Unreadable)
     }
 }

@@ -63,6 +63,12 @@ fun dayMonthLong(d: LocalDate): String = d.format(dayMonthLongFmt)
 /** "82" for a whole number of kg, otherwise "81.5". */
 fun plainKg(v: Double): String = if (v == Math.rint(v)) "%.0f".format(v) else "%.1f".format(v)
 
+/** The road card's progress: "3.1 kg down", or "0.3 kg up" above the start. */
+fun downText(downKg: Double): String = if (downKg <= -0.05) "%.1f kg up".format(-downKg) else "%.1f kg down".format(maxOf(downKg, 0.0))
+
+/** "3.2 kg to go", or "Goal reached" once less than 0.05 kg is left. */
+fun toGoText(toGoKg: Double): String = if (toGoKg < 0.05) "Goal reached" else "%.1f kg to go".format(toGoKg)
+
 /** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
 fun weekRange(monday: LocalDate): String {
     val sunday = monday.plusDays(6)
