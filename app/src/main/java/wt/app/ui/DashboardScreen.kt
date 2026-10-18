@@ -233,13 +233,16 @@ private fun ForecastTiles(d: Dashboard) {
 /** A deficit rounded to 10 kcal ("360"). */
 private fun roughDeficit(v: Double) = "%,d".format((Math.round(v / 10.0) * 10).toInt())
 
-/** Last five weeks' average weight and change; the km run per week lives in the Distance card. */
+/**
+ * Last five weeks' average weight and change; the km run per week lives in the Distance card. Five columns are
+ * narrow, so the date and the change each get their own line instead of wrapping.
+ */
 @Composable
-private fun WeeksCard(weeks: List<WeekSummary>) {
+internal fun WeeksCard(weeks: List<WeekSummary>, initiallyExpanded: Boolean = false) {
     if (weeks.none { it.avgKg != null }) return
     val shown = weeks.take(5).reversed() // weekly is newest first
     val newest = shown.last()
-    CollapsibleSection("Weeks", newest.avgKg?.let { "This week %.1f kg".format(it) } ?: "No weigh-in this week") {
+    CollapsibleSection("Weeks", newest.avgKg?.let { "This week %.1f kg".format(it) } ?: "No weigh-in this week", initiallyExpanded = initiallyExpanded) {
         Text("Average weight, last five weeks", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             shown.forEach { w ->
@@ -249,8 +252,9 @@ private fun WeeksCard(weeks: List<WeekSummary>) {
                         style = numberStyle(20.sp),
                         color = if (w == newest) Palette.Accent else Palette.Text,
                     )
+                    Text(weekLabel(w), style = MaterialTheme.typography.labelSmall, color = Palette.Muted, maxLines = 1)
                     Text(
-                        weekLabel(w) + (w.changeKg?.let { " · " + signed(it) } ?: ""),
+                        w.changeKg?.let { signed(it) } ?: " ",
                         style = MaterialTheme.typography.labelSmall,
                         color = Palette.Muted,
                         textAlign = TextAlign.Center,

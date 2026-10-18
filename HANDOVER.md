@@ -49,7 +49,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#33](https://github.com/midhun221B/Wt-tracker/pull/33) | Streak in words on Today ("5-week streak", "keeps your 4-week streak"), the Weigh-in saved card without " · trend" endings plus one muted trend note, and a real minus for signed numbers (`signed()`); version 0.7.1 (`v0.7.1` release) |
 
 ### Not merged
-Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a` (v0.7.2): small cleanups. Trend's Weeks table puts the date and the change on separate lines (five narrow columns no longer wrap), with a new `1e-weeks-open` screenshot. Re-sharing week 1 later leaves out runs after the weigh-in day (`weekShare`, test `firstWeekSharedLaterLeavesOutRunsAfterTheWeighIn`).
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.

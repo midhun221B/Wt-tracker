@@ -16,8 +16,8 @@ import kotlin.math.roundToLong
  *   since the plan start ([weighIns], each week's last one, so extra weigh-ins don't zigzag) run beside it. [kgRange] covers both, so a weight above the start still fits.
  * - [planMarkerKg] is the planned weight on [date], shown only once the trend wait is over (three weigh-ins over two
  *   weeks), the same moment the Trend tab starts showing over/under plan.
- * - The strip is the Monday–Sunday week before [date]'s week ([stripIsLastWeek]), or [date]'s own week when there
- *   is no earlier week in use (the first week).
+ * - The strip is the Monday–Sunday week before [date]'s week ([stripIsLastWeek]), or [date]'s own week up to [date]
+ *   when there is no earlier week in use (the first week).
  */
 data class WeekShare(
     val date: LocalDate,
@@ -68,7 +68,10 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
 
     val lastWeek = dashboard.distance.firstOrNull { it.monday == weekStart(date).minusWeeks(1) }
         ?.takeIf { w -> w.days.any { it.kind != DayKind.BeforeStart } }
-    val stripWeek = lastWeek ?: dashboard.distance.first { it.monday == weekStart(date) }
+    // The weigh-in's own week (the first one) ends at the weigh-in: runs after it aren't part of this card.
+    val stripWeek = lastWeek ?: dashboard.distance.first { it.monday == weekStart(date) }.let { w ->
+        w.copy(days = w.days.map { if (it.date > date) it.copy(km = 0.0, runs = 0, kind = DayKind.Future, durationSec = 0) else it })
+    }
     val runs = stripWeek.days.sumOf { it.runs }
     val headline = weekHeadline(week, totalWeeks)
 

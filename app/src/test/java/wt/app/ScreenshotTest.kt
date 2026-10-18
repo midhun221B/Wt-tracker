@@ -26,6 +26,7 @@ import wt.app.data.WeightEntity
 import wt.app.ui.BodyDialog
 import wt.app.ui.CheckpointDialog
 import wt.app.ui.EnergyDialog
+import wt.app.ui.WeeksCard
 import wt.app.ui.HistoryDialog
 import wt.app.ui.RebaselineDialog
 import wt.app.ui.BodyScreen
@@ -128,6 +129,11 @@ class ScreenshotTest {
     }
 
     @Test fun dashboard() = shoot("1-dashboard") { DashboardScreen(sampleState().dashboard) }
+
+    // The Weeks card opened: five narrow columns must not wrap at 411 dp.
+    @Test fun weeksOpen() = shoot("1e-weeks-open") {
+        Box(Modifier.background(Palette.Background).padding(16.dp)) { WeeksCard(sampleState().dashboard.weekly, initiallyExpanded = true) }
+    }
 
     // The Trend distance card's other two ranges (2 weeks shows in 1-dashboard).
     @Test fun distanceMonth() = shoot("1c-distance-month") {
