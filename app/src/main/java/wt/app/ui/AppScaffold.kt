@@ -170,7 +170,7 @@ fun AppScaffold(vm: AppViewModel) {
     }
 
     // Partner sharing: Google asks for consent in its own screen the first time; the token comes back here.
-    val sharing by vm.sharing.collectAsStateWithLifecycle()
+    val partnerSharing by vm.sharing.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var afterAuth by remember { mutableStateOf<((String) -> Unit)?>(null) }
     val authLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -338,11 +338,11 @@ fun AppScaffold(vm: AppViewModel) {
                 modifier = modifier,
                 partnerSharing = {
                     PartnerSharingCard(
-                        sharing,
+                        partnerSharing,
                         onTurnOn = { name -> withToken { vm.startSharing(name, it) } },
-                        onSendLink = { sharing.link?.let { context.startActivity(shareLinkIntent(it)) } },
+                        onSendLink = { partnerSharing.link?.let { context.startActivity(shareLinkIntent(it)) } },
                         onCopyLink = {
-                            sharing.link?.let { clipboard.setText(AnnotatedString(it)) }
+                            partnerSharing.link?.let { clipboard.setText(AnnotatedString(it)) }
                             scope.launch { snackbar.showSnackbar("Link copied") }
                         },
                         onNewLink = { withToken { vm.newLink(it) } },
