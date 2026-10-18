@@ -73,8 +73,8 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
     Column(
         // Square corners: the picture sent keeps them, so apps that drop transparency show no black corners.
         modifier.size(360.dp, 450.dp).background(Palette.Background)
-            .padding(horizontal = 22.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(horizontal = 22.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Wordmark(20.dp, 18.sp, Modifier.weight(1f))
@@ -184,7 +184,7 @@ private fun Road(s: WeekShare) {
     val span = ChronoUnit.DAYS.between(start.date, goal.date).coerceAtLeast(1).toFloat()
     val description = "My weigh-ins beside the plan from ${plainKg(start.kg)} to ${plainKg(goal.kg)} kg by ${dayMonth(goal.date)}; " +
         "now ${"%.1f".format(s.kg)} kg"
-    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = description }) {
+    Canvas(Modifier.fillMaxWidth().height(104.dp).semantics { contentDescription = description }) {
         val left = 8.dp.toPx()
         val right = size.width - 12.dp.toPx()
         val top = 18.dp.toPx()
