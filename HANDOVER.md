@@ -47,6 +47,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#31](https://github.com/midhun221B/Wt-tracker/pull/31) | Body tab redesign (big chart for the chosen measure with a minimum range and a monotone curve, a stat card per measure, folded measurements log; `bodyMetrics`, `BodyCharts.kt`), new Body and tab icons, and a whole-app polish pass: Today follows midnight, Undo on deletes, backups keep the weigh-in day and reminder, the checkpoint editor refuses stretches above 1 kg/week, re-baseline "goal reached", "Goal week" on Trend, signed kg/week, alerts count scale measurements, fastest pace from the last 28 days; version 0.6.0 (`v0.6.0` release) |
 | [#32](https://github.com/midhun221B/Wt-tracker/pull/32) | Run streak: weeks in a row with 3+ runs (`runWeekStreak`, the week in progress doesn't break it), a flame with the number inside (`StreakFlame.kt`) on Today's week card (solid, waiting or off) and on the share card's run strip from 2 weeks (caption too), replacing the weigh-in streak; version 0.7.0 (`v0.7.0` release) |
 | [#33](https://github.com/midhun221B/Wt-tracker/pull/33) | Streak in words on Today ("5-week streak", "keeps your 4-week streak"), the Weigh-in saved card without " · trend" endings plus one muted trend note, and a real minus for signed numbers (`signed()`); version 0.7.1 (`v0.7.1` release) |
+| [#34](https://github.com/midhun221B/Wt-tracker/pull/34) | Cleanups: Trend's Weeks table puts the date and the change on separate lines (no wrapping at 411 dp; screenshot `1e-weeks-open`), and re-sharing week 1 leaves out runs after the weigh-in day (`weekShare`); version 0.7.2 (`v0.7.2` release) |
 
 ### Not merged
 Nothing.
@@ -84,7 +85,7 @@ Nothing.
      - The body screen has no weight row. Weight = lean / (1 − fat %) (88.3 kg for the sample, about ±0.1 kg), with BMI × height² as the fallback.
        It's shown as an optional field with a note. When saved, it updates that day's weigh-in and keeps the sleep, hunger and notes.
    - Not tested yet: Strava in Japanese (labels 距離/ペース/時間 are handled, but the
-     units are guessed), and other scale apps. The confirm dialogs filled from a screenshot aren't in the Robolectric screenshots; the add forms are.
+     units are guessed), and other scale apps. Needs a real screenshot from the owner (Strava in Japanese, or another scale app) to add as a test case. The confirm dialogs filled from a screenshot aren't in the Robolectric screenshots; the add forms are.
 2. **Not yet verified on a real device** (owner's phone: Nothing Phone (3a)):
    - status-bar icon colour and the dark launch window
    - Room v1→v2→v3 migrations on a real install

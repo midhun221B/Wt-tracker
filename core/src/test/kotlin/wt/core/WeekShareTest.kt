@@ -99,6 +99,18 @@ class WeekShareTest {
     }
 
     @Test
+    fun firstWeekSharedLaterLeavesOutRunsAfterTheWeighIn() {
+        // Weigh-in Thu 8 Oct, runs Fri 9 and Sat 10, shared again on Mon 12: the card is about the 8th.
+        val r = listOf(Run(d(9), 3.0, 1200), Run(d(10), 3.0, 1200))
+        val s = assertNotNull(weekShare(dashboard(listOf(WeightEntry(d(8), 88.6)), r, d(12)), d(8)))
+        assertFalse(s.stripIsLastWeek)
+        assertEquals(0, s.runs)
+        assertEquals(0.0, s.km, 1e-9)
+        assertEquals(List(3) { DayKind.Future }, s.strip.drop(4).map { it.kind })
+        assertEquals("Week 1 weigh-in: 88.6 kg. This week no runs.", s.caption)
+    }
+
+    @Test
     fun beforeTheTrendWait() {
         val s = assertNotNull(weekShare(dashboard(weights.take(2), emptyList(), d(12)), d(12)))
         assertNull(s.planMarkerKg)
