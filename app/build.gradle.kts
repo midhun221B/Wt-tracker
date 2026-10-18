@@ -66,6 +66,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // Google sign-in (authorization) for partner sharing: access to files this app creates in my Drive.
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 
     // On-device text recognition for Strava and body-scale screenshots (bundled model, works offline).
     implementation("com.google.mlkit:text-recognition-japanese:16.0.1")

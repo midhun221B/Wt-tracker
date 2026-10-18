@@ -46,6 +46,13 @@ import wt.core.model.TOKYO
 import wt.core.model.todayInTokyo
 import wt.app.data.clearAll
 import wt.app.share.Mode
+import wt.app.share.ShareError
+import wt.app.share.ShareScheduler
+import wt.app.share.shareSnapshot
+import wt.core.io.DriveClient
+import wt.core.io.driveLink
+import wt.core.io.encodeShare
+import java.io.IOException
 import wt.app.share.SharePrefs
 import wt.app.share.fetchFollow
 import wt.app.share.followSource
@@ -222,6 +229,90 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _follow.value = followFromPrefs()
     }
 
+    /** Partner sharing on my phone: on or off, the link, the last upload and why uploads stopped. */
+    data class SharingState(
+        val on: Boolean = false,
+        val name: String? = null,
+        val link: String? = null,
+        val lastUploadMillis: Long = 0,
+        val error: ShareError? = null,
+        val busy: Boolean = false,
+    )
+
+    private fun sharingFromPrefs() = SharingState(
+        on = share.fileId != null,
+        name = share.ownerName,
+        link = share.fileId?.let(::driveLink),
+        lastUploadMillis = share.lastUploadMillis,
+        error = share.error,
+    )
+
+    private val _sharing = MutableStateFlow(sharingFromPrefs())
+    val sharing: StateFlow<SharingState> = _sharing
+
+    /** Re-reads what the background upload wrote (call on resume). */
+    fun refreshSharing() {
+        if (!_sharing.value.busy) _sharing.value = sharingFromPrefs()
+    }
+
+    /** Turn on: creates the file in my Drive, lets anyone with the link view it and uploads my data. */
+    fun startSharing(name: String, token: String) = viewModelScope.launch {
+        _sharing.value = _sharing.value.copy(busy = true)
+        try {
+            share.ownerName = name
+            val json = encodeShare(shareSnapshot(getApplication(), name))
+            val id = withContext(Dispatchers.IO) {
+                val drive = DriveClient(token)
+                drive.create("Wt-tracker share.json", json).also { drive.makePublic(it) }
+            }
+            share.fileId = id
+            share.lastUploadMillis = System.currentTimeMillis()
+            share.error = null
+        } catch (e: IOException) {
+            messageChannel.send(Message("Couldn't turn on sharing. Check your connection and try again."))
+        }
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** New link: deletes the shared file (the old link stops working) and makes a new one. */
+    fun newLink(token: String) = viewModelScope.launch {
+        val old = share.fileId
+        _sharing.value = _sharing.value.copy(busy = true)
+        try {
+            if (old != null) withContext(Dispatchers.IO) { DriveClient(token).delete(old) }
+            share.fileId = null
+            ShareScheduler.cancel(getApplication())
+        } catch (e: IOException) {
+            messageChannel.send(Message("Couldn't make a new link. Check your connection and try again."))
+            _sharing.value = sharingFromPrefs()
+            return@launch
+        }
+        startSharing(share.ownerName.orEmpty(), token).join()
+    }
+
+    /** Turn off: deletes the shared file, withdraws the app's Drive access and stops uploads. */
+    fun stopSharing(token: String?) = viewModelScope.launch {
+        _sharing.value = _sharing.value.copy(busy = true)
+        val id = share.fileId
+        if (token != null) {
+            try {
+                withContext(Dispatchers.IO) {
+                    val drive = DriveClient(token)
+                    if (id != null) drive.delete(id)
+                    drive.revoke()
+                }
+            } catch (e: IOException) {
+                // Offline or already revoked: the file can still be deleted from Drive by hand.
+                messageChannel.send(Message("Sharing is off. The file stays in your Drive until you delete it there."))
+            }
+        }
+        ShareScheduler.cancel(getApplication())
+        share.fileId = null
+        share.error = null
+        share.lastUploadMillis = 0
+        _sharing.value = sharingFromPrefs()
+    }
+
     /** "Stop following": removes my partner's data and returns to first-run setup. */
     fun stopFollowing() = viewModelScope.launch {
         db.clearAll()
@@ -240,9 +331,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         today.value = todayInTokyo()
     }
 
-    private fun launchWithMessage(done: String?, block: suspend () -> Unit) = viewModelScope.launch {
+    /** Runs [block]; a change to my data ([changes]) also queues an upload to my partner when sharing is on. */
+    private fun launchWithMessage(done: String?, changes: Boolean = true, block: suspend () -> Unit) = viewModelScope.launch {
         try {
             block()
+            if (changes) ShareScheduler.changed(getApplication())
             done?.let { messageChannel.send(Message(it)) }
         } catch (e: Exception) {
             messageChannel.send(Message(e.message ?: "Something went wrong"))
@@ -317,7 +410,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         db.profile().upsert(p.copy(weighInDay = day))
     }
 
-    fun export(kind: ExportKind, uri: Uri) = launchWithMessage("Exported ${kind.fileName}") {
+    fun export(kind: ExportKind, uri: Uri) = launchWithMessage("Exported ${kind.fileName}", changes = false) {
         val data = db.loadAll()
         val text = when (kind) {
             ExportKind.WEIGHTS_CSV -> weightsCsv(data.weights, data.restDays)
@@ -338,7 +431,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         importReport.value = db.importStrava(text)
     }
 
-    fun readScreenshot(uri: Uri) = launchWithMessage(null) {
+    fun readScreenshot(uri: Uri) = launchWithMessage(null, changes = false) {
         val rows = ocrRows(recognizeLines(getApplication(), uri))
         val reading = withContext(Dispatchers.Default) { readScreenshot(rows, db.profile().get()?.heightCm) }
         if (reading == null) messageChannel.send(Message("Couldn't find a run or body measurement in this image"))

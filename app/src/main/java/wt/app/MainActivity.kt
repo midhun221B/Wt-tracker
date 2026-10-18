@@ -28,5 +28,6 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         vm.refreshToday()
         vm.refreshFollow()
+        vm.refreshSharing()
     }
 }
