@@ -341,7 +341,7 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
             }
             p.changeKg?.let { c ->
                 Text(
-                    (if (c > 0.05) "+%.1f" else "%.1f").format(c) + " kg since the last weigh-in",
+                    signedKg(c) + " since the last weigh-in",
                     style = numberStyle(22.sp),
                     color = if (c > 0.05) Palette.Warn else Palette.Accent,
                 )

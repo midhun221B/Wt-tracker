@@ -250,7 +250,7 @@ private fun WeeksCard(weeks: List<WeekSummary>) {
                         color = if (w == newest) Palette.Accent else Palette.Text,
                     )
                     Text(
-                        weekLabel(w) + (w.changeKg?.let { " · %+.1f".format(it) } ?: ""),
+                        weekLabel(w) + (w.changeKg?.let { " · " + signed(it) } ?: ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = Palette.Muted,
                         textAlign = TextAlign.Center,
@@ -268,8 +268,8 @@ private fun BodyTiles(d: Dashboard) {
     val last = d.body.last()
     CollapsibleSection("Body", "Fat %.1f%% · visceral %.1f".format(last.fatPct, last.visceral)) {
         TileRow { m ->
-            StatTile("Body fat", "%.1f%%".format(last.fatPct), m, sub = "%+.1f since start".format(last.fatPct - first.fatPct))
-            StatTile("Visceral fat", "%.1f".format(last.visceral), m, sub = "%+.1f since start".format(last.visceral - first.visceral))
+            StatTile("Body fat", "%.1f%%".format(last.fatPct), m, sub = signed(last.fatPct - first.fatPct) + " since start")
+            StatTile("Visceral fat", "%.1f".format(last.visceral), m, sub = signed(last.visceral - first.visceral) + " since start")
         }
     }
 }
