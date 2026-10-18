@@ -144,7 +144,7 @@ private fun Swatch(label: String, color: Color, dashed: Boolean) {
             val y = size.height / 2
             drawLine(
                 color, Offset(1.dp.toPx(), y), Offset(size.width - 1.dp.toPx(), y),
-                (if (dashed) 2 else 3.5).dp.toPx(), StrokeCap.Round,
+                (if (dashed) 2.0 else 3.5).dp.toPx(), StrokeCap.Round,
                 pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 3.dp.toPx())) else null,
             )
         }
