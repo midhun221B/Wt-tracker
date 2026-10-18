@@ -229,6 +229,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _follow.value = followFromPrefs()
     }
 
+    /** Makes the Drive client for a token; tests point it at a local server. */
+    internal var driveFor: (String) -> DriveClient = { DriveClient(it) }
+
     /** Partner sharing on my phone: on or off, the link, the last upload and why uploads stopped. */
     data class SharingState(
         val on: Boolean = false,
@@ -275,7 +278,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             share.ownerName = name
             val json = encodeShare(shareSnapshot(getApplication(), name))
             val id = withContext(Dispatchers.IO) {
-                val drive = DriveClient(token)
+                val drive = driveFor(token)
                 drive.create("Wt-tracker share.json", json).also { drive.makePublic(it) }
             }
             share.fileId = id
@@ -292,7 +295,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val old = share.fileId
         _sharing.value = _sharing.value.copy(busy = true)
         try {
-            if (old != null) withContext(Dispatchers.IO) { DriveClient(token).delete(old) }
+            if (old != null) withContext(Dispatchers.IO) { driveFor(token).delete(old) }
             share.fileId = null
             ShareScheduler.cancel(getApplication())
         } catch (e: IOException) {
@@ -310,7 +313,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (token != null) {
             try {
                 withContext(Dispatchers.IO) {
-                    val drive = DriveClient(token)
+                    val drive = driveFor(token)
                     if (id != null) drive.delete(id)
                     drive.revoke()
                 }

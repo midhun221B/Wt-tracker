@@ -23,8 +23,9 @@ fun followSourceUrl(text: String, debug: Boolean): String? {
 }
 
 /**
- * Downloads and reads a share file (blocking; call it off the main thread). 403/404/410 mean the link was turned
- * off or replaced; no connection is Offline; anything that isn't a share file is Unreadable.
+ * Downloads and reads a share file (blocking; call it off the main thread). 403/404/410, or an HTML page (Google's
+ * sign-in or error page for a trashed or unshared file), mean the link was turned off or replaced; no connection is
+ * Offline; anything else that isn't a share file is Unreadable.
  */
 fun fetchSnapshot(url: String, timeoutMs: Int = 15_000): FetchResult {
     val text = try {
@@ -33,7 +34,12 @@ fun fetchSnapshot(url: String, timeoutMs: Int = 15_000): FetchResult {
         c.readTimeout = timeoutMs
         try {
             when (c.responseCode) {
-                200 -> c.inputStream.use { it.readBytes().decodeToString() }
+                // A trashed or no-longer-shared Drive file answers with Google's HTML sign-in or error page.
+                200 -> if (c.contentType?.startsWith("text/html") == true || c.url.host == "accounts.google.com") {
+                    return FetchResult.Failed(FollowError.LinkDead)
+                } else {
+                    c.inputStream.use { it.readBytes().decodeToString() }
+                }
                 403, 404, 410 -> return FetchResult.Failed(FollowError.LinkDead)
                 else -> return FetchResult.Failed(FollowError.Offline)
             }

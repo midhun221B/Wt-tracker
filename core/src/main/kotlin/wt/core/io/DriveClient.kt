@@ -36,9 +36,25 @@ class DriveClient(
         call("POST", "$api/drive/v3/files/$id/permissions", """{"role":"reader","type":"anyone"}""", "application/json")
     }
 
-    /** Replaces the file's content. HttpURLConnection can't send PATCH, so it uses Google's method override. */
-    fun update(id: String, json: String) {
-        call("POST", "$api/upload/drive/v3/files/$id?uploadType=media", json, "application/json", patch = true)
+    /**
+     * Replaces the file's content and returns whether the file is in the trash ("Delete" in the Drive app only trashes
+     * it, and Drive still accepts updates). HttpURLConnection can't send PATCH, so it uses Google's method override.
+     */
+    fun update(id: String, json: String): Boolean {
+        val reply = call("POST", "$api/upload/drive/v3/files/$id?uploadType=media&fields=trashed", json, "application/json", patch = true)
+        return Json.parseToJsonElement(reply).jsonObject["trashed"]?.jsonPrimitive?.content == "true"
+    }
+
+    /** Creates the file and lets anyone with the link view it; if that fails, deletes the file again and rethrows. */
+    fun createPublic(name: String, json: String): String {
+        val id = create(name, json)
+        try {
+            makePublic(id)
+        } catch (e: IOException) {
+            runCatching { delete(id) }
+            throw e
+        }
+        return id
     }
 
     /** Deletes the file; one that is already gone counts as deleted. */

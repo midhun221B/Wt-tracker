@@ -112,3 +112,6 @@ fun PartnerSharingCard(
         }
     }
 }
+
+/** What a failed Turn on says: Drive's HTTP code (a setup mistake, see the guide) or the connection. */
+fun turnOnErrorText(e: Exception): String = TODO()

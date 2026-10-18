@@ -17,10 +17,11 @@ class ShareFetchTest {
     private val fixture = javaClass.getResource("/share-sample.json")!!.readText()
     private var server: HttpServer? = null
 
-    /** Serves [body] with [code] at /share.json and returns its URL. */
-    private fun serve(code: Int, body: String): String {
+    /** Serves [body] with [code] (and [type], if given) at /share.json and returns its URL. */
+    private fun serve(code: Int, body: String, type: String? = null): String {
         val s = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         s.createContext("/share.json") { ex ->
+            type?.let { ex.responseHeaders.add("Content-Type", it) }
             val bytes = body.toByteArray()
             ex.sendResponseHeaders(code, bytes.size.toLong().coerceAtLeast(1))
             ex.responseBody.use { if (bytes.isNotEmpty()) it.write(bytes) else it.write(' '.code) }
@@ -73,5 +74,11 @@ class ShareFetchTest {
         assertNull(followSourceUrl("http://10.0.2.2:8765/share.json", debug = false))
         assertEquals("http://10.0.2.2:8765/share.json", followSourceUrl(" http://10.0.2.2:8765/share.json ", debug = true))
         assertNull(followSourceUrl("hello", debug = true))
+    }
+
+    @Test
+    fun aSignInPageMeansTheLinkIsDead() {
+        // A trashed or no-longer-shared Drive file answers 200 with Google's HTML sign-in or error page.
+        assertEquals(FetchResult.Failed(FollowError.LinkDead), fetchSnapshot(serve(200, "<html>Sign in</html>", "text/html; charset=utf-8")))
     }
 }
