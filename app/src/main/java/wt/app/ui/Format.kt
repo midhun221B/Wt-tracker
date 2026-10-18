@@ -7,11 +7,20 @@ import java.util.Locale
 
 fun kg(v: Double) = "%.1f kg".format(v)
 
-fun signedKg(v: Double) = "%+.1f kg".format(v)
+/** One decimal with a real minus (−) or a plus; no sign when it rounds to 0.0. */
+fun signed(v: Double): String {
+    val tenths = Math.round(v * 10)
+    val sign = when {
+        tenths < 0 -> "−"
+        tenths > 0 -> "+"
+        else -> ""
+    }
+    return sign + "%.1f".format(Math.abs(tenths) / 10.0)
+}
+
+fun signedKg(v: Double) = signed(v) + " kg"
 
 fun kcal(v: Double) = "%,.0f kcal".format(v)
-
-fun signedKcal(v: Double) = "%+,.0f kcal".format(v)
 
 /**
  * Daily kcal rounded to the nearest 50 ("2,350"): intake is estimated from the weight trend and a BMR guess,

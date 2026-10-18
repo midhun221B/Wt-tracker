@@ -7,6 +7,7 @@ import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
 import wt.app.ui.planLabel
+import wt.app.ui.signed
 import wt.app.ui.roughKcal
 import wt.app.ui.weekRange
 import wt.core.model.TOKYO
@@ -72,5 +73,13 @@ class FormatTest {
     fun planLabelsUseShortDates() {
         assertEquals("Re-baseline 17 Oct", planLabel("Re-baseline 2026-10-17"))
         assertEquals("Original plan", planLabel("Original plan"))
+    }
+
+    @Test
+    fun signedUsesARealMinus() {
+        assertEquals("−0.6", signed(-0.6))
+        assertEquals("+0.3", signed(0.3))
+        assertEquals("0.0", signed(0.0))
+        assertEquals("0.0", signed(-0.04)) // rounds to zero: no sign
     }
 }

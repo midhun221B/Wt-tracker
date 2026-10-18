@@ -341,7 +341,7 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
             }
             p.changeKg?.let { c ->
                 Text(
-                    (if (c > 0.05) "+%.1f" else "%.1f").format(c) + " kg since the last weigh-in",
+                    signedKg(c) + " since the last weigh-in",
                     style = numberStyle(22.sp),
                     color = if (c > 0.05) Palette.Warn else Palette.Accent,
                 )
@@ -349,22 +349,30 @@ private fun WeighInSavedCard(p: WeighInProgress, goalKg: Double, onEdit: () -> U
             // The ring is the trend, like the Trend tab; the scale shows only as the change above.
             val g = p.goal
             Text(
-                "%.1f of %.1f kg toward %s kg".format(g.lostKg, g.totalKg, plainKg(goalKg)) + if (g.fromTrend) " · trend" else "",
+                "%.1f of %.1f kg lost toward %s kg".format(g.lostKg, g.totalKg, plainKg(goalKg)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.Muted,
             )
             // Trend minus plan, the same gap as the Trend tab.
             val diff = p.gapKg
-            val basis = if (g.fromTrend) " · trend" else ""
             Text(
                 when {
-                    diff < -0.05 -> "%.1f kg under plan".format(-diff) + basis
-                    diff <= 0.05 -> "On plan$basis"
-                    else -> "%.1f kg over plan".format(diff) + basis
+                    diff < -0.05 -> "%.1f kg under plan".format(-diff)
+                    diff <= 0.05 -> "On plan"
+                    else -> "%.1f kg over plan".format(diff)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (diff <= 0.05) Palette.Accent else Palette.Warn,
             )
+            // Before there is a trend both lines use the latest weigh-in, which needs no explaining.
+            if (g.fromTrend) {
+                Text(
+                    "From your trend weight, which smooths out day-to-day swings.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Palette.Muted,
+                    textAlign = TextAlign.Center,
+                )
+            }
             onShare?.let {
                 OutlinedButton(
                     onClick = it,
