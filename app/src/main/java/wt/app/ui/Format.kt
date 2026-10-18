@@ -1,8 +1,10 @@
 package wt.app.ui
 
 import wt.core.model.formatMinSec
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 fun kg(v: Double) = "%.1f kg".format(v)
@@ -62,6 +64,19 @@ fun dayMonthLong(d: LocalDate): String = d.format(dayMonthLongFmt)
 
 /** "82" for a whole number of kg, otherwise "81.5". */
 fun plainKg(v: Double): String = if (v == Math.rint(v)) "%.0f".format(v) else "%.1f".format(v)
+
+/** The road card's progress: "3.1 kg down", or "0.3 kg up" above the start. */
+fun downText(downKg: Double): String = if (downKg <= -0.05) "%.1f kg up".format(-downKg) else "%.1f kg down".format(maxOf(downKg, 0.0))
+
+/** "3.2 kg to go", or "Goal reached" once less than 0.05 kg is left. */
+fun toGoText(toGoKg: Double): String = if (toGoKg < 0.05) "Goal reached" else "%.1f kg to go".format(toGoKg)
+
+/** The reminder row's title: "Reminder at 07:30", or just "Reminder" while it's off. */
+fun reminderTitle(hour: Int, minute: Int, enabled: Boolean): String =
+    if (enabled) "Reminder at %02d:%02d".format(hour, minute) else "Reminder"
+
+/** "Monday" for ISO weekday 1 … "Sunday" for 7. */
+fun weekdayName(isoDay: Int): String = DayOfWeek.of(isoDay).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
 /** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
 fun weekRange(monday: LocalDate): String {

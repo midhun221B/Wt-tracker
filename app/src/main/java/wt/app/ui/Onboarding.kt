@@ -214,7 +214,7 @@ private fun Heading(text: String, sub: String? = null) {
 
 @Composable
 private fun Welcome() {
-    Text("Wt-tracker", style = numberStyle(22.sp, Palette.Accent))
+    Wordmark(28.dp, 26.sp)
     Spacer(Modifier.height(32.dp))
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Palette.Card).padding(20.dp)) {
         PlanVsRealitySketch(Modifier.fillMaxWidth().height(140.dp))

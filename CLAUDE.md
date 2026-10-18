@@ -1,6 +1,6 @@
 # Wt-tracker
 
-Personal Android weight-loss tracker. It compares the PLANNED trajectory (88.3 kg on 2026-10-08 → 82.0 kg on 2027-01-07)
+The app is called **Downhill** (since v0.8.1; the repo, package and file names keep "wt-tracker"). Personal Android weight-loss tracker. It compares the PLANNED trajectory (88.3 kg on 2026-10-08 → 82.0 kg on 2027-01-07)
 with a REALISTIC forecast built from logged weights. Single user, all data on the phone: no accounts, no cloud.
 
 ## Layout

@@ -90,9 +90,9 @@ fun decodeBackup(text: String): AppData {
     val file = try {
         json.decodeFromString(BackupFile.serializer(), text)
     } catch (e: Exception) {
-        throw IllegalArgumentException("Not a valid Wt Tracker backup: ${e.message}", e)
+        throw IllegalArgumentException("Not a valid Downhill backup: ${e.message}", e)
     }
-    require(file.format == BackupFile.FORMAT) { "Not a Wt Tracker backup (format '${file.format}')" }
+    require(file.format == BackupFile.FORMAT) { "Not a Downhill backup (format '${file.format}')" }
     require(file.version <= BackupFile.VERSION) { "Backup version ${file.version} is newer than this app supports" }
     require(file.plans.count { it.active } == 1) { "Backup must contain exactly one active plan" }
     require(file.plans.first { it.active }.checkpoints.size >= 2) { "The backup's active plan needs at least two checkpoints" }

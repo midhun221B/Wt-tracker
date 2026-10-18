@@ -27,7 +27,7 @@ Google wants a home page and a privacy policy before it lets you publish. They'r
 ## 3. Consent screen
 Newer consoles call this **Google Auth Platform**, with Branding, Audience and Data access in the left menu.
 1. **Branding**:
-   - App name `Wt-tracker`; user support email and developer contact: your email.
+   - App name `Downhill`; user support email and developer contact: your email.
    - **Leave the app logo empty.** A logo makes Google ask for a verification that takes weeks.
    - Application home page: `https://midhun221b.github.io/Wt-tracker/`
    - Application privacy policy link: `https://midhun221b.github.io/Wt-tracker/privacy.html`
@@ -49,7 +49,7 @@ Newer consoles call this **Google Auth Platform**, with Branding, Audience and D
 5. Click **Create**. There's nothing to copy into the app: Google matches the package and fingerprint.
 
 ## 5. On your phone
-1. Wt-tracker → **Settings → Partner sharing → Turn on**.
+1. Downhill → **Settings → Partner sharing → Turn on**.
 2. Type the name your partner should see, then pick your Google account and allow access.
 3. **Send link to partner** opens the share menu: send it on WhatsApp.
 
@@ -66,4 +66,4 @@ Your partner installs the same app, chooses **Follow a partner** on the first sc
 - **"Couldn't sign in with Google (code 7)" or "Waiting for a connection"**: no internet; it retries on its own.
 - **Your partner sees "This link no longer works"**: you made a new link or turned sharing off. Send the new link.
 - To stop at any time: **Turn off** deletes the file and withdraws the app's access. You can also delete
-  "Wt-tracker share.json" in Drive yourself.
+  "Downhill share.json" (or "Wt-tracker share.json" from before 0.8.1) in Drive yourself.

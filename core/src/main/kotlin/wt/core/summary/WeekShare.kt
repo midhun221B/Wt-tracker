@@ -30,6 +30,10 @@ data class WeekShare(
     val changeKg: Double?,
     val previousDate: LocalDate?,
     val fraction: Double,
+    /** Kilos below the plan's start (negative when above it): "3.1 kg down". */
+    val downKg: Double,
+    /** Kilos left to the plan's goal, never below 0: "3.2 kg to go". */
+    val toGoKg: Double,
     val trail: List<Checkpoint>,
     val posts: List<Checkpoint>,
     val currentPost: Checkpoint,
@@ -85,6 +89,8 @@ fun weekShare(dashboard: Dashboard, date: LocalDate): WeekShare? {
         changeKg = p.changeKg,
         previousDate = p.previousDate,
         fraction = p.goal.fraction,
+        downKg = plan.start.kg - p.kg,
+        toGoKg = (p.kg - plan.goal.kg).coerceAtLeast(0.0),
         trail = plan.checkpoints,
         posts = posts,
         currentPost = Checkpoint(weekStart(date), plan.at(weekStart(date))),

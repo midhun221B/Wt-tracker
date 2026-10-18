@@ -32,18 +32,21 @@ fun encodeShare(s: ShareSnapshot): String = json.encodeToString(
     ShareFile(ownerName = s.ownerName, updatedAt = s.updatedAt, backup = json.parseToJsonElement(encodeBackup(s.data, s.updatedAt))),
 )
 
+/** The message for a share file written by a newer app; [fetchSnapshot] maps it to [FollowError.NewerVersion]. */
+const val NEWER_VERSION = "Update Downhill to read this"
+
 /**
  * Reads a share file; throws IllegalArgumentException with a readable message when it isn't one, or when it was
- * written by a newer app ("Update Wt-tracker to read this"). The backup inside is checked like any restore.
+ * written by a newer app ("Update Downhill to read this"). The backup inside is checked like any restore.
  */
 fun decodeShare(text: String): ShareSnapshot {
     val file = try {
         json.decodeFromString(ShareFile.serializer(), text)
     } catch (e: Exception) {
-        throw IllegalArgumentException("Not a Wt-tracker share file", e)
+        throw IllegalArgumentException("Not a Downhill share file", e)
     }
-    require(file.format == ShareFile.FORMAT) { "Not a Wt-tracker share file" }
-    require(file.version <= ShareFile.VERSION) { "Update Wt-tracker to read this" }
+    require(file.format == ShareFile.FORMAT) { "Not a Downhill share file" }
+    require(file.version <= ShareFile.VERSION) { NEWER_VERSION }
     return ShareSnapshot(file.ownerName, file.updatedAt, decodeBackup(file.backup.toString()))
 }
 

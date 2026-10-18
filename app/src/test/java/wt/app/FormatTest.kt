@@ -2,11 +2,15 @@ package wt.app
 
 import wt.app.chart.kgStep
 import wt.app.notify.Reminder
+import wt.app.ui.downText
 import wt.app.ui.duration
+import wt.app.ui.toGoText
 import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
 import wt.app.ui.planLabel
+import wt.app.ui.reminderTitle
+import wt.app.ui.weekdayName
 import wt.app.ui.ageText
 import wt.app.ui.signed
 import wt.app.ui.roughKcal
@@ -19,6 +23,29 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class FormatTest {
+    @Test
+    fun downAndToGo() {
+        assertEquals("3.1 kg down", downText(3.1))
+        assertEquals("0.3 kg up", downText(-0.3))
+        assertEquals("0.0 kg down", downText(-0.02))
+        assertEquals("3.2 kg to go", toGoText(3.2))
+        assertEquals("Goal reached", toGoText(0.0))
+        assertEquals("Goal reached", toGoText(0.04))
+    }
+
+    @Test
+    fun reminderTitles() {
+        assertEquals("Reminder at 07:30", reminderTitle(7, 30, enabled = true))
+        assertEquals("Reminder at 21:05", reminderTitle(21, 5, enabled = true))
+        assertEquals("Reminder", reminderTitle(7, 30, enabled = false))
+    }
+
+    @Test
+    fun weekdayNames() {
+        assertEquals("Monday", weekdayName(1))
+        assertEquals("Sunday", weekdayName(7))
+    }
+
     @Test
     fun roughKcalRoundsToFifty() {
         assertEquals("2,350", roughKcal(2358.0))

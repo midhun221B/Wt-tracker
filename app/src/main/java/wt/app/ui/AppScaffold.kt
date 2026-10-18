@@ -230,7 +230,7 @@ fun AppScaffold(vm: AppViewModel) {
             val s = state
             val (subtitle, title) = when {
                 settingsOpen && follow.following -> "Following ${follow.ownerName.orEmpty()}" to "Settings"
-                settingsOpen -> "Reminder, export and backup" to "Settings"
+                settingsOpen -> "Weigh-in, sharing and your data" to "Settings"
                 s == null -> "" to tab.label
                 tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "${weekHeadline(w, n)} · ${longDay(s.today)}" to tab.label }
                 // Today's day switcher already shows the date.
@@ -328,7 +328,7 @@ fun AppScaffold(vm: AppViewModel) {
                 onWeighInDay = vm::setWeighInDay,
                 onExport = { kind ->
                     if (kind == ExportKind.BACKUP_JSON) {
-                        jsonLauncher.launch("wt-tracker-backup-${s.today}.json")
+                        jsonLauncher.launch("downhill-backup-${s.today}.json")
                     } else {
                         pendingExport = kind
                         csvLauncher.launch(kind.fileName.replace(".csv", "-${s.today}.csv"))

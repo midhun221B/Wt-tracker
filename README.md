@@ -1,6 +1,8 @@
-# Wt-tracker
+# Downhill
 
-A personal Android app for weight loss. It compares the **planned** trajectory with a **realistic**, data-driven forecast
+*Every week, a little further down the road.*
+
+Downhill (repository: Wt-tracker) is a personal Android app for weight loss. It compares the **planned** trajectory with a **realistic**, data-driven forecast
 that updates every time you log a weight. Everything stays on the phone: no accounts, no cloud.
 
 | Trend | Today | Runs | Body | Plan |

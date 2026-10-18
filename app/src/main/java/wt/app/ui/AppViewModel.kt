@@ -82,7 +82,7 @@ enum class ExportKind(val fileName: String, val mime: String) {
     WEIGHTS_CSV("weights.csv", "text/csv"),
     RUNS_CSV("runs.csv", "text/csv"),
     BODY_CSV("body.csv", "text/csv"),
-    BACKUP_JSON("wt-tracker-backup.json", "application/json"),
+    BACKUP_JSON("downhill-backup.json", "application/json"),
 }
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
@@ -284,7 +284,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         try {
             share.ownerName = name
             val json = encodeShare(shareSnapshot(getApplication(), name))
-            val id = withContext(Dispatchers.IO) { driveFor(token).createPublic("Wt-tracker share.json", json) }
+            val id = withContext(Dispatchers.IO) { driveFor(token).createPublic("$APP_NAME share.json", json) }
             share.fileId = id
             share.lastUploadMillis = System.currentTimeMillis()
             share.error = null

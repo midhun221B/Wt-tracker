@@ -323,13 +323,34 @@ class ScreenshotTest {
 
     @Test fun shareLinkMessage() {
         kotlin.test.assertEquals(
-            "Open this in Wt-tracker to follow my progress: https://drive.google.com/file/d/X/view?usp=sharing",
+            "Open this in Downhill to follow my progress: https://drive.google.com/file/d/X/view?usp=sharing",
             wt.app.ui.shareLinkText("https://drive.google.com/file/d/X/view?usp=sharing"),
         )
     }
 
     @Test fun settings() = shoot("8-settings") {
-        SettingsScreen(sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {})
+        SettingsScreen(
+            sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {},
+            partnerSharing = { wt.app.ui.PartnerSharingCard(wt.app.ui.AppViewModel.SharingState(), {}, {}, {}, {}, {}, {}, now = sharingNow) },
+        )
+    }
+
+    @Test fun settingsReminderOff() = shoot("8b-settings-reminder-off") {
+        SettingsScreen(
+            sampleState().profile.copy(reminderEnabled = false), notificationsAllowed = true,
+            onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {},
+            partnerSharing = { wt.app.ui.PartnerSharingCard(sharingState(), {}, {}, {}, {}, {}, {}, now = sharingNow) },
+        )
+    }
+
+    @Test fun settingsManageLink() = shoot("8c-settings-manage-link") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            wt.app.ui.ManageLinkDialog(sharingState().link, {}, {}, {}, {})
+        }
+    }
+
+    @Test fun settingsExport() = shoot("8d-settings-export") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { wt.app.ui.ExportDialog({}) {} }
     }
 
     // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.

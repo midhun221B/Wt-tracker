@@ -152,6 +152,27 @@ class WeekShareTest {
     }
 
     @Test
+    fun downAndToGoCountFromThePlan() {
+        // The road card's "0.8 kg down · 5.5 kg to go": from the plan's start (88.3) and towards its goal (82.0).
+        val s = assertNotNull(weekShare(dashboard(), d(2, 11)))
+        assertEquals(0.8, s.downKg, 1e-9)
+        assertEquals(5.5, s.toGoKg, 1e-9)
+    }
+
+    @Test
+    fun aboveTheStartIsNegativeDown() {
+        val s = assertNotNull(weekShare(dashboard(listOf(WeightEntry(d(8), 88.6)), emptyList(), d(8)), d(8)))
+        assertEquals(-0.3, s.downKg, 1e-9)
+    }
+
+    @Test
+    fun pastTheGoalHasNothingToGo() {
+        val day = d(11, 1, 2027)
+        val s = assertNotNull(weekShare(dashboard(weights + WeightEntry(day, 81.6), asOf = day), day))
+        assertEquals(0.0, s.toGoKg, 1e-9)
+    }
+
+    @Test
     fun afterGoalDateHasNoWeeksToGo() {
         val day = d(11, 1, 2027)
         val s = assertNotNull(weekShare(dashboard(weights + WeightEntry(day, 84.0), asOf = day), day))
