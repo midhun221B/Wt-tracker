@@ -1,8 +1,10 @@
 package wt.app.ui
 
 import wt.core.model.formatMinSec
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 fun kg(v: Double) = "%.1f kg".format(v)
@@ -68,6 +70,11 @@ fun downText(downKg: Double): String = if (downKg <= -0.05) "%.1f kg up".format(
 
 /** "3.2 kg to go", or "Goal reached" once less than 0.05 kg is left. */
 fun toGoText(toGoKg: Double): String = if (toGoKg < 0.05) "Goal reached" else "%.1f kg to go".format(toGoKg)
+
+/** The reminder in one line: "Monday at 07:30 if you haven't weighed in yet", or "Off". [weekday] is ISO (1 = Monday). */
+fun reminderSummary(weekday: Int, hour: Int, minute: Int, enabled: Boolean): String =
+    if (!enabled) "Off"
+    else "${DayOfWeek.of(weekday).getDisplayName(TextStyle.FULL, Locale.ENGLISH)} at %02d:%02d if you haven't weighed in yet".format(hour, minute)
 
 /** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
 fun weekRange(monday: LocalDate): String {

@@ -329,7 +329,18 @@ class ScreenshotTest {
     }
 
     @Test fun settings() = shoot("8-settings") {
-        SettingsScreen(sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {})
+        SettingsScreen(
+            sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {},
+            partnerSharing = { wt.app.ui.PartnerSharingCard(wt.app.ui.AppViewModel.SharingState(), {}, {}, {}, {}, {}, {}, now = sharingNow) },
+        )
+    }
+
+    @Test fun settingsReminderOff() = shoot("8b-settings-reminder-off") {
+        SettingsScreen(
+            sampleState().profile.copy(reminderEnabled = false), notificationsAllowed = true,
+            onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {},
+            partnerSharing = { wt.app.ui.PartnerSharingCard(sharingState(), {}, {}, {}, {}, {}, {}, now = sharingNow) },
+        )
     }
 
     // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.

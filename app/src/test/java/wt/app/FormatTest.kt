@@ -9,6 +9,7 @@ import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
 import wt.app.ui.planLabel
+import wt.app.ui.reminderSummary
 import wt.app.ui.ageText
 import wt.app.ui.signed
 import wt.app.ui.roughKcal
@@ -29,6 +30,13 @@ class FormatTest {
         assertEquals("3.2 kg to go", toGoText(3.2))
         assertEquals("Goal reached", toGoText(0.0))
         assertEquals("Goal reached", toGoText(0.04))
+    }
+
+    @Test
+    fun reminderSummaries() {
+        assertEquals("Monday at 07:30 if you haven't weighed in yet", reminderSummary(1, 7, 30, enabled = true))
+        assertEquals("Sunday at 21:05 if you haven't weighed in yet", reminderSummary(7, 21, 5, enabled = true))
+        assertEquals("Off", reminderSummary(1, 7, 30, enabled = false))
     }
 
     @Test
