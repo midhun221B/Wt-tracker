@@ -181,7 +181,7 @@ private fun Timeline(state: UiState, onEdit: () -> Unit) {
 
     Column {
         rows.forEachIndexed { j, row ->
-            val clickable = row.stop != Stop.Today
+            val clickable = row.stop != Stop.Today && !LocalReadOnly.current
             Row(
                 Modifier.fillMaxWidth().height(56.dp)
                     .then(if (clickable) Modifier.clickable(onClickLabel = "Edit checkpoints", onClick = onEdit) else Modifier),
@@ -227,7 +227,7 @@ private fun Timeline(state: UiState, onEdit: () -> Unit) {
                 )
             }
         }
-        TextButton(onClick = onEdit, modifier = Modifier.padding(start = 28.dp).height(44.dp)) {
+        if (!LocalReadOnly.current) TextButton(onClick = onEdit, modifier = Modifier.padding(start = 28.dp).height(44.dp)) {
             Text("Add checkpoint", color = Palette.Muted)
         }
     }
@@ -249,6 +249,8 @@ internal fun Rail(dot: Color, above: Color?, below: Color?) {
 /** A quiet list row: title, grey value and a chevron, with a hairline below. */
 @Composable
 internal fun ListRow(title: String, value: String, enabled: Boolean = true, onClick: () -> Unit) {
+    // On a phone that follows someone the rows still show their values but open nothing.
+    val enabled = enabled && !LocalReadOnly.current
     Row(
         Modifier.fillMaxWidth().height(52.dp).clickable(enabled = enabled, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,

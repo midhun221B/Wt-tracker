@@ -155,6 +155,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val updatedAt: String? = null,
         val error: FollowError? = null,
         val busy: Boolean = false,
+        /** Where the copy comes from, shown in follow-mode Settings. */
+        val link: String? = null,
     )
 
     private fun followFromPrefs() = FollowState(
@@ -162,6 +164,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         ownerName = share.ownerName.takeIf { share.mode == Mode.Follow },
         updatedAt = share.lastUpdatedAt,
         error = share.followError,
+        link = share.followUrl.takeIf { share.mode == Mode.Follow },
     )
 
     private val _follow = MutableStateFlow(followFromPrefs())
@@ -183,6 +186,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             is FetchResult.Ok -> {
                 share.mode = Mode.Follow
                 share.followUrl = url
+                // Read-only from the first frame the tabs appear.
+                _follow.value = followFromPrefs().copy(busy = true)
                 applySnapshot(r.snapshot)
                 Reminder.schedule(getApplication(), false, 0, 0)
             }

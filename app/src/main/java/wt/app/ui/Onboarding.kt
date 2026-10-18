@@ -62,6 +62,7 @@ import wt.core.plan.RebaselineResult
 import wt.core.plan.firstPlan
 import wt.core.plan.steadyGoalDate
 import wt.core.summary.weekStart
+import wt.core.io.FollowError
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -96,9 +97,19 @@ internal fun OnboardingScreen(
     onReminderOn: () -> Unit,
     initialStep: SetupStep = SetupStep.Welcome,
     initialDraft: SetupDraft = SetupDraft(),
+    onFollow: ((String) -> Unit)? = null,
+    followError: FollowError? = null,
+    followBusy: Boolean = false,
 ) {
     var step by rememberSaveable { mutableStateOf(initialStep) }
     var draft by rememberSaveable { mutableStateOf(initialDraft) }
+    // "Follow a partner" replaces setup: paste a link instead of making a plan.
+    var followStep by rememberSaveable { mutableStateOf(false) }
+    if (followStep && onFollow != null) {
+        BackHandler { followStep = false }
+        FollowSetupStep(followError, followBusy, onFollow, onBack = { followStep = false })
+        return
+    }
     BackHandler(enabled = step != SetupStep.Welcome) { step = SetupStep.entries[step.ordinal - 1] }
 
     val kg = parseDecimal(draft.kg)?.takeIf { it in 30.0..250.0 }
@@ -138,6 +149,10 @@ internal fun OnboardingScreen(
                     BigButton("Set up my plan") { step = SetupStep.Weight }
                     Spacer(Modifier.height(12.dp))
                     BigButton("Restore a backup", primary = false, onClick = onRestore)
+                    if (onFollow != null) {
+                        Spacer(Modifier.height(12.dp))
+                        BigButton("Follow a partner", primary = false) { followStep = true }
+                    }
                     Text(
                         "No account, no cloud.",
                         Modifier.fillMaxWidth().padding(top = 12.dp),

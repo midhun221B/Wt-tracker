@@ -1,5 +1,9 @@
 package wt.app
 
+import wt.app.ui.FollowSettings
+import wt.app.ui.FollowSetupStep
+import wt.app.ui.FollowBar
+import wt.app.ui.LocalReadOnly
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -258,6 +262,40 @@ class ScreenshotTest {
     }
 
     @Test fun plan() = shoot("4-plan") { PlanScreen(sampleState(), {}, {}, {}) }
+
+    // Follow mode: my partner's phone, read-only, with the follow bar on top.
+    private val followNow = java.time.ZonedDateTime.parse("2026-11-05T10:00+09:00")
+
+    @Composable
+    private fun Following(error: wt.core.io.FollowError? = null, content: @Composable () -> Unit) {
+        CompositionLocalProvider(LocalReadOnly provides true) {
+            Column {
+                FollowBar("Midhun", "2026-11-05T08:00+09:00", error, false, {}, now = followNow)
+                content()
+            }
+        }
+    }
+
+    @Test fun followSetup() = shoot("11a-follow-setup") { FollowSetupStep(null, false, {}, {}) }
+
+    @Test fun followSetupError() = shoot("11b-follow-setup-error") { FollowSetupStep(wt.core.io.FollowError.NotALink, false, {}, {}) }
+
+    @Test fun followToday() = shoot("11c-follow-today") { Following { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) } }
+
+    @Test fun followRuns() = shoot("11d-follow-runs") {
+        val s = sampleState()
+        Following { RunsScreen(s.runs, today, {}, {}, onImportStrava = {}, week1 = s.dashboard.week1, allTime = s.dashboard.allTime()) }
+    }
+
+    @Test fun followPlan() = shoot("11e-follow-plan") { Following { PlanScreen(sampleState(), {}, {}, {}) } }
+
+    @Test fun followSettings() = shoot("11f-follow-settings") {
+        FollowSettings("Midhun", "2026-11-05T08:00+09:00", "https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOpQrStUvWxYz012345", {}, now = followNow)
+    }
+
+    @Test fun followBarDead() = shoot("11g-follow-bar-dead") {
+        Following(wt.core.io.FollowError.LinkDead) { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
+    }
 
     @Test fun settings() = shoot("8-settings") {
         SettingsScreen(sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {})

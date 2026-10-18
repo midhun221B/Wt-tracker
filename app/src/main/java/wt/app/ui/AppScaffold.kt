@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -161,6 +162,7 @@ fun AppScaffold(vm: AppViewModel) {
 
     // A fresh install has no profile: first-run setup instead of the tabs (a restored backup also ends it).
     val needsSetup by vm.needsSetup.collectAsStateWithLifecycle()
+    val follow by vm.follow.collectAsStateWithLifecycle()
     if (needsSetup == true) {
         // The snackbar shows restore errors (a wrong file) during setup too.
         Box(Modifier.fillMaxSize()) {
@@ -171,17 +173,23 @@ fun AppScaffold(vm: AppViewModel) {
                 onReminderOn = {
                     if (Build.VERSION.SDK_INT >= 33 && !notificationsAllowed) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 },
+                onFollow = { vm.follow(it) },
+                followError = follow.error,
+                followBusy = follow.busy,
             )
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
         }
         return
     }
 
+    // A phone that follows someone shows the same screens with every edit control hidden.
+    CompositionLocalProvider(LocalReadOnly provides follow.following) {
     Scaffold(
         containerColor = Palette.Background,
         topBar = { Column {
             val s = state
             val (subtitle, title) = when {
+                settingsOpen && follow.following -> "Following ${follow.ownerName.orEmpty()}" to "Settings"
                 settingsOpen -> "Reminder, export and backup" to "Settings"
                 s == null -> "" to tab.label
                 tab == Tab.DASHBOARD -> s.dashboard.programWeek().let { (w, n) -> "${weekHeadline(w, n)} · ${longDay(s.today)}" to tab.label }
@@ -201,7 +209,7 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 actions = {
                     // Trend: share the card for the latest weigh-in, any day (not only right after saving it).
-                    val share = if (!settingsOpen && tab == Tab.DASHBOARD && s != null) {
+                    val share = if (!settingsOpen && !follow.following && tab == Tab.DASHBOARD && s != null) {
                         s.dashboard.latestWeight?.let { w -> weekShare(s.dashboard, w.date) }
                     } else null
                     if (share != null) {
@@ -223,6 +231,9 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Palette.Background, titleContentColor = Palette.Text),
             )
+            if (follow.following) {
+                FollowBar(follow.ownerName.orEmpty(), follow.updatedAt, follow.error, follow.busy, onRefresh = { vm.refreshFollow(force = true) })
+            }
             // "Run logged" banner under the top bar for a few seconds after any new run is saved.
             AnimatedVisibility(visible = runLogged && s != null, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 val monday = weekStart(s?.today ?: todayInTokyo())
@@ -258,6 +269,10 @@ fun AppScaffold(vm: AppViewModel) {
         val modifier = Modifier.padding(padding)
         if (s == null) {
             Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            return@Scaffold
+        }
+        if (settingsOpen && follow.following) {
+            FollowSettings(follow.ownerName.orEmpty(), follow.updatedAt, follow.link.orEmpty(), onStop = { settingsOpen = false; vm.stopFollowing() }, modifier = modifier)
             return@Scaffold
         }
         if (settingsOpen) {
@@ -300,5 +315,6 @@ fun AppScaffold(vm: AppViewModel) {
                 metrics = bodyMetrics(s.dashboard.weights, s.dashboard.body, s.profile.heightCm))
             Tab.PLAN -> PlanScreen(s, vm::saveCheckpoints, vm::applyRebaseline, vm::saveProfile, modifier)
         }
+    }
     }
 }

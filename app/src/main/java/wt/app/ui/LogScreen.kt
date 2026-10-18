@@ -125,7 +125,9 @@ fun LogScreen(
     var weighInFor by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     // Weekly: the big card shows only while this week's weigh-in is due, or when asked for ("Weigh in" / "Edit").
     // A day that already has a weight shows it in the small card instead.
-    val showWeighIn = (status.due && existing == null) || weighInFor == date
+    // A phone that follows someone only looks: no weigh-in card.
+    val readOnly = LocalReadOnly.current
+    val showWeighIn = !readOnly && ((status.due && existing == null) || weighInFor == date)
     val lastKg = state.weights.lastOrNull { it.date <= date }?.kg ?: state.weights.lastOrNull()?.kg
         ?: (round(state.dashboard.plan.at(date) * 10) / 10)
 
@@ -228,7 +230,7 @@ fun LogScreen(
             if (existing != null) {
                 TextButton(onClick = { onDeleteWeight(date); weighInFor = null }, modifier = Modifier.fillMaxWidth()) { Text("Delete this entry", color = Palette.Muted) }
             }
-        } else if (savedWeighIn == date && existing != null) {
+        } else if (!readOnly && savedWeighIn == date && existing != null) {
             weighInProgress(state.weights.map { it.toModel() }, date, state.dashboard.plan.goal.kg, state.dashboard.plan.start.kg, planned)?.let { p ->
                 // The card for my partner; null (no button) if the dashboard doesn't have this weigh-in yet.
                 val share = remember(state.dashboard, date) { weekShare(state.dashboard, date) }
@@ -404,12 +406,13 @@ private fun NextWeighInCard(
     onWeighInDay: (Int) -> Unit,
 ) {
     var picking by remember { mutableStateOf(false) }
+    val readOnly = LocalReadOnly.current
     DarkCard {
         Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Tapping the text opens the weekday chips to change the weigh-in day.
                 Column(
-                    Modifier.weight(1f).heightIn(min = 44.dp).clickable(onClickLabel = "Change weigh-in day") { picking = !picking },
+                    Modifier.weight(1f).heightIn(min = 44.dp).clickable(enabled = !readOnly, onClickLabel = "Change weigh-in day") { picking = !picking },
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text("Next weigh-in · ${shortDay(next)}", style = MaterialTheme.typography.titleSmall)
@@ -419,7 +422,7 @@ private fun NextWeighInCard(
                         last != null -> Text("Last %.1f kg on %s".format(last.kg, dayMonth(last.date)), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                     }
                 }
-                TextButton(onClick = onWeighInNow) { Text(actionLabel, color = Palette.Accent) }
+                if (!readOnly) TextButton(onClick = onWeighInNow) { Text(actionLabel, color = Palette.Accent) }
             }
             if (picking) {
                 Text("Weigh-in day", style = MaterialTheme.typography.labelMedium, color = Palette.Muted, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
@@ -449,6 +452,7 @@ private fun RunningCard(
     streak: RunWeekStreak? = null,
 ) {
     val done = runs.isNotEmpty() || rest
+    val readOnly = LocalReadOnly.current
     // A run day glows orange; a rest day (no run) blue-grey, so the two never look alike.
     val tint = if (runs.isEmpty() && rest) Palette.Rest else Palette.Accent
     val shape = RoundedCornerShape(20.dp)
@@ -475,7 +479,7 @@ private fun RunningCard(
                             Text("%.1f km".format(km), style = numberStyle(28.sp))
                             Text("${pace(sec / km)} · ${duration(sec)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                         }
-                        TextButton(onClick = onAddRun) { Text("+ Add another", color = Palette.Muted) }
+                        if (!readOnly) TextButton(onClick = onAddRun) { Text("+ Add another", color = Palette.Muted) }
                     }
                 }
                 rest -> {
@@ -485,13 +489,15 @@ private fun RunningCard(
                             Text("Rest day", style = MaterialTheme.typography.labelMedium, color = Palette.Rest)
                             Text("Recovery counts", style = numberStyle(28.sp))
                         }
-                        Switch(
-                            checked = true,
-                            onCheckedChange = onRest,
-                            colors = SwitchDefaults.colors(checkedTrackColor = Palette.Rest, checkedBorderColor = Palette.Rest),
-                        )
+                        if (!readOnly) {
+                            Switch(
+                                checked = true,
+                                onCheckedChange = onRest,
+                                colors = SwitchDefaults.colors(checkedTrackColor = Palette.Rest, checkedBorderColor = Palette.Rest),
+                            )
+                        }
                     }
-                    TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Log a run anyway", color = Palette.Muted) }
+                    if (!readOnly) TextButton(onClick = onAddRun, contentPadding = PaddingValues(0.dp)) { Text("+ Log a run anyway", color = Palette.Muted) }
                 }
                 else -> {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -499,11 +505,13 @@ private fun RunningCard(
                             Text(if (date == today) "Run today" else "Run", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
                             Text("No run yet", style = numberStyle(28.sp), color = Palette.Muted)
                         }
-                        PrimaryButton("Add run", onAddRun)
+                        if (!readOnly) PrimaryButton("Add run", onAddRun)
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Rest day", Modifier.weight(1f))
-                        Switch(checked = false, onCheckedChange = onRest)
+                    if (!readOnly) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Rest day", Modifier.weight(1f))
+                            Switch(checked = false, onCheckedChange = onRest)
+                        }
                     }
                 }
             }
