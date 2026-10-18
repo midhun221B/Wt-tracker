@@ -86,9 +86,6 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(s.headline, style = numberStyle(28.sp, Palette.Text))
                 Text("Weigh-in · ${shortDay(s.date)}", fontSize = 13.sp, color = Palette.Muted)
-                if (s.streakWeeks >= 2) {
-                    Text("${s.streakWeeks}-week weigh-in streak", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Accent)
-                }
             }
         }
 
@@ -111,8 +108,14 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.Card).padding(horizontal = 12.dp, vertical = 9.dp),
             verticalArrangement = Arrangement.spacedBy(7.dp),
         ) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Text(if (s.stripIsLastWeek) "Last week" else "This week", Modifier.weight(1f), fontSize = 12.sp, color = Palette.Muted)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The run streak (weeks in a row with 3+ runs) sits with the runs it counts, from 2 weeks.
+                val streak = s.runStreakWeeks >= 2
+                if (streak) StreakFlame(s.runStreakWeeks, FlameLook.Solid, 26.dp)
+                Column(Modifier.weight(1f)) {
+                    if (streak) Text("${s.runStreakWeeks}-week run streak", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Accent)
+                    Text(if (s.stripIsLastWeek) "Last week" else "This week", fontSize = if (streak) 11.sp else 12.sp, color = Palette.Muted)
+                }
                 Text(
                     when (s.runs) {
                         0 -> "No runs"

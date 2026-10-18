@@ -19,6 +19,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.BorderStroke
 import wt.core.summary.WeekShare
 import wt.core.summary.weekShare
+import wt.core.summary.runWeekStreak
+import wt.core.summary.RunWeekStreak
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
@@ -275,6 +277,8 @@ fun LogScreen(
             justLogged = runJustLogged && date == state.today,
             // Days before anything was logged are not "missed": the app wasn't in use yet.
             firstDay = listOfNotNull(state.weights.minOfOrNull { it.date }, state.runs.mapNotNull { it.date }.minOrNull()).minOrNull(),
+            // Weeks in a row with 3+ runs, as of the day shown.
+            streak = runWeekStreak(state.runs.mapNotNull { it.date }, date),
         )
 
         Disclaimer()
@@ -434,6 +438,7 @@ private fun RunningCard(
     onRest: (Boolean) -> Unit,
     justLogged: Boolean = false,
     firstDay: LocalDate? = null,
+    streak: RunWeekStreak? = null,
 ) {
     val done = runs.isNotEmpty() || rest
     // A run day glows orange; a rest day (no run) blue-grey, so the two never look alike.
@@ -496,7 +501,10 @@ private fun RunningCard(
             }
             HorizontalDivider(color = Palette.CardHigh)
             val monday = weekStart(date)
-            Text("This week · ${weekRange(monday)}", style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("This week · ${weekRange(monday)}", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = Palette.Muted)
+                streak?.let { TodayStreak(it) }
+            }
             WeekDots(monday, date, today, weekRuns.mapNotNull { it.date }.toSet(), restDays, pop = date.takeIf { justLogged }, firstDay = firstDay)
             val weekRest = (0L..6L).count { monday.plusDays(it) in restDays }
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

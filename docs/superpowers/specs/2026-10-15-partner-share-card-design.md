@@ -22,7 +22,7 @@ One portrait image, 360 × 450 dp (about 1080 × 1350 px), in the "B orange" dar
    - Inside the ring: the scale weight ("87.5") and "kg on the scale". (The change since the previous weigh-in is in the
      caption only; the "−0.4 kg since …" pill was removed from the picture on 2026-10-17.)
    - Beside the ring: "Week 5 of 14" (`Dashboard.programWeek()`) and "Weigh-in · Mon, 2 Nov".
-     Under them, from 2 weeks on, "5-week weigh-in streak" (weeks in a row with a weigh-in or scale measurement).
+     (Until v0.6.0 a "5-week weigh-in streak" sat under them; v0.7.0 replaced it with the run streak on the run strip.)
 2. **Downhill trail**
    - Label row: "Downhill to 82 kg" on the left, "9 weeks to go" on the right (total weeks − current week).
    - The plan as a trail: a dashed blue-grey line through the active plan's checkpoints, start kg at the top left
