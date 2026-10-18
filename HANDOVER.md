@@ -48,19 +48,10 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#32](https://github.com/midhun221B/Wt-tracker/pull/32) | Run streak: weeks in a row with 3+ runs (`runWeekStreak`, the week in progress doesn't break it), a flame with the number inside (`StreakFlame.kt`) on Today's week card (solid, waiting or off) and on the share card's run strip from 2 weeks (caption too), replacing the weigh-in streak; version 0.7.0 (`v0.7.0` release) |
 | [#33](https://github.com/midhun221B/Wt-tracker/pull/33) | Streak in words on Today ("5-week streak", "keeps your 4-week streak"), the Weigh-in saved card without " · trend" endings plus one muted trend note, and a real minus for signed numbers (`signed()`); version 0.7.1 (`v0.7.1` release) |
 | [#34](https://github.com/midhun221B/Wt-tracker/pull/34) | Cleanups: Trend's Weeks table puts the date and the change on separate lines (no wrapping at 411 dp; screenshot `1e-weeks-open`), and re-sharing week 1 leaves out runs after the weigh-in day (`weekShare`); version 0.7.2 (`v0.7.2` release) |
+| [#35](https://github.com/midhun221B/Wt-tracker/pull/35) | Partner follow mode: "Follow a partner" at first-run setup turns a phone into a read-only follower of one "anyone with the link" Drive file (`ShareSnapshot`, `fetchSnapshot`, `LocalReadOnly`, `FollowBar`); Settings → Partner sharing on the owner's phone (Google consent with `drive.file` only, `DriveClient`, `ShareWorker` uploads a minute after each change, Send/Copy/New link, Turn off); final-review fixes (`ShareFlowsTest`); emulator follow smoke; setup guide `docs/partner-sharing-setup.md`; home page and privacy policy on GitHub Pages (`docs/index.html`, `docs/privacy.html`); tested by the owner on both phones; version 0.8.0 (`v0.8.0` release) |
 
 ### Not merged
-- Branch `claude/fervent-ptolemy-ho7r2a`: partner follow mode, part 1 (spec `docs/superpowers/specs/2026-10-18-partner-follow-design.md`, plan `docs/superpowers/plans/2026-10-18-partner-follow.md`).
-  - Core: `ShareSnapshot`/`encodeShare`/`decodeShare` (a backup plus owner name and updated time), `driveFileId` (also inside a pasted WhatsApp message), `fetchSnapshot`/`followSourceUrl` (tests against a local HTTP server); fixture `core/src/test/resources/share-sample.json`.
-  - App: first-run setup has "Follow a partner" (paste the link; nothing is stored until it reads). A following phone keeps a read-only copy in its own database (`replaceAll`), refreshes on open/resume or Refresh, shows "Following Midhun · updated 2 h ago" (or why the last update failed) above the tabs, hides every add/edit/delete control (`LocalReadOnly`), has no reminders, and Settings has only "Stop following" (clears everything, back to setup) and About. Follow state lives in SharedPreferences ("share"), no Room change. The app now has the INTERNET permission; debug builds allow plain HTTP to 10.0.2.2 for the emulator test.
-  - Emulator smoke follows the fixture served from the CI host and checks the read-only tabs and Stop following.
-- Same branch, part 2 (owner side), version 0.8.0:
-  - Core `DriveClient` (create, make public, update via `X-HTTP-Method-Override: PATCH`, delete, revoke; tests against a local server).
-  - `DriveAuth` (Play services authorization, `drive.file` only), `ShareWorker` + `ShareScheduler` (unique "share-upload", 60 s delay, needs a connection, REPLACE): every data change in the view model queues one upload. Errors: NeedsSignIn, FileRemoved, Offline (shown on the card).
-  - Settings → **Partner sharing** card: Turn on (name, then Google consent), Send link to partner (share sheet), Copy link, New link, Turn off (deletes the file, revokes access), Sign in again.
-  - Final-review fixes: Stop following cancels a refresh in flight and a late result can't write the data back; Turn off only forgets the link once the file is really deleted (offline it says the link still works); a file deleted in the Drive app (trashed, which Drive still accepts updates to) shows "The shared file was removed"; a Google sign-in or error page instead of the file reads as "link no longer works"; Turn on errors name the Drive error code and don't leave a stray file in Drive when sharing it fails (`createPublic`). Robolectric `ShareFlowsTest` covers the view-model flows.
-  - Web pages for Google's consent screen: `docs/index.html` (home page) and `docs/privacy.html` (privacy policy), served by GitHub Pages from `/docs` at <https://midhun221b.github.io/Wt-tracker/> (`docs/.nojekyll`: no Jekyll). The owner turns Pages on from this branch now and switches it to `main` after the merge. Google wouldn't let the app be published without them.
-  - Owner's one-time Google Cloud setup: `docs/partner-sharing-setup.md` (package `io.github.midhun.wttracker`, debug-key SHA-1 `2D:08:2D:82:9E:FA:2A:1B:A0:DC:13:D0:C6:A0:D6:20:5B:69:0A:25`). Real sign-in and upload can't run in CI: the owner tests them on the phone before merging.
+Nothing.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
@@ -76,7 +67,8 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 - **Runs:** "Last 28 days" summary (runs, distance, fastest pace), an "Every week" ring (spoke per week, plan-progress arc, goal tick); manual entry, screenshot, and Strava `activities.csv` import (all from Add run), grouped by Mon–Sun week. Imports convert UTC to Tokyo time, skip duplicates, and match undated sample runs.
 - **Body:** a big chart of the chosen measure and stat cards for weight, BMI, body fat, visceral fat and muscle (tap to chart); body-scale measurements (fat %, visceral, muscle, skeletal %, lean, BMR) in a folded log.
 - **Plan:** "82 kg by 7 January. 9 weeks to go."; checkpoint timeline with today (orange line up to today; tap to edit checkpoints); list rows for re-baseline (flags > 0.7 kg/week, blocks > 1 kg/week), energy estimate and history, each opening a pop-up.
-- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, app version under About.
+- **Settings:** weigh-in day and reminder (default Monday 07:30 Tokyo), CSV export, JSON backup and restore, Partner sharing (Turn on with Google, Send/Copy/New link, Turn off), app version under About.
+- **Follow a partner** (first-run setup): paste the partner's link; the app becomes a read-only copy of their data, refreshed on open, with "Following <name> · updated …" above the tabs and Stop following in Settings.
 
 ## Open items / next steps
 1. **Screenshot import: merged via #6, confirmed working on the owner's phone with both screenshots.**
@@ -104,7 +96,7 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
    - only Strava's English date format has been tested
 3. Extras mockups (2026-10-09, https://claude.ai/artifact/E4vLaBMyhRWExCXBDSbfSw): the owner chose 2B (goal ring after a weigh-in), 2C (check pulse) and 3B (ruler with marks); built on the branch. The ruler's drag feel and haptics still need checking on the phone.
 
-4. **View-only partner app**: built on the branch (v0.8.0, see Not merged). Waiting for the owner's Google Cloud setup and a test on both phones.
+4. **View-only partner app**: done in v0.8.0 (#35). The owner's Google Cloud project is published and sign-in works. GitHub Pages must serve `/docs` from `main` (the consent screen links to the privacy page).
 5. **Bluetooth scale** (spike, waiting for data): the Iris Ohyama IBCM-B212-H only talks to Iris's own app (ウェルネスノート), with no Health Connect export. The owner is to send nRF Connect screenshots of the scale's broadcast to see whether the weight can be read without pairing.
 6. **Run streak**: shipped in v0.7.0 (#32). Not yet seen on the phone.
 
