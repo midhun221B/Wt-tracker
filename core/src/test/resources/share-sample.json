@@ -1,0 +1,302 @@
+{
+    "format": "wt-tracker-share",
+    "version": 1,
+    "ownerName": "Midhun",
+    "updatedAt": "2026-11-05T08:00+09:00",
+    "backup": {
+        "format": "wt-tracker-backup",
+        "version": 1,
+        "exportedAt": "2026-11-05T08:00+09:00",
+        "profile": {
+            "sex": "male",
+            "birthYear": 1994,
+            "heightCm": 170.0,
+            "bmrKcal": 1818.0,
+            "activityFactor": 1.4,
+            "goalKg": 82.0,
+            "goalDate": "2027-01-07",
+            "plannedFoodDeficitKcal": 350.0,
+            "weighInDay": null,
+            "reminderEnabled": null,
+            "reminderHour": null,
+            "reminderMinute": null
+        },
+        "weights": [
+            {
+                "date": "2026-10-08",
+                "kg": 88.6,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            },
+            {
+                "date": "2026-10-12",
+                "kg": 88.4,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            },
+            {
+                "date": "2026-10-19",
+                "kg": 87.6,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            },
+            {
+                "date": "2026-10-26",
+                "kg": 87.7,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            },
+            {
+                "date": "2026-11-02",
+                "kg": 87.5,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            },
+            {
+                "date": "2026-11-05",
+                "kg": 86.6,
+                "sleepHours": null,
+                "hunger": null,
+                "snacks": null,
+                "note": null
+            }
+        ],
+        "body": [
+            {
+                "date": "2026-10-08",
+                "fatPct": 29.2,
+                "visceral": 16.0,
+                "muscleKg": 60.1,
+                "skeletalPct": 37.0,
+                "leanKg": 62.5,
+                "bmrKcal": 1818.0
+            },
+            {
+                "date": "2026-10-22",
+                "fatPct": 28.8,
+                "visceral": 15.5,
+                "muscleKg": 60.0,
+                "skeletalPct": 37.1,
+                "leanKg": 62.3,
+                "bmrKcal": 1810.0
+            },
+            {
+                "date": "2026-11-05",
+                "fatPct": 28.3,
+                "visceral": 15.0,
+                "muscleKg": 59.9,
+                "skeletalPct": 37.2,
+                "leanKg": 62.2,
+                "bmrKcal": 1805.0
+            }
+        ],
+        "runs": [
+            {
+                "date": "2026-10-08",
+                "km": 3.0,
+                "durationSec": 1368,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-09",
+                "km": 3.0,
+                "durationSec": 1291,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-11",
+                "km": 3.0,
+                "durationSec": 1315,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-12",
+                "km": 3.0,
+                "durationSec": 1282,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-14",
+                "km": 3.0,
+                "durationSec": 1341,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-15",
+                "km": 3.0,
+                "durationSec": 1278,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-16",
+                "km": 3.0,
+                "durationSec": 1287,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-18",
+                "km": 3.0,
+                "durationSec": 1299,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-19",
+                "km": 3.0,
+                "durationSec": 1342,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-21",
+                "km": 3.0,
+                "durationSec": 1304,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-22",
+                "km": 3.0,
+                "durationSec": 1263,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-23",
+                "km": 3.0,
+                "durationSec": 1351,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-25",
+                "km": 3.0,
+                "durationSec": 1298,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-26",
+                "km": 3.0,
+                "durationSec": 1304,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-28",
+                "km": 3.0,
+                "durationSec": 1299,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-29",
+                "km": 3.0,
+                "durationSec": 1300,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-10-30",
+                "km": 3.0,
+                "durationSec": 1356,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-11-01",
+                "km": 3.0,
+                "durationSec": 1271,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-11-02",
+                "km": 3.5,
+                "durationSec": 1263,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-11-04",
+                "km": 3.5,
+                "durationSec": 1293,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            },
+            {
+                "date": "2026-11-05",
+                "km": 3.5,
+                "durationSec": 1339,
+                "kcal": null,
+                "source": "manual",
+                "externalId": null
+            }
+        ],
+        "restDays": [
+            "2026-10-10"
+        ],
+        "plans": [
+            {
+                "label": "Original plan",
+                "createdAt": "2026-10-08",
+                "active": true,
+                "checkpoints": [
+                    {
+                        "date": "2026-10-08",
+                        "kg": 88.3
+                    },
+                    {
+                        "date": "2026-11-08",
+                        "kg": 86.2
+                    },
+                    {
+                        "date": "2026-12-08",
+                        "kg": 84.0
+                    },
+                    {
+                        "date": "2027-01-07",
+                        "kg": 82.0
+                    }
+                ]
+            }
+        ]
+    }
+}
