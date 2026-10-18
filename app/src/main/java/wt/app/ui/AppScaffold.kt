@@ -55,6 +55,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.activity.result.IntentSenderRequest
+import androidx.compose.runtime.rememberCoroutineScope
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.launch
+import wt.app.share.DriveAuth
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -84,6 +92,7 @@ enum class Tab(val label: String, @DrawableRes val icon: Int) {
 fun AppScaffold(vm: AppViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     var tab by rememberSaveable { mutableStateOf(Tab.LOG) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     // The partner card being previewed from Trend's share icon, if any.
@@ -158,6 +167,37 @@ fun AppScaffold(vm: AppViewModel) {
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         notificationsAllowed = granted
+    }
+
+    // Partner sharing: Google asks for consent in its own screen the first time; the token comes back here.
+    val sharing by vm.sharing.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var afterAuth by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    val authLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val then = afterAuth
+        afterAuth = null
+        val token = runCatching { Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(result.data).accessToken }.getOrNull()
+        if (token != null) then?.invoke(token) else vm.signInFailed(null)
+    }
+    /** Gets a Drive token (showing Google's consent screen if needed), then runs [then]; [onFail] if sign-in fails. */
+    fun withToken(onFail: () -> Unit = {}, then: (String) -> Unit) {
+        scope.launch {
+            try {
+                val r = DriveAuth.authorize(context)
+                val pending = r.pendingIntent
+                when {
+                    r.hasResolution() && pending != null -> {
+                        afterAuth = then
+                        authLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
+                    }
+                    r.accessToken != null -> then(r.accessToken!!)
+                    else -> { vm.signInFailed(null); onFail() }
+                }
+            } catch (e: Exception) {
+                vm.signInFailed((e as? ApiException)?.statusCode?.let { "code $it" })
+                onFail()
+            }
+        }
     }
 
     // A fresh install has no profile: first-run setup instead of the tabs (a restored backup also ends it).
@@ -296,6 +336,20 @@ fun AppScaffold(vm: AppViewModel) {
                 },
                 onRestore = { restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
                 modifier = modifier,
+                partnerSharing = {
+                    PartnerSharingCard(
+                        sharing,
+                        onTurnOn = { name -> withToken { vm.startSharing(name, it) } },
+                        onSendLink = { sharing.link?.let { context.startActivity(shareLinkIntent(it)) } },
+                        onCopyLink = {
+                            sharing.link?.let { clipboard.setText(AnnotatedString(it)) }
+                            scope.launch { snackbar.showSnackbar("Link copied") }
+                        },
+                        onNewLink = { withToken { vm.newLink(it) } },
+                        onTurnOff = { withToken(onFail = { vm.stopSharing(null) }) { vm.stopSharing(it) } },
+                        onSignIn = { withToken { vm.resumeSharing() } },
+                    )
+                },
             )
             return@Scaffold
         }

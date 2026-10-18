@@ -255,6 +255,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (!_sharing.value.busy) _sharing.value = sharingFromPrefs()
     }
 
+    /** After signing in again: clears the error and uploads now-ish. */
+    fun resumeSharing() {
+        share.error = null
+        ShareScheduler.changed(getApplication())
+        _sharing.value = sharingFromPrefs()
+    }
+
+    /** Google sign-in failed or was cancelled. */
+    fun signInFailed(detail: String?) = viewModelScope.launch {
+        messageChannel.send(Message("Couldn't sign in with Google" + (detail?.let { " ($it)" } ?: "") + ". See the setup guide."))
+        _sharing.value = sharingFromPrefs()
+    }
+
     /** Turn on: creates the file in my Drive, lets anyone with the link view it and uploads my data. */
     fun startSharing(name: String, token: String) = viewModelScope.launch {
         _sharing.value = _sharing.value.copy(busy = true)

@@ -297,6 +297,37 @@ class ScreenshotTest {
         Following(wt.core.io.FollowError.LinkDead) { LogScreen(sampleState(), {}, {}, { _, _ -> }, {}, onScreenshot = {}) }
     }
 
+    // Partner sharing card on my phone: off, on, waiting, needs sign-in, file removed.
+    private val sharingNow = 1_793_000_000_000L
+    private fun sharingOn(error: wt.app.share.ShareError? = null) = wt.app.ui.AppViewModel.SharingState(
+        on = true, name = "Midhun", link = "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012345/view?usp=sharing",
+        lastUploadMillis = sharingNow - 5 * 60_000, error = error,
+    )
+
+    @Composable
+    private fun SharingCard(state: wt.app.ui.AppViewModel.SharingState) {
+        Box(Modifier.background(Palette.Background).padding(16.dp)) {
+            wt.app.ui.PartnerSharingCard(state, {}, {}, {}, {}, {}, {}, now = sharingNow)
+        }
+    }
+
+    @Test fun sharingOff() = shoot("12a-sharing-off") { SharingCard(wt.app.ui.AppViewModel.SharingState()) }
+
+    @Test fun sharingOn() = shoot("12b-sharing-on") { SharingCard(sharingOn()) }
+
+    @Test fun sharingWaiting() = shoot("12c-sharing-waiting") { SharingCard(sharingOn(wt.app.share.ShareError.Offline)) }
+
+    @Test fun sharingSignIn() = shoot("12d-sharing-sign-in") { SharingCard(sharingOn(wt.app.share.ShareError.NeedsSignIn)) }
+
+    @Test fun sharingRemoved() = shoot("12e-sharing-removed") { SharingCard(sharingOn(wt.app.share.ShareError.FileRemoved)) }
+
+    @Test fun shareLinkMessage() {
+        kotlin.test.assertEquals(
+            "Open this in Wt-tracker to follow my progress: https://drive.google.com/file/d/X/view?usp=sharing",
+            wt.app.ui.shareLinkText("https://drive.google.com/file/d/X/view?usp=sharing"),
+        )
+    }
+
     @Test fun settings() = shoot("8-settings") {
         SettingsScreen(sampleState().profile, notificationsAllowed = true, onReminder = { _, _, _ -> }, onWeighInDay = {}, onExport = {}, onRestore = {})
     }
