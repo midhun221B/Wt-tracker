@@ -83,7 +83,7 @@ fun ShareCard(s: WeekShare, modifier: Modifier = Modifier) {
 
         Column {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("%.1f".format(s.kg), Modifier.alignByBaseline(), style = numberStyle(72.sp, Palette.Text))
+                Text("%.1f".format(s.kg), Modifier.alignByBaseline(), style = numberStyle(68.sp, Palette.Text))
                 Text("kg", Modifier.alignByBaseline(), style = numberStyle(22.sp, Palette.Muted))
             }
             Text(
@@ -184,7 +184,7 @@ private fun Road(s: WeekShare) {
     val span = ChronoUnit.DAYS.between(start.date, goal.date).coerceAtLeast(1).toFloat()
     val description = "My weigh-ins beside the plan from ${plainKg(start.kg)} to ${plainKg(goal.kg)} kg by ${dayMonth(goal.date)}; " +
         "now ${"%.1f".format(s.kg)} kg"
-    Canvas(Modifier.fillMaxWidth().height(136.dp).semantics { contentDescription = description }) {
+    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = description }) {
         val left = 8.dp.toPx()
         val right = size.width - 12.dp.toPx()
         val top = 18.dp.toPx()
