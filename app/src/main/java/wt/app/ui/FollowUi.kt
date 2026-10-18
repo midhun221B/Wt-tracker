@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
-import wt.app.BuildConfig
+import wt.app.R
 import wt.core.io.FollowError
 import wt.core.io.driveFileId
 import wt.core.io.driveLink
@@ -123,20 +123,16 @@ fun FollowSetupStep(error: FollowError?, busy: Boolean, onFollow: (String) -> Un
 @Composable
 fun FollowSettings(name: String, updatedAt: String?, link: String, onStop: () -> Unit, modifier: Modifier = Modifier, now: ZonedDateTime = ZonedDateTime.now(TOKYO)) {
     var confirm by remember { mutableStateOf(false) }
-    Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionCard("Following $name") {
-            Text(updatedAt?.let { "Updated ${ageText(it, now)}" } ?: "Not updated yet", color = Palette.Muted)
-            Text(driveFileId(link)?.let(::driveLink) ?: link, style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
-            SecondaryButton("Stop following", { confirm = true }, Modifier.fillMaxWidth())
+    Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
+        SettingsGroup("Following", footer = { GroupNote(driveFileId(link)?.let(::driveLink) ?: link) }) {
+            SettingsRow(
+                R.drawable.ic_set_people, "Following $name", updatedAt?.let { "Updated ${ageText(it, now)}" } ?: "Not updated yet",
+                end = RowEnd.Pill("Read-only", active = false), iconAccent = true,
+            )
+            RowDivider()
+            SettingsRow(R.drawable.ic_set_stop, "Stop following", end = RowEnd.Empty, onClick = { confirm = true })
         }
-        SectionCard("About") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Version", Modifier.weight(1f))
-                Text(BuildConfig.VERSION_NAME, color = Palette.Muted)
-            }
-            Text("This phone shows $name's data, read-only. Dates use Asia/Tokyo time.", style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
-            Disclaimer()
-        }
+        AboutGroup("This phone shows $name's data, read-only. Dates and times use Japan time.")
     }
     if (confirm) {
         FormDialog(

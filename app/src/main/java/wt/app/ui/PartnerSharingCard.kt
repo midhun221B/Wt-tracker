@@ -1,8 +1,6 @@
 package wt.app.ui
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -14,7 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import wt.app.R
 import wt.app.share.ShareError
 import wt.core.io.DriveException
 import java.io.IOException
@@ -31,8 +29,9 @@ fun shareLinkIntent(link: String): Intent = Intent.createChooser(
 )
 
 /**
- * Settings' Partner sharing card. Off: what it does and Turn on (asks my name, then Google sign-in). On: when it
- * last uploaded or why it stopped, Send link, Copy link, New link and Turn off.
+ * Settings' Partner sharing group. Off: what it does and Turn on (asks my name, then Google sign-in). On: who it's
+ * shared as and when it last uploaded (or why it stopped), the one action that matters now (Send link, Sign in
+ * again or Make a new link), and Manage link (copy, new link, turn off) in a pop-up.
  */
 @Composable
 fun PartnerSharingCard(
@@ -46,43 +45,52 @@ fun PartnerSharingCard(
     now: Long = System.currentTimeMillis(),
 ) {
     var askingName by remember { mutableStateOf(false) }
+    var managing by remember { mutableStateOf(false) }
     var confirmNewLink by remember { mutableStateOf(false) }
     var confirmOff by remember { mutableStateOf(false) }
-    SectionCard("Partner sharing") {
-        if (!state.on) {
-            Text(
-                "Let your partner follow your progress on their phone. Your data goes to one file in your Google Drive " +
-                    "that only people with the link can open, and it updates a minute after each change.",
-                style = MaterialTheme.typography.bodySmall, color = Palette.Muted,
+    // While a sign-in or upload is running, actions wait.
+    fun act(action: () -> Unit): (() -> Unit)? = if (state.busy) null else action
+
+    if (!state.on) {
+        SettingsGroup(
+            "Partner sharing",
+            footer = { GroupNote("Your data goes to one file in your Google Drive that only people with the link can open. It updates a minute after each change.") },
+        ) {
+            SettingsRow(
+                R.drawable.ic_set_people, "Partner sharing", "Your partner follows along on their phone",
+                end = RowEnd.Pill("Off", active = false), iconAccent = true,
             )
-            PrimaryButton(if (state.busy) "Turning on…" else "Turn on", { askingName = true }, Modifier.fillMaxWidth(), enabled = !state.busy)
-        } else {
-            val status = when (state.error) {
-                ShareError.NeedsSignIn -> "Sign in again to keep sharing"
-                ShareError.FileRemoved -> "The shared file was removed"
-                ShareError.Offline -> "Waiting for a connection"
-                null -> if (state.lastUploadMillis > 0) {
-                    "Last update " + ageText(Instant.ofEpochMilli(state.lastUploadMillis).atZone(TOKYO).toString(), Instant.ofEpochMilli(now).atZone(TOKYO))
-                } else {
-                    "Waiting for the first update"
-                }
+            RowDivider()
+            SettingsRow(
+                R.drawable.ic_set_link, if (state.busy) "Turning on…" else "Turn on", end = RowEnd.Empty, accent = true,
+                onClick = act { askingName = true },
+            )
+        }
+    } else {
+        val status = when (state.error) {
+            ShareError.NeedsSignIn -> "Sign in again to keep sharing"
+            ShareError.FileRemoved -> "The shared file was removed"
+            ShareError.Offline -> "Waiting for a connection"
+            null -> if (state.lastUploadMillis > 0) {
+                "Updated " + ageText(Instant.ofEpochMilli(state.lastUploadMillis).atZone(TOKYO).toString(), Instant.ofEpochMilli(now).atZone(TOKYO))
+            } else {
+                "Waiting for the first update"
             }
-            Text("Shared as ${state.name.orEmpty()}", style = MaterialTheme.typography.bodyMedium)
-            Text(status, style = MaterialTheme.typography.bodySmall, color = if (state.error != null) Palette.Warn else Palette.Muted)
+        }
+        SettingsGroup("Partner sharing") {
+            SettingsRow(
+                R.drawable.ic_set_people, "Shared as ${state.name.orEmpty()}", status,
+                end = RowEnd.Pill("On", active = true), iconAccent = true,
+                subtitleColor = if (state.error != null) Palette.Warn else Palette.Muted,
+            )
+            RowDivider()
             when (state.error) {
-                ShareError.NeedsSignIn -> PrimaryButton("Sign in", onSignIn, Modifier.fillMaxWidth(), enabled = !state.busy)
-                ShareError.FileRemoved -> PrimaryButton("New link", { confirmNewLink = true }, Modifier.fillMaxWidth(), enabled = !state.busy)
-                else -> {
-                    PrimaryButton("Send link to partner", onSendLink, Modifier.fillMaxWidth(), enabled = !state.busy)
-                    SecondaryButton("Copy link", onCopyLink, Modifier.fillMaxWidth(), enabled = !state.busy)
-                }
+                ShareError.NeedsSignIn -> SettingsRow(R.drawable.ic_set_shield, "Sign in again", end = RowEnd.Empty, accent = true, onClick = act(onSignIn))
+                ShareError.FileRemoved -> SettingsRow(R.drawable.ic_set_link, "Make a new link", end = RowEnd.Empty, accent = true, onClick = act { confirmNewLink = true })
+                else -> SettingsRow(R.drawable.ic_set_send, "Send link to partner", end = RowEnd.Empty, accent = true, onClick = act(onSendLink))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (state.error != ShareError.FileRemoved) {
-                    SecondaryButton("New link", { confirmNewLink = true }, Modifier.weight(1f), enabled = !state.busy)
-                }
-                SecondaryButton("Turn off", { confirmOff = true }, Modifier.weight(1f), enabled = !state.busy)
-            }
+            RowDivider()
+            SettingsRow(R.drawable.ic_set_link, "Manage link", "Copy, new link, turn off", onClick = act { managing = true })
         }
     }
 
@@ -103,6 +111,15 @@ fun PartnerSharingCard(
             )
         }
     }
+    if (managing) {
+        ManageLinkDialog(
+            state.link,
+            onCopy = { managing = false; onCopyLink() },
+            onNewLink = { managing = false; confirmNewLink = true },
+            onTurnOff = { managing = false; confirmOff = true },
+            onDismiss = { managing = false },
+        )
+    }
     if (confirmNewLink) {
         FormDialog(title = "New link?", onDismiss = { confirmNewLink = false }, confirmLabel = "New link", onConfirm = { confirmNewLink = false; onNewLink() }) {
             Text("Your partner's current link will stop working. Send them the new one.", color = Palette.Muted)
@@ -112,6 +129,25 @@ fun PartnerSharingCard(
         FormDialog(title = "Turn off sharing?", onDismiss = { confirmOff = false }, confirmLabel = "Turn off", onConfirm = { confirmOff = false; onTurnOff() }) {
             Text("Delete the shared file and stop sharing? Your partner's link stops working.", color = Palette.Muted)
         }
+    }
+}
+
+/** Manage link: the link itself, Copy link, and the two that change it (New link, Turn off sharing). */
+@Composable
+internal fun ManageLinkDialog(link: String?, onCopy: () -> Unit, onNewLink: () -> Unit, onTurnOff: () -> Unit, onDismiss: () -> Unit) {
+    FormDialog(
+        title = "Your link",
+        onDismiss = onDismiss,
+        confirmLabel = "Copy link",
+        onConfirm = onCopy,
+        dismissLabel = "Close",
+        below = {
+            SecondaryButton("New link", onNewLink, Modifier.fillMaxWidth())
+            SecondaryButton("Turn off sharing", onTurnOff, Modifier.fillMaxWidth())
+        },
+    ) {
+        Text("Anyone with this link can see your progress.", color = Palette.Muted)
+        Text(link.orEmpty(), style = MaterialTheme.typography.bodySmall, color = Palette.Muted)
     }
 }
 

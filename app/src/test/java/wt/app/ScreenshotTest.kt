@@ -343,6 +343,16 @@ class ScreenshotTest {
         )
     }
 
+    @Test fun settingsManageLink() = shoot("8c-settings-manage-link") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) {
+            wt.app.ui.ManageLinkDialog(sharingState().link, {}, {}, {}, {})
+        }
+    }
+
+    @Test fun settingsExport() = shoot("8d-settings-export") {
+        CompositionLocalProvider(LocalInlineDialogs provides true) { wt.app.ui.ExportDialog({}) {} }
+    }
+
     // Dialogs normally open in their own window; LocalInlineDialogs draws them in place for the capture.
     @Test fun addRun() = shoot("6-add-run") {
         CompositionLocalProvider(LocalInlineDialogs provides true) {

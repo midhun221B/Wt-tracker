@@ -71,10 +71,12 @@ fun downText(downKg: Double): String = if (downKg <= -0.05) "%.1f kg up".format(
 /** "3.2 kg to go", or "Goal reached" once less than 0.05 kg is left. */
 fun toGoText(toGoKg: Double): String = if (toGoKg < 0.05) "Goal reached" else "%.1f kg to go".format(toGoKg)
 
-/** The reminder in one line: "Monday at 07:30 if you haven't weighed in yet", or "Off". [weekday] is ISO (1 = Monday). */
-fun reminderSummary(weekday: Int, hour: Int, minute: Int, enabled: Boolean): String =
-    if (!enabled) "Off"
-    else "${DayOfWeek.of(weekday).getDisplayName(TextStyle.FULL, Locale.ENGLISH)} at %02d:%02d if you haven't weighed in yet".format(hour, minute)
+/** The reminder row's title: "Reminder at 07:30", or just "Reminder" while it's off. */
+fun reminderTitle(hour: Int, minute: Int, enabled: Boolean): String =
+    if (enabled) "Reminder at %02d:%02d".format(hour, minute) else "Reminder"
+
+/** "Monday" for ISO weekday 1 … "Sunday" for 7. */
+fun weekdayName(isoDay: Int): String = DayOfWeek.of(isoDay).getDisplayName(TextStyle.FULL, Locale.ENGLISH)
 
 /** Monday-to-Sunday range starting [monday]: "12 – 18 Oct", or "28 Sep – 4 Oct" across months. */
 fun weekRange(monday: LocalDate): String {

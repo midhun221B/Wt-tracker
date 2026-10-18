@@ -9,7 +9,8 @@ import wt.app.ui.fieldText
 import wt.app.ui.parseDecimal
 import wt.app.ui.parseDuration
 import wt.app.ui.planLabel
-import wt.app.ui.reminderSummary
+import wt.app.ui.reminderTitle
+import wt.app.ui.weekdayName
 import wt.app.ui.ageText
 import wt.app.ui.signed
 import wt.app.ui.roughKcal
@@ -33,10 +34,16 @@ class FormatTest {
     }
 
     @Test
-    fun reminderSummaries() {
-        assertEquals("Monday at 07:30 if you haven't weighed in yet", reminderSummary(1, 7, 30, enabled = true))
-        assertEquals("Sunday at 21:05 if you haven't weighed in yet", reminderSummary(7, 21, 5, enabled = true))
-        assertEquals("Off", reminderSummary(1, 7, 30, enabled = false))
+    fun reminderTitles() {
+        assertEquals("Reminder at 07:30", reminderTitle(7, 30, enabled = true))
+        assertEquals("Reminder at 21:05", reminderTitle(21, 5, enabled = true))
+        assertEquals("Reminder", reminderTitle(7, 30, enabled = false))
+    }
+
+    @Test
+    fun weekdayNames() {
+        assertEquals("Monday", weekdayName(1))
+        assertEquals("Sunday", weekdayName(7))
     }
 
     @Test
