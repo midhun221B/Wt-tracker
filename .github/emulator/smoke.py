@@ -4,7 +4,10 @@
    and checks the marker is still there (an update keeps the data).
 2. Opens every tab and Settings and saves a screenshot of each to the output folder.
 3. Reinstalls fresh and goes through first-run setup with its defaults.
-4. Fails if the app crashed at any point.
+4. Reinstalls fresh and follows a partner: the workflow serves core/src/test/resources on the host's port 8765
+   (http://10.0.2.2:8765 from the emulator; debug builds accept that URL). Checks the tabs show the data with no
+   edit controls, then Stop following returns to setup.
+5. Fails if the app crashed at any point.
 
 Usage: python3 smoke.py NEW_APK OLD_APK OUT_DIR
 """
@@ -58,6 +61,23 @@ def wait_for(*labels, timeout=40):
         time.sleep(1)
     shot("failed-waiting")
     sys.exit(f"{' or '.join(labels)} never appeared")
+
+
+def wait_contains(part, timeout=40):
+    """Waits until some text on screen contains [part]."""
+    end = time.time() + timeout
+    while time.time() < end:
+        if any(part in (t or "") for t, *_ in nodes()):
+            return
+        time.sleep(1)
+    shot("failed-waiting")
+    sys.exit(f'Nothing containing "{part}" appeared')
+
+
+def assert_absent(label):
+    if any(label in (t, d) for t, d, *_ in nodes()):
+        shot("failed-absent")
+        sys.exit(f'"{label}" is on screen in follow mode')
 
 
 def tap(label, lowest=False):
@@ -155,6 +175,35 @@ setup(prefix="1")
 shot("15-after-setup")
 print("Setup on a fresh install works")
 
-# 4. No crash anywhere.
+# 4. Fresh install that follows a partner (read-only copy of the served share file).
+adb("uninstall", PKG)
+adb("install", new_apk)
+adb("shell", "am", "start", "-W", "-n", f"{PKG}/wt.app.MainActivity")
+wait_for("Set up my plan")
+tap("Follow a partner")
+wait_for("Link from your partner")
+tap("Link from your partner")
+adb("shell", "input", "text", "http://10.0.2.2:8765/share-sample.json")
+time.sleep(1)
+shot("19-follow-link")
+tap("Follow", lowest=True)
+wait_contains("Following Midhun")
+shot("20-follow-today")
+assert_absent("Add run")
+tap("Trend", lowest=True)
+shot("21-follow-trend")
+tap("Runs", lowest=True)
+assert_absent("Add run")
+shot("22-follow-runs")
+tap("Settings")
+wait_for("Stop following")
+shot("23-follow-settings")
+tap("Stop following")
+wait_for("Stop following?")
+tap("Stop following", lowest=True)
+wait_for("Set up my plan")
+print("Follow mode works: read-only tabs, Stop following returns to setup")
+
+# 5. No crash anywhere.
 check_no_crash()
 print("Smoke test passed")

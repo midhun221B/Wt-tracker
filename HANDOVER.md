@@ -50,7 +50,11 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#34](https://github.com/midhun221B/Wt-tracker/pull/34) | Cleanups: Trend's Weeks table puts the date and the change on separate lines (no wrapping at 411 dp; screenshot `1e-weeks-open`), and re-sharing week 1 leaves out runs after the weigh-in day (`weekShare`); version 0.7.2 (`v0.7.2` release) |
 
 ### Not merged
-Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a`: partner follow mode, part 1 (spec `docs/superpowers/specs/2026-10-18-partner-follow-design.md`, plan `docs/superpowers/plans/2026-10-18-partner-follow.md`).
+  - Core: `ShareSnapshot`/`encodeShare`/`decodeShare` (a backup plus owner name and updated time), `driveFileId` (also inside a pasted WhatsApp message), `fetchSnapshot`/`followSourceUrl` (tests against a local HTTP server); fixture `core/src/test/resources/share-sample.json`.
+  - App: first-run setup has "Follow a partner" (paste the link; nothing is stored until it reads). A following phone keeps a read-only copy in its own database (`replaceAll`), refreshes on open/resume or Refresh, shows "Following Midhun · updated 2 h ago" (or why the last update failed) above the tabs, hides every add/edit/delete control (`LocalReadOnly`), has no reminders, and Settings has only "Stop following" (clears everything, back to setup) and About. Follow state lives in SharedPreferences ("share"), no Room change. The app now has the INTERNET permission; debug builds allow plain HTTP to 10.0.2.2 for the emulator test.
+  - Emulator smoke follows the fixture served from the CI host and checks the read-only tabs and Stop following.
+  - Not built yet: the owner side (Google sign-in, Drive upload, Partner sharing card, setup guide), version 0.8.0.
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
