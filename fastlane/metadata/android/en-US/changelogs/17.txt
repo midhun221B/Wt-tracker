@@ -1,0 +1,5 @@
+First release for open-source app stores.
+• New name: Downhill, with a road icon and a road-style share card.
+• Settings as a grouped list.
+• Partner sharing and following (read-only).
+• GPL-3.0 licence; releases are now signed with the Downhill release key.

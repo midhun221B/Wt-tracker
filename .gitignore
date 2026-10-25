@@ -7,3 +7,8 @@ local.properties
 captures/
 .kotlin/
 __pycache__/
+
+# Private signing keys: never commit (see docs/RELEASING.md)
+*.jks
+*.keystore.b64
+release.keystore

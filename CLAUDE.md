@@ -39,6 +39,14 @@ with a REALISTIC forecast built from logged weights. Single user, all data on th
   Its screenshots go to the `emulator-latest` pre-release (download them with curl, like `debug-latest`).
 - Versioned releases: bump `versionCode` and `versionName` in `app/build.gradle.kts`. When that reaches `main`, the
   `publish` job creates a `v<versionName>` tag and release with `wt-tracker-v<versionName>.apk` (once per version).
+- **Release signing (since 0.8.2):** `./gradlew :app:assembleRelease` signs with the private key from the env vars
+  `RELEASE_KEYSTORE_FILE/_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` (CI fills them from the GitHub secrets
+  `RELEASE_KEYSTORE_BASE64` etc.; a throwaway key when they're missing, never published). With the secrets, `debug-latest`
+  and the `v<version>` releases carry the release-signed APK; without them `debug-latest` stays debug-signed and no version
+  tag is published. The emulator job still tests the debug build, updating from the pinned debug-signed `v0.8.1`. The
+  key and its password are the owner's only: never commit them. Steps, store submissions: `docs/RELEASING.md`.
+- Licence: GPL-3.0 (`LICENSE`). Store listing texts and images: `fastlane/metadata/android/en-US/` (a new versionCode
+  needs `changelogs/<versionCode>.txt`).
 - Debug builds are signed with the committed `app/debug.keystore` (standard debug credentials) so updates install over
   the old app without wiping its data. Don't replace or remove it.
 - `docs/screenshots/` is a fixed snapshot used by the README. CI no longer commits screenshots; update them by hand

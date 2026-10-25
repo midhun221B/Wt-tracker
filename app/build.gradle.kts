@@ -13,8 +13,8 @@ android {
         applicationId = "io.github.midhun.wttracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "0.8.1"
+        versionCode = 17
+        versionName = "0.8.2"
     }
 
     // Fixed debug key (standard debug credentials) so each CI build installs over the previous one
@@ -26,12 +26,29 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // The private release key (never in git). CI passes it through these variables from GitHub secrets; see
+        // docs/RELEASING.md. Without them the release build is simply unsigned.
+        System.getenv("RELEASE_KEYSTORE_FILE")?.let { keystore ->
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
+    }
+
+    // Stores read the dependency list: the APK carries no extra signing block that would make builds differ.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

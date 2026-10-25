@@ -1,0 +1,20 @@
+Downhill is a personal weight-loss tracker that puts your plan next to an honest forecast built from your own weigh-ins and runs. Every week, a little further down the road.
+
+<b>What it does</b>
+• One weigh-in a week, on the day you choose, with a realistic trend, a range and an expected goal date.
+• Your planned line and your real line side by side, with how far ahead or behind plan you are.
+• Runs from Strava's export file, with weekly distance and a run streak.
+• Body measurements from your scale app, with charts.
+• Estimates of how much to eat to stay on plan. It never suggests less than 1,800 kcal a day or more than 1 kg of loss a week.
+• A picture card to send your partner after each weigh-in.
+• Optional partner sharing: your partner follows your progress read-only on their own phone through a private link.
+
+<b>Your data stays yours</b>
+No account, no ads, no analytics and no Downhill server. Everything lives on your phone. Backups and spreadsheet exports are files you save yourself.
+
+<b>Good to know</b>
+• Partner sharing writes one file to your own Google Drive using Google sign-in (the drive.file permission only reaches files Downhill creates). Following a partner needs no sign-in.
+• Reading a weight or a run from a screenshot uses Google's on-device ML Kit text recognition. Images never leave the phone.
+• Estimates, not medical advice.
+
+Free software under the GPL-3.0 licence. Source code and issues: https://github.com/midhun221B/Wt-tracker

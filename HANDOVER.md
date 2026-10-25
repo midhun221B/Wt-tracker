@@ -52,7 +52,12 @@ Personal Android weight-loss tracker for one user (male, 32, 170 cm). It compare
 | [#36](https://github.com/midhun221B/Wt-tracker/pull/36) | The app is now called **Downhill** (launcher label, welcome wordmark, share link message, follow errors, `downhill-backup-….json`, new Drive files "Downhill share.json", release titles, README, web pages, setup guide; package, database, format ids, APK names and the repo keep wt-tracker so updates, backups and share links keep working); road launcher icon (`RoadMark`/`Wordmark` in `Brand.kt`); road-style share card ("0.8 kg down · 5.5 kg to go" from `WeekShare.downKg`/`toGoKg`, weigh-ins beside the dashed plan to the goal flag, run strip with km and the streak); Settings as a grouped list, design A (`SettingsRows.kt`: weigh-in day and reminder, partner sharing with a Manage link pop-up, your data with an export pop-up, about; follow mode's Settings in the same style); version 0.8.1 (`v0.8.1` release) |
 
 ### Not merged
-Nothing.
+- Branch `claude/fervent-ptolemy-ho7r2a`, version 0.8.2 (versionCode 17): ready for the open-source stores (IzzyOnDroid, Orion Store).
+  - GPL-3.0 `LICENSE`, README install/licence sections, `docs/RELEASING.md` (key, secrets, phones, store requests).
+  - Release signing: `signingConfigs.release` from env vars, `tools/make-release-key.sh` (owner runs it), CI builds and verifies the release APK every run (throwaway key without secrets), publishes it as `debug-latest`/`v<version>` only when the four `RELEASE_*` secrets exist. Emulator job pinned to the debug-signed `v0.8.1`. `dependenciesInfo` off in the APK.
+  - `fastlane/metadata/android/en-US/` (title, short/full description, changelog 17, icon, feature graphic, 7 phone screenshots).
+  - **Owner to do before the release APK exists:** make the key, add the 4 secrets, re-run `main` CI; then back up, reinstall once on both phones (docs/RELEASING.md), then submit to the stores.
+  - Not done: F-Droid main repo (needs a build without Play services and ML Kit).
 
 ### Features in the app today
 - **First-run setup** (fresh install only): welcome or restore a backup, today's weight, goal weight and date (kg/week check, not allowed above 1 kg/week), weigh-in day and reminder, then the plan.
